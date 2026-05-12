@@ -356,6 +356,7 @@ function CampanhasPage() {
                   <div className="bg-zinc-950 rounded-xl p-4 border border-zinc-800 relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-1 h-full bg-primary/20" />
                     <p className="text-xs text-zinc-400 leading-relaxed italic">
+                      {filteredLeads[0] 
                         ? replaceVariables(message || "Digite sua mensagem para ver o preview...", filteredLeads[0])
                         : "Selecione leads para ver o preview..."}
                     </p>
