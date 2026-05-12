@@ -81,6 +81,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "ProspectAI — Prospecção inteligente de empresas" },
       { name: "description", content: "Encontre leads qualificados e gerencie sua prospecção." },
       { name: "author", content: "ProspectAI" },
+      { property: "og:title", content: "ProspectAI — Prospecção inteligente de empresas" },
+      { name: "twitter:title", content: "ProspectAI — Prospecção inteligente de empresas" },
+      { property: "og:description", content: "Encontre leads qualificados e gerencie sua prospecção." },
+      { name: "twitter:description", content: "Encontre leads qualificados e gerencie sua prospecção." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5f66066a-da39-40b4-a919-55964a3a1ed5/id-preview-7fb8a480--1847067f-ffb5-4364-a265-5913efb984d0.lovable.app-1778555999871.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/5f66066a-da39-40b4-a919-55964a3a1ed5/id-preview-7fb8a480--1847067f-ffb5-4364-a265-5913efb984d0.lovable.app-1778555999871.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       {
