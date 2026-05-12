@@ -109,7 +109,7 @@ export function Sidebar({ className = "" }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={`
-          fixed top-0 left-0 h-screen bg-sidebar border-r border-sidebar-border z-40 transition-all duration-300 ease-in-out flex flex-col
+          fixed top-0 left-0 h-screen bg-sidebar border-r border-sidebar-border z-40 transition-all duration-300 ease-in-out flex flex-col sticky
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
           ${isCollapsed ? "w-20" : "w-64"}
           md:translate-x-0 md:sticky md:top-0
