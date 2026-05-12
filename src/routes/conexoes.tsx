@@ -73,7 +73,10 @@ function ConexoesPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInstances(data || []);
+      setInstances((data as any[])?.map(item => ({
+        ...item,
+        status: item.status || 'disconnected'
+      })) || []);
     } catch (err: any) {
       toast.error("Erro ao carregar instâncias: " + err.message);
     } finally {
