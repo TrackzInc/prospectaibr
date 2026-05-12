@@ -694,64 +694,66 @@ function Index() {
           <TabsContent value="search" className="space-y-6 mt-0">
             {/* Search & Filters */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Card className="border-border/60 lg:col-span-2">
-            <CardContent className="p-5 md:p-6">
-              <div className="mb-4">
-                <h2 className="text-base font-semibold text-foreground">
+          <Card className="bg-zinc-800 border-zinc-700 lg:col-span-2 shadow-none">
+            <CardContent className="p-6">
+              <div className="mb-6">
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">
                   Buscar empresas
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-zinc-400">
                   Encontre leads qualificados via SerpApi Google Maps.
                 </p>
               </div>
               <form
                 onSubmit={handleSearch}
-                className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]"
+                className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto]"
               >
-                <div className="space-y-1.5">
-                  <Label htmlFor="segment">Tipo de negócio</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="segment" className="text-xs font-semibold text-zinc-400">Tipo de negócio</Label>
                   <Input
                     id="segment"
                     placeholder="ex: clínica, academia, restaurante"
                     value={segment}
                     onChange={(e) => setSegment(e.target.value)}
+                    className="bg-zinc-900 border-zinc-700 focus-visible:ring-primary h-10"
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="location">Cidade / Estado</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="location" className="text-xs font-semibold text-zinc-400">Cidade / Estado</Label>
                   <Input
                     id="location"
                     placeholder="ex: São Paulo, SP"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
+                    className="bg-zinc-900 border-zinc-700 focus-visible:ring-primary h-10"
                   />
                 </div>
                 <div className="flex items-end">
-                  <Button type="submit" className="w-full gap-2 md:w-auto" disabled={loading}>
+                  <Button type="submit" className="w-full gap-2 md:w-auto h-10 font-bold px-8 shadow-[0_0_15px_rgba(170,255,0,0.2)]" disabled={loading}>
                     <SearchIcon className="h-4 w-4" />
-                    {loading ? "Buscando..." : "Buscar"}
+                    {loading ? "BUSCANDO..." : "BUSCAR"}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
 
-          <Card className="border-border/60">
-            <CardContent className="p-5 md:p-6">
-              <div className="mb-4 flex items-center gap-2">
+          <Card className="bg-zinc-800 border-zinc-700 shadow-none">
+            <CardContent className="p-6">
+              <div className="mb-6 flex items-center gap-2">
                 <Filter className="h-4 w-4 text-primary" />
-                <h2 className="text-base font-semibold text-foreground">
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
                   Filtros
                 </h2>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label>Avaliação mínima</Label>
+                  <Label className="text-xs font-semibold text-zinc-400">Avaliação mínima</Label>
                   <Select value={minRating} onValueChange={setMinRating}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-zinc-900 border-zinc-700 h-10">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-50">
                       <SelectItem value="0">Todas</SelectItem>
                       <SelectItem value="3">3.0+ Estrelas</SelectItem>
                       <SelectItem value="4">4.0+ Estrelas</SelectItem>
@@ -759,22 +761,24 @@ function Index() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center space-x-3">
                     <Checkbox 
                       id="phone-filter" 
                       checked={onlyWithPhone}
                       onCheckedChange={(checked) => setOnlyWithPhone(checked as boolean)}
+                      className="border-zinc-700 data-[state=checked]:bg-primary data-[state=checked]:text-black"
                     />
-                    <Label htmlFor="phone-filter" className="cursor-pointer">Apenas com telefone</Label>
+                    <Label htmlFor="phone-filter" className="text-sm text-zinc-400 cursor-pointer">Apenas com telefone</Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <Checkbox 
                       id="website-filter" 
                       checked={onlyWithWebsite}
                       onCheckedChange={(checked) => setOnlyWithWebsite(checked as boolean)}
+                      className="border-zinc-700 data-[state=checked]:bg-primary data-[state=checked]:text-black"
                     />
-                    <Label htmlFor="website-filter" className="cursor-pointer">Apenas com site</Label>
+                    <Label htmlFor="website-filter" className="text-sm text-zinc-400 cursor-pointer">Apenas com site</Label>
                   </div>
                 </div>
               </div>
