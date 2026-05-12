@@ -563,7 +563,7 @@ function Index() {
       </header>
 
       {/* API Key Banner for all screens */}
-      <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md sticky top-0 md:top-0 z-20">
+      <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-end md:px-8">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Label htmlFor="api-key" className="sr-only">
