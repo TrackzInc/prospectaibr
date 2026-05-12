@@ -155,7 +155,7 @@ export function Sidebar({ className = "" }: SidebarProps) {
           <ul className="space-y-1">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.href || (item.href === "/" && location.pathname === "/" && !location.search.includes("tab=dashboard") && !location.search.includes("tab=history")) || (location.search.includes(`tab=${item.id}`));
+              const isActive = location.pathname === item.href || (item.href === "/" && location.pathname === "/" && !(location.search as any).tab) || ((location.search as any).tab === item.id);
 
               return (
                 <li key={item.id} className="relative">
