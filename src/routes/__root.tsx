@@ -111,11 +111,49 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!session && location.pathname !== "/login") {
+        navigate({ to: "/login" });
+      } else if (session && location.pathname === "/login") {
+        navigate({ to: "/" });
+      }
+    }
+  }, [session, loading, location.pathname, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const isLoginPage = location.pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster richColors position="top-right" />
       <div className="flex min-h-screen w-full bg-muted/30">
-        <Sidebar />
+        {!isLoginPage && <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           <Outlet />
         </div>
