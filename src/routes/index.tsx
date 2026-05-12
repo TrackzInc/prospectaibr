@@ -256,16 +256,23 @@ function Index() {
     window.open(`https://hunter.io/search/${domain}`, '_blank');
   };
 
-  const metrics = filteredResults
-    ? {
-        total: filteredResults.length,
-        withPhone: filteredResults.filter((r) => r.phone).length,
-        withSite: filteredResults.filter((r) => r.website).length,
-        avgRating: filteredResults.length > 0 
-          ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
-          : 0,
-      }
-    : null;
+  const metrics = useMemo(() => {
+    if (!filteredResults) return {
+      total: 0,
+      withPhone: 0,
+      withSite: 0,
+      avgRating: 0,
+    };
+    
+    return {
+      total: filteredResults.length,
+      withPhone: filteredResults.filter((r) => r.phone).length,
+      withSite: filteredResults.filter((r) => r.website).length,
+      avgRating: filteredResults.length > 0 
+        ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
+        : 0,
+    };
+  }, [filteredResults]);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -400,44 +407,42 @@ function Index() {
         </div>
 
         {/* Metrics */}
-        {(loading || metrics) && (
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {loading && !results
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <Card key={i} className="border-border/60">
-                    <CardContent className="p-5">
-                      <Skeleton className="h-11 w-11 rounded-lg" />
-                      <Skeleton className="mt-3 h-3 w-20" />
-                      <Skeleton className="mt-2 h-6 w-12" />
-                    </CardContent>
-                  </Card>
-                ))
-              : metrics && (
-                  <>
-                    <MetricCard
-                      icon={Building2}
-                      label="Total filtrado"
-                      value={metrics.total.toString()}
-                    />
-                    <MetricCard
-                      icon={PhoneCall}
-                      label="Com telefone"
-                      value={metrics.withPhone.toString()}
-                    />
-                    <MetricCard
-                      icon={Globe}
-                      label="Com site"
-                      value={metrics.withSite.toString()}
-                    />
-                    <MetricCard
-                      icon={Star}
-                      label="Avaliação média"
-                      value={metrics.avgRating.toFixed(1)}
-                    />
-                  </>
-                )}
-          </div>
-        )}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {loading && !results
+            ? Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="border-border/60">
+                  <CardContent className="p-5">
+                    <Skeleton className="h-11 w-11 rounded-lg" />
+                    <Skeleton className="mt-3 h-3 w-20" />
+                    <Skeleton className="mt-2 h-6 w-12" />
+                  </CardContent>
+                </Card>
+              ))
+            : (
+                <>
+                  <MetricCard
+                    icon={Building2}
+                    label="Empresas encontradas"
+                    value={metrics.total.toString()}
+                  />
+                  <MetricCard
+                    icon={PhoneCall}
+                    label="Com telefone"
+                    value={metrics.withPhone.toString()}
+                  />
+                  <MetricCard
+                    icon={Globe}
+                    label="Com site"
+                    value={metrics.withSite.toString()}
+                  />
+                  <MetricCard
+                    icon={Star}
+                    label="Avaliação média"
+                    value={metrics.avgRating.toFixed(1)}
+                  />
+                </>
+              )}
+        </div>
 
         {/* Results */}
         <Card className="border-border/60">
