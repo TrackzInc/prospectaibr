@@ -118,7 +118,7 @@ function MetricCard({
 }
 
 function Index() {
-  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("google_places_api_key") : "") || "");
+  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("serp_api_key") : "") || "");
   const [segment, setSegment] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -146,7 +146,7 @@ function Index() {
       return;
     }
     if (!apiKey.trim()) {
-      toast.error("Configure sua Google Places API Key no topo");
+      toast.error("Configure sua SerpApi Key no topo");
       return;
     }
 
@@ -154,54 +154,28 @@ function Index() {
     setResults(null);
 
     try {
-      // 1. Geocode location
-      const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('google-places-proxy', {
-        body: { action: 'geocode', apiKey, params: { address: location } }
-      });
-
-      if (geocodeError || !geocodeData?.results?.[0]) {
-        throw new Error(geocodeError?.message || "Localização não encontrada ou erro no Geocoding.");
-      }
-
-      const { lat, lng } = geocodeData.results[0].geometry.location;
-      const latLngStr = `${lat},${lng}`;
-
-      // 2. Nearby Search
-      const { data: searchData, error: searchError } = await supabase.functions.invoke('google-places-proxy', {
+      const { data, error } = await supabase.functions.invoke('google-places-proxy', {
         body: { 
-          action: 'nearbysearch', 
+          action: 'search', 
           apiKey, 
-          params: { location: latLngStr, keyword: segment } 
+          params: { q: segment, location: location } 
         }
       });
 
-      if (searchError || !searchData?.results) {
-        throw new Error(searchError?.message || "Erro na busca por estabelecimentos.");
-      }
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
 
-      // 3. Place Details for each result (limit to top 10 for performance and cost)
-      const topResults = searchData.results.slice(0, 10);
-      const detailedResults: Company[] = [];
-
-      for (const place of topResults) {
-        const { data: detailsData, error: detailsError } = await supabase.functions.invoke('google-places-proxy', {
-          body: { action: 'placedetails', apiKey, params: { placeId: place.place_id } }
-        });
-
-        if (!detailsError && detailsData?.result) {
-          const res = detailsData.result;
-          detailedResults.push({
-            id: place.place_id,
-            name: res.name,
-            phone: res.formatted_phone_number || null,
-            website: res.website || null,
-            address: res.formatted_address,
-            rating: res.rating || 0,
-            reviews: res.user_ratings_total || 0,
-            open: res.opening_hours?.open_now ?? false,
-          });
-        }
-      }
+      const localResults = data.local_results || [];
+      const detailedResults: Company[] = localResults.map((res: any) => ({
+        id: res.place_id || Math.random().toString(36).substr(2, 9),
+        name: res.title,
+        phone: res.phone || null,
+        website: res.website || null,
+        address: res.address,
+        rating: res.rating || 0,
+        reviews: res.reviews || 0,
+        open: res.operating_hours?.status === "Open" || res.operating_hours?.status === "Aberto",
+      }));
 
       setResults(detailedResults);
       if (detailedResults.length === 0) {
@@ -222,7 +196,7 @@ function Index() {
       toast.error("Cole sua API Key antes de salvar");
       return;
     }
-    localStorage.setItem("google_places_api_key", apiKey);
+    localStorage.setItem("serp_api_key", apiKey);
     toast.success("API Key salva no navegador");
   };
 
@@ -325,7 +299,7 @@ function Index() {
                   Buscar empresas
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Encontre leads qualificados via Google Places API.
+                  Encontre leads qualificados via SerpApi Google Maps.
                 </p>
               </div>
               <form
