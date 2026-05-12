@@ -317,16 +317,16 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
           <div 
             {...attributes} 
             {...listeners} 
-            className="cursor-grab active:cursor-grabbing p-1 -mt-1 -mr-1 text-slate-300 group-hover:text-slate-400 transition-colors"
+            className="cursor-grab active:cursor-grabbing p-1 -mt-1 -mr-1 text-zinc-600 group-hover:text-zinc-400 transition-colors"
           >
             <GripVertical className="h-4 w-4" />
           </div>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {lead.phone && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Phone className="h-3 w-3 shrink-0" />
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Phone className="h-3 w-3 shrink-0 text-primary/70" />
               <span className="truncate">{lead.phone}</span>
             </div>
           )}
@@ -337,13 +337,13 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
                   key={i}
                   className={`h-2.5 w-2.5 ${
                     i <= Math.round(lead.rating || 0)
-                      ? "fill-accent text-accent"
-                      : "text-muted-foreground/20"
+                      ? "fill-primary text-primary"
+                      : "text-zinc-700"
                   }`}
                 />
               ))}
             </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+            <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
               <Calendar className="h-2.5 w-2.5" />
               {new Date(lead.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
             </div>
@@ -351,11 +351,11 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
         </div>
 
         {showNext && (
-          <div className="pt-2 border-t border-border/40 mt-2 flex justify-end">
+          <div className="pt-3 border-t border-zinc-700 mt-2 flex justify-end">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 text-[10px] font-medium gap-1 text-primary hover:text-primary hover:bg-primary/10 px-2"
+              className="h-7 text-[10px] font-bold uppercase tracking-widest gap-1 text-primary hover:text-primary hover:bg-primary/10 px-2"
               onClick={(e) => {
                 e.stopPropagation();
                 onNext?.();
