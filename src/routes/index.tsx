@@ -996,9 +996,9 @@ function Index() {
           </TabsContent>
 
           <TabsContent value="history" className="mt-0">
-            <Card className="border-zinc-700">
-              <div className="border-b border-zinc-700 p-5">
-                <h2 className="text-base font-semibold text-zinc-50">
+            <Card className="bg-zinc-800 border-zinc-700 shadow-none overflow-hidden">
+              <div className="border-b border-zinc-700 p-6">
+                <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">
                   Histórico de buscas
                 </h2>
                 <p className="text-sm text-zinc-400">
@@ -1026,11 +1026,11 @@ function Index() {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Data</TableHead>
-                          <TableHead>Segmento</TableHead>
-                          <TableHead>Cidade/Estado</TableHead>
-                          <TableHead className="text-right">Leads</TableHead>
+                        <TableRow className="border-zinc-700 hover:bg-transparent">
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Data</TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Segmento</TableHead>
+                          <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Cidade/Estado</TableHead>
+                          <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-zinc-500">Leads</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
