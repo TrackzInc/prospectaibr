@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Search,
   Download,
@@ -12,6 +12,9 @@ import {
   PhoneCall,
   Save,
   Inbox,
+  Filter,
+  Mail,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +30,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -169,24 +181,103 @@ function MetricCard({
 }
 
 function Index() {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem("google_places_api_key") || "");
   const [segment, setSegment] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Company[] | null>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Filters
+  const [minRating, setMinRating] = useState("0");
+  const [onlyWithPhone, setOnlyWithPhone] = useState(false);
+  const [onlyWithWebsite, setOnlyWithWebsite] = useState(false);
+
+  const filteredResults = useMemo(() => {
+    if (!results) return null;
+    return results.filter((r) => {
+      const ratingMatch = r.rating >= parseFloat(minRating);
+      const phoneMatch = onlyWithPhone ? !!r.phone : true;
+      const websiteMatch = onlyWithWebsite ? !!r.website : true;
+      return ratingMatch && phoneMatch && websiteMatch;
+    });
+  }, [results, minRating, onlyWithPhone, onlyWithWebsite]);
+
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!segment.trim() || !location.trim()) {
       toast.error("Informe segmento e cidade/estado");
       return;
     }
+    if (!apiKey.trim()) {
+      toast.error("Configure sua Google Places API Key no topo");
+      return;
+    }
+
     setLoading(true);
     setResults(null);
-    setTimeout(() => {
-      setResults(MOCK);
+
+    try {
+      // 1. Geocode location
+      const { data: geocodeData, error: geocodeError } = await supabase.functions.invoke('google-places-proxy', {
+        body: { action: 'geocode', apiKey, params: { address: location } }
+      });
+
+      if (geocodeError || !geocodeData.results?.[0]) {
+        throw new Error("Erro ao converter localização.");
+      }
+
+      const { lat, lng } = geocodeData.results[0].geometry.location;
+      const latLngStr = `${lat},${lng}`;
+
+      // 2. Nearby Search
+      const { data: searchData, error: searchError } = await supabase.functions.invoke('google-places-proxy', {
+        body: { 
+          action: 'nearbysearch', 
+          apiKey, 
+          params: { location: latLngStr, keyword: segment } 
+        }
+      });
+
+      if (searchError || !searchData.results) {
+        throw new Error("Erro na busca por estabelecimentos.");
+      }
+
+      // 3. Place Details for each result (limit to top 15 for better performance/cost)
+      const topResults = searchData.results.slice(0, 15);
+      const detailedResults: Company[] = [];
+
+      for (const place of topResults) {
+        const { data: detailsData, error: detailsError } = await supabase.functions.invoke('google-places-proxy', {
+          body: { action: 'placedetails', apiKey, params: { placeId: place.place_id } }
+        });
+
+        if (!detailsError && detailsData.result) {
+          const res = detailsData.result;
+          detailedResults.push({
+            id: place.place_id,
+            name: res.name,
+            phone: res.formatted_phone_number || null,
+            website: res.website || null,
+            address: res.formatted_address,
+            rating: res.rating || 0,
+            reviews: res.user_ratings_total || 0,
+            open: res.opening_hours?.open_now ?? false,
+          });
+        }
+      }
+
+      setResults(detailedResults);
+      if (detailedResults.length === 0) {
+        toast.info("Nenhum resultado encontrado.");
+      } else {
+        toast.success(`${detailedResults.length} empresas encontradas!`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Erro inesperado na busca.");
+      console.error(err);
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   };
 
   const handleSaveKey = () => {
@@ -194,17 +285,19 @@ function Index() {
       toast.error("Cole sua API Key antes de salvar");
       return;
     }
-    toast.success("API Key salva com sucesso");
+    localStorage.setItem("google_places_api_key", apiKey);
+    toast.success("API Key salva no navegador");
   };
 
   const exportCSV = (rows: Company[]) => {
-    const header = ["Nome", "Telefone", "Site", "Endereço", "Avaliação", "Status"];
+    const header = ["Nome", "Telefone", "Site", "Endereço", "Avaliação", "Avaliações", "Status"];
     const body = rows.map((r) => [
       r.name,
       r.phone ?? "",
       r.website ?? "",
       r.address,
       r.rating.toString(),
+      r.reviews.toString(),
       r.open ? "Aberto" : "Fechado",
     ]);
     const csv = [header, ...body]
@@ -220,13 +313,20 @@ function Index() {
     toast.success(`Exportado ${rows.length} ${rows.length === 1 ? "registro" : "registros"}`);
   };
 
-  const metrics = results
+  const handleSearchEmail = (website: string | null) => {
+    if (!website) return;
+    const domain = website.replace(/^https?:\/\//, '').split('/')[0].replace(/^www\./, '');
+    window.open(`https://hunter.io/search/${domain}`, '_blank');
+  };
+
+  const metrics = filteredResults
     ? {
-        total: results.length,
-        withPhone: results.filter((r) => r.phone).length,
-        withSite: results.filter((r) => r.website).length,
-        avgRating:
-          results.reduce((s, r) => s + r.rating, 0) / results.length,
+        total: filteredResults.length,
+        withPhone: filteredResults.filter((r) => r.phone).length,
+        withSite: filteredResults.filter((r) => r.website).length,
+        avgRating: filteredResults.length > 0 
+          ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
+          : 0,
       }
     : null;
 
