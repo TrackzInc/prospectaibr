@@ -540,7 +540,7 @@ function Index() {
       </header>
 
       {/* API Key Banner for all screens */}
-      <div className="border-b border-border/60 bg-background/50">
+      <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-20">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-end md:px-8">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Label htmlFor="api-key" className="sr-only">
@@ -564,16 +564,16 @@ function Index() {
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
         <Tabs value={currentTab} onValueChange={(val) => navigate({ to: '/', search: { tab: val } as any })} className="space-y-6">
-          <TabsList className="bg-background border border-border/60">
-            <TabsTrigger value="dashboard" className="gap-2">
+          <TabsList className="bg-zinc-800 border border-zinc-700 p-1">
+            <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary text-[10px] font-bold uppercase tracking-widest px-4">
               <BarChart3 className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="search" className="gap-2">
+            <TabsTrigger value="search" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary text-[10px] font-bold uppercase tracking-widest px-4">
               <SearchIcon className="h-4 w-4" />
               Busca
             </TabsTrigger>
-            <TabsTrigger value="history" className="gap-2">
+            <TabsTrigger value="history" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary text-[10px] font-bold uppercase tracking-widest px-4">
               <History className="h-4 w-4" />
               Histórico
             </TabsTrigger>
