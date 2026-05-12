@@ -529,10 +529,10 @@ function Index() {
       {/* Removed local Toaster as it is now in __root.tsx */}
 
       {/* Header - Simplified as we have Sidebar now */}
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 border-b border-zinc-700 bg-zinc-900/80 backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
           <div className="flex items-center gap-2.5 ml-12">
-            <h1 className="text-lg font-bold leading-none text-foreground">
+            <h1 className="text-lg font-bold leading-none text-zinc-50">
               ProspectAI
             </h1>
           </div>
@@ -645,7 +645,7 @@ function Index() {
                         </ResponsiveContainer>
                         <div className="absolute flex flex-col items-center">
                           <span className="text-2xl font-bold">{dashboardData.contactRate}%</span>
-                          <span className="text-[10px] text-muted-foreground uppercase">Com Telefone</span>
+                          <span className="text-[10px] text-zinc-400 uppercase">Com Telefone</span>
                         </div>
                       </div>
                     </CardContent>
@@ -678,9 +678,9 @@ function Index() {
             ) : (
               <Card className="border-dashed border-2">
                 <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                  <Inbox className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
-                  <h3 className="text-lg font-medium text-foreground">Sem dados para exibir</h3>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+                  <Inbox className="h-12 w-12 text-zinc-400 mb-4 opacity-20" />
+                  <h3 className="text-lg font-medium text-zinc-50">Sem dados para exibir</h3>
+                  <p className="text-sm text-zinc-400 max-w-xs mx-auto mt-2">
                     Realize uma busca e salve os resultados no banco de dados para começar a ver estatísticas.
                   </p>
                   <Button variant="outline" className="mt-6" onClick={() => navigate({ to: '/', search: { tab: 'search' } as any })}>
@@ -790,7 +790,7 @@ function Index() {
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {loading && !results
             ? Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="border-border/60">
+                <Card key={i} className="border-zinc-700">
                   <CardContent className="p-5">
                     <Skeleton className="h-11 w-11 rounded-lg" />
                     <Skeleton className="mt-3 h-3 w-20" />
@@ -899,11 +899,11 @@ function Index() {
                         <div className="flex flex-col gap-1.5">
                           {r.phone ? (
                             <span className="inline-flex items-center gap-1.5 text-sm">
-                              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                              <Phone className="h-3.5 w-3.5 text-zinc-400" />
                               {r.phone}
                             </span>
                           ) : (
-                            <span className="text-xs text-muted-foreground italic">Sem telefone</span>
+                            <span className="text-xs text-zinc-400 italic">Sem telefone</span>
                           )}
                           {r.website ? (
                             <a
@@ -917,12 +917,12 @@ function Index() {
                               <ExternalLink className="h-3 w-3" />
                             </a>
                           ) : (
-                            <span className="text-xs text-muted-foreground italic">Sem site</span>
+                            <span className="text-xs text-zinc-400 italic">Sem site</span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="inline-flex items-start gap-1.5 text-sm text-muted-foreground">
+                        <span className="inline-flex items-start gap-1.5 text-sm text-zinc-400">
                           <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                           <span className="max-w-[240px] truncate">
                             {r.address}
@@ -931,7 +931,7 @@ function Index() {
                       </TableCell>
                       <TableCell>
                         <Stars rating={r.rating} />
-                        <p className="mt-0.5 text-xs text-muted-foreground">
+                        <p className="mt-0.5 text-xs text-zinc-400">
                           {r.reviews} avaliações
                         </p>
                       </TableCell>
@@ -941,7 +941,7 @@ function Index() {
                           className={
                             r.open
                               ? "bg-success/15 text-success hover:bg-success/15"
-                              : "bg-muted text-muted-foreground"
+                              : "bg-muted text-zinc-400"
                           }
                         >
                           <span
@@ -996,12 +996,12 @@ function Index() {
           </TabsContent>
 
           <TabsContent value="history" className="mt-0">
-            <Card className="border-border/60">
-              <div className="border-b border-border/60 p-5">
-                <h2 className="text-base font-semibold text-foreground">
+            <Card className="border-zinc-700">
+              <div className="border-b border-zinc-700 p-5">
+                <h2 className="text-base font-semibold text-zinc-50">
                   Histórico de buscas
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-zinc-400">
                   Suas últimas pesquisas realizadas.
                 </p>
               </div>
@@ -1014,11 +1014,11 @@ function Index() {
                   </div>
                 ) : history.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <History className="h-12 w-12 text-muted-foreground/30 mb-4" />
-                    <h3 className="text-base font-semibold text-foreground">
+                    <History className="h-12 w-12 text-zinc-400/30 mb-4" />
+                    <h3 className="text-base font-semibold text-zinc-50">
                       Nenhuma busca registrada
                     </h3>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-zinc-400">
                       As buscas que você realizar aparecerão aqui.
                     </p>
                   </div>
@@ -1041,7 +1041,7 @@ function Index() {
                             onClick={() => fetchHistoryLeads(item)}
                           >
                             <TableCell className="text-sm">
-                              <div className="flex items-center gap-2 text-muted-foreground">
+                              <div className="flex items-center gap-2 text-zinc-400">
                                 <Calendar className="h-3.5 w-3.5" />
                                 {new Date(item.created_at).toLocaleDateString('pt-BR', {
                                   day: '2-digit',
@@ -1053,7 +1053,7 @@ function Index() {
                               </div>
                             </TableCell>
                             <TableCell className="font-medium capitalize">{item.segment}</TableCell>
-                            <TableCell className="text-muted-foreground capitalize">{item.location}</TableCell>
+                            <TableCell className="text-zinc-400 capitalize">{item.location}</TableCell>
                             <TableCell className="text-right font-semibold">
                               <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/15 border-none">
                                 {item.leads_count} {item.leads_count === 1 ? 'lead' : 'leads'}
@@ -1067,14 +1067,14 @@ function Index() {
                 )}
 
                 {selectedHistory && (
-                  <div className="mt-8 border-t border-border/60 pt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="mt-8 border-t border-zinc-700 pt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                     <div className="flex items-center justify-between mb-4">
                       <div>
                         <h3 className="text-lg font-semibold flex items-center gap-2">
                           <Building2 className="h-5 w-5 text-primary" />
                           Leads de: <span className="text-primary capitalize">{selectedHistory.segment}</span> em <span className="text-primary capitalize">{selectedHistory.location}</span>
                         </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-zinc-400">
                           {historyLeads.length} leads encontrados no banco de dados para esta busca.
                         </p>
                       </div>
@@ -1091,10 +1091,10 @@ function Index() {
                       </div>
                     ) : historyLeads.length === 0 ? (
                       <div className="bg-muted/20 rounded-xl p-8 text-center">
-                        <p className="text-sm text-muted-foreground italic">Nenhum lead salvo foi encontrado para estes critérios.</p>
+                        <p className="text-sm text-zinc-400 italic">Nenhum lead salvo foi encontrado para estes critérios.</p>
                       </div>
                     ) : (
-                      <div className="overflow-x-auto rounded-xl border border-border/60 bg-white/50">
+                      <div className="overflow-x-auto rounded-xl border border-zinc-700 bg-zinc-900/50">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -1155,14 +1155,14 @@ function EmptyState() {
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
       <div className="relative mb-5">
         <div className="absolute inset-0 -z-10 rounded-full bg-primary/10 blur-2xl" />
-        <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border/60 bg-background shadow-sm">
-          <Inbox className="h-9 w-9 text-muted-foreground" />
+        <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-zinc-700 bg-zinc-900 shadow-sm">
+          <Inbox className="h-9 w-9 text-zinc-400" />
         </div>
       </div>
-      <h3 className="text-base font-semibold text-foreground">
+      <h3 className="text-base font-semibold text-zinc-50">
         Nenhum resultado encontrado
       </h3>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+      <p className="mt-1 max-w-sm text-sm text-zinc-400">
         Use os filtros ou faça uma nova busca por segmento e localização.
       </p>
     </div>

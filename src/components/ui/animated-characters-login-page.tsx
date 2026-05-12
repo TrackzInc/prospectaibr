@@ -467,7 +467,7 @@ export function LoginPage() {
         <div className="absolute bottom-1/4 left-1/4 size-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="flex items-center justify-center p-8 bg-background">
+      <div className="flex items-center justify-center p-8 bg-zinc-900">
         <div className="w-full max-w-[420px]">
           <div className="lg:hidden flex items-center justify-center gap-2 text-lg font-semibold mb-12">
             <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -498,7 +498,7 @@ export function LoginPage() {
                 onFocus={() => setIsTyping(true)}
                 onBlur={() => setIsTyping(false)}
                 required
-                className="h-12 bg-background border-border/60 focus:border-primary"
+                className="h-12 bg-zinc-900 border-zinc-700 focus:border-primary"
               />
             </div>
 
@@ -512,7 +512,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 pr-10 bg-background border-border/60 focus:border-primary"
+                  className="h-12 pr-10 bg-zinc-900 border-zinc-700 focus:border-primary"
                 />
                 <button
                   type="button"
@@ -530,7 +530,7 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6">
-            <Button variant="outline" className="w-full h-12 bg-background border-border/60 hover:bg-accent" type="button" onClick={handleGoogleLogin}>
+            <Button variant="outline" className="w-full h-12 bg-zinc-900 border-zinc-700 hover:bg-accent" type="button" onClick={handleGoogleLogin}>
               <Mail className="mr-2 size-5" />
               Entrar com Google
             </Button>
