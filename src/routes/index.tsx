@@ -825,13 +825,13 @@ function Index() {
         </div>
 
         {/* Results */}
-        <Card className="border-border/60">
-          <div className="flex items-center justify-between gap-4 border-b border-border/60 p-5">
+        <Card className="bg-zinc-800 border-zinc-700 shadow-none overflow-hidden">
+          <div className="flex items-center justify-between gap-4 border-b border-zinc-700 p-6">
             <div>
-              <h2 className="text-base font-semibold text-foreground">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-1">
                 Resultados
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-zinc-400">
                 {filteredResults
                   ? `${filteredResults.length} empresas encontradas`
                   : loading
@@ -842,21 +842,21 @@ function Index() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50 font-bold text-xs"
                 disabled={!filteredResults || filteredResults.length === 0 || saving}
                 onClick={saveResultsToDatabase}
               >
                 <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">{saving ? "Salvando..." : "Salvar no Banco"}</span>
+                <span className="hidden sm:inline">{saving ? "SALVANDO..." : "SALVAR NO BANCO"}</span>
               </Button>
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50 font-bold text-xs"
                 disabled={!filteredResults || filteredResults.length === 0}
                 onClick={() => filteredResults && exportCSV(filteredResults)}
               >
                 <Download className="h-4 w-4" />
-                <span className="hidden sm:inline">Exportar CSV</span>
+                <span className="hidden sm:inline">EXPORTAR CSV</span>
               </Button>
             </div>
           </div>
