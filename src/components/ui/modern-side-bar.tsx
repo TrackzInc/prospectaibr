@@ -16,7 +16,8 @@ import {
   HelpCircle,
   History,
   TrendingUp,
-  Columns
+  Columns,
+  Link2
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "@tanstack/react-router";
