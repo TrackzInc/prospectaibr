@@ -500,6 +500,22 @@ function Index() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
+    // Funnel Stages
+    const funnelStages = ["Novo Lead", "Contato Iniciado", "Respondeu", "Em Negociação", "Fechado"];
+    const funnelCounts: Record<string, number> = {};
+    funnelStages.forEach(s => funnelCounts[s] = 0);
+    
+    allCompanies.forEach(c => {
+      if (c.pipeline_stage && funnelCounts[c.pipeline_stage] !== undefined) {
+        funnelCounts[c.pipeline_stage]++;
+      }
+    });
+    
+    const funnelData = funnelStages.map(name => ({ name, value: funnelCounts[name] }));
+    const totalFunnel = allCompanies.filter(c => c.pipeline_stage).length;
+    const movedFromStart = totalFunnel - funnelCounts["Novo Lead"];
+    const advanceRate = totalFunnel > 0 ? ((movedFromStart / totalFunnel) * 100).toFixed(1) : "0";
+
     // Contact Rate (Phone)
     const withPhone = allCompanies.filter(c => c.phone).length;
     const phoneData = [
@@ -510,7 +526,7 @@ function Index() {
     // Leads by City
     const cityCounts: Record<string, number> = {};
     allCompanies.forEach(c => {
-      const city = c.city_state || "Não informado";
+      const city = (c.city_state || "Não informado").split(',')[0].trim();
       cityCounts[city] = (cityCounts[city] || 0) + 1;
     });
     const cityData = Object.entries(cityCounts)
@@ -518,11 +534,11 @@ function Index() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
-    // Leads over time (from history)
+    // Leads over time (from companies created_at for line chart)
     const historyByDate: Record<string, number> = {};
-    history.forEach(h => {
-      const date = new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      historyByDate[date] = (historyByDate[date] || 0) + h.leads_count;
+    allCompanies.forEach(c => {
+      const date = new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      historyByDate[date] = (historyByDate[date] || 0) + 1;
     });
     
     // Create last 7 days even if no data
