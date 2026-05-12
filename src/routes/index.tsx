@@ -67,8 +67,6 @@ type Company = {
   open: boolean;
 };
 
-// MOCK data removed as we are now using the Google Places API via Edge Functions.
-
 function Stars({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-1">
@@ -120,7 +118,7 @@ function MetricCard({
 }
 
 function Index() {
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem("google_places_api_key") || "");
+  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("google_places_api_key") : "") || "");
   const [segment, setSegment] = useState("");
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
@@ -449,18 +447,18 @@ function Index() {
                 Resultados
               </h2>
               <p className="text-sm text-muted-foreground">
-                {results
-                  ? `${results.length} empresas encontradas`
+                {filteredResults
+                  ? `${filteredResults.length} empresas encontradas`
                   : loading
-                    ? "Buscando empresas…"
-                    : "Faça uma busca para ver os resultados"}
+                    ? "Buscando na API..."
+                    : "Configure a API Key e faça uma busca"}
               </p>
             </div>
             <Button
               variant="outline"
               className="gap-2"
-              disabled={!results || results.length === 0}
-              onClick={() => results && exportCSV(results)}
+              disabled={!filteredResults || filteredResults.length === 0}
+              onClick={() => filteredResults && exportCSV(filteredResults)}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">Exportar CSV</span>
@@ -480,9 +478,9 @@ function Index() {
                 </div>
               ))}
             </div>
-          ) : !results ? (
+          ) : !filteredResults ? (
             <EmptyState />
-          ) : results.length === 0 ? (
+          ) : filteredResults.length === 0 ? (
             <EmptyState />
           ) : (
             <div className="overflow-x-auto">
@@ -490,42 +488,42 @@ function Index() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Site</TableHead>
+                    <TableHead>Contato & Links</TableHead>
                     <TableHead>Endereço</TableHead>
                     <TableHead>Avaliação</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ação</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {results.map((r) => (
+                  {filteredResults.map((r) => (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.name}</TableCell>
                       <TableCell>
-                        {r.phone ? (
-                          <span className="inline-flex items-center gap-1.5 text-sm">
-                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                            {r.phone}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {r.website ? (
-                          <a
-                            href={`https://${r.website}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                          >
-                            <Globe className="h-3.5 w-3.5" />
-                            {r.website}
-                          </a>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">—</span>
-                        )}
+                        <div className="flex flex-col gap-1.5">
+                          {r.phone ? (
+                            <span className="inline-flex items-center gap-1.5 text-sm">
+                              <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                              {r.phone}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">Sem telefone</span>
+                          )}
+                          {r.website ? (
+                            <a
+                              href={r.website.startsWith('http') ? r.website : `https://${r.website}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                            >
+                              <Globe className="h-3.5 w-3.5" />
+                              Website
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground italic">Sem site</span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-start gap-1.5 text-sm text-muted-foreground">
@@ -559,15 +557,27 @@ function Index() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="gap-1.5"
-                          onClick={() => exportCSV([r])}
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Exportar
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-accent hover:text-accent hover:bg-accent/10"
+                            disabled={!r.website}
+                            onClick={() => handleSearchEmail(r.website)}
+                          >
+                            <Mail className="h-3.5 w-3.5" />
+                            Buscar e-mail
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => exportCSV([r])}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Exportar
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -591,11 +601,10 @@ function EmptyState() {
         </div>
       </div>
       <h3 className="text-base font-semibold text-foreground">
-        Nenhum resultado ainda
+        Nenhum resultado encontrado
       </h3>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        Use o formulário acima para buscar empresas por segmento e localização.
-        Os resultados aparecerão aqui.
+        Use os filtros ou faça uma nova busca por segmento e localização.
       </p>
     </div>
   );
