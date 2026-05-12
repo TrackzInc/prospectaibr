@@ -21,7 +21,8 @@ import {
   Users,
   Target,
   LayoutDashboard,
-  Plus
+  Plus,
+  Columns
 } from "lucide-react";
 import {
   BarChart,
