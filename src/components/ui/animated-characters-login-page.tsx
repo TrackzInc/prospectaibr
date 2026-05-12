@@ -457,14 +457,14 @@ export function LoginPage() {
         </div>
 
         <div className="relative z-20 flex items-center gap-8 text-sm text-primary-foreground/60">
-          <a href="#" className="hover:text-primary-foreground transition-colors">Privacidade</a>
-          <a href="#" className="hover:text-primary-foreground transition-colors">Termos</a>
-          <a href="#" className="hover:text-primary-foreground transition-colors">Suporte</a>
+          <a href="#" className="hover:text-primary transition-colors">Privacidade</a>
+          <a href="#" className="hover:text-primary transition-colors">Termos</a>
+          <a href="#" className="hover:text-primary transition-colors">Suporte</a>
         </div>
 
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-        <div className="absolute top-1/4 right-1/4 size-64 bg-primary-foreground/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/4 size-96 bg-primary-foreground/5 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:40px_40px]" />
+        <div className="absolute top-1/4 right-1/4 size-64 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-1/4 size-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       <div className="flex items-center justify-center p-8 bg-background">
