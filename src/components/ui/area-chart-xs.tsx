@@ -10,7 +10,7 @@ export interface DataPoint {
   data: number;
 }
 
-export interface ComponentProps {
+export interface AreaChartXSProps {
   id: string;
   data: DataPoint[];
   width?: number;
@@ -44,7 +44,7 @@ const getCssVariableWithOpacity = (variableName: string, opacity: number, fallba
   return value || fallback;
 }
 
-export const AreaChartXS: React.FC<ComponentProps> = ({
+export const AreaChartXS: React.FC<AreaChartXSProps> = ({
   id, data, width, height, colorScheme: propColorScheme,
   xAxisFormat = defaultXAxisFormat, showXAxisTicks = true, showYAxisTicks = false, isDarkMode
 }) => {
@@ -78,7 +78,23 @@ export const AreaChartXS: React.FC<ComponentProps> = ({
       data={data} 
       width={width} 
       height={height}
-      series={<AreaSeries area={<Area gradient={<Gradient stops={[<GradientStop key="0" stopOpacity={0} offset="0%"/>,<GradientStop key="1" offset="100%" stopOpacity={themeColors.gradientStop2Opacity}/>]}/>} />}/>}
+      series={
+        <AreaSeries 
+          colorScheme={colorScheme}
+          area={
+            <Area 
+              gradient={
+                <Gradient 
+                  stops={[
+                    <GradientStop key="0" stopOpacity={0} offset="0%"/>,
+                    <GradientStop key="1" offset="100%" stopOpacity={themeColors.gradientStop2Opacity}/>
+                  ]}
+                />
+              } 
+            />
+          }
+        />
+      }
       xAxis={
         <LinearXAxis 
           type="time" 
@@ -93,7 +109,6 @@ export const AreaChartXS: React.FC<ComponentProps> = ({
         />
       }
       gridlines={<GridlineSeries line={<Gridline strokeColor={themeColors.gridlineColor}/>}/>}
-      colorScheme={colorScheme}
     />
   );
 };
