@@ -292,7 +292,7 @@ function CampanhasPage() {
                       </SelectTrigger>
                       <SelectContent className="bg-zinc-800 border-zinc-700 text-zinc-200">
                         <SelectItem value="all">Todos Segmentos</SelectItem>
-                        {segments.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        {segments.map(s => <SelectItem key={s || 'unknown'} value={s || 'unknown'}>{s || 'Desconhecido'}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
