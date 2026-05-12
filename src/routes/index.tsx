@@ -153,7 +153,7 @@ function MetricCard({
 function Index() {
   const navigate = useNavigate();
   const searchParams = useSearch({ from: "/" }) as any;
-  const currentTab = searchParams.tab || "search";
+  const currentTab = searchParams.tab || "dashboard";
 
   const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("serp_api_key") : "") || "");
   const [segment, setSegment] = useState("");
