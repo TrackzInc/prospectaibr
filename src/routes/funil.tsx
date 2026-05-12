@@ -58,7 +58,7 @@ type Lead = {
   id: string;
   name: string;
   phone: string | null;
-  rating: number;
+  rating: number | null;
   segment: string | null;
   created_at: string;
   pipeline_stage: string;
@@ -336,7 +336,7 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
                 <Star
                   key={i}
                   className={`h-2.5 w-2.5 ${
-                    i <= Math.round(lead.rating)
+                    i <= Math.round(lead.rating || 0)
                       ? "fill-accent text-accent"
                       : "text-muted-foreground/20"
                   }`}
