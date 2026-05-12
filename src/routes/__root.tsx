@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Sidebar } from "@/components/ui/modern-side-bar";
 
 import appCss from "../styles.css?url";
 
@@ -113,7 +114,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <div className="flex min-h-screen w-full bg-muted/30">
+        <Sidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <Outlet />
+        </div>
+      </div>
     </QueryClientProvider>
   );
 }
