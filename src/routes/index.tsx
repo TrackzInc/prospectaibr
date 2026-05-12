@@ -637,30 +637,30 @@ function Index() {
                     </CardContent>
                   </Card>
 
-                  <Card className="bg-zinc-800 border-zinc-700 shadow-none">
-                    <CardContent className="p-6">
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-8 flex items-center gap-2">
-                        <Building2 className="h-3.5 w-3.5 text-primary" />
-                        Leads por Nicho
-                      </h3>
-                      <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={dashboardData.nicheData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
-                            <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
-                            <YAxis fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
-                            <Tooltip 
-                              cursor={{ fill: '#18181b' }}
-                              contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
-                              itemStyle={{ color: '#fafafa' }}
-                              labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
-                            />
-                            <Bar dataKey="value" fill="#aaff00" radius={[4, 4, 0, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <IncidentReportCard 
+                    title="Leads por Nicho"
+                    data={dashboardData.nicheData.map(item => ({ key: item.name, data: item.value }))}
+                    metrics={[
+                      { 
+                        label: "Nicho Principal", 
+                        value: dashboardData.nicheData[0]?.name || "N/A", 
+                        trend: "up", 
+                        iconColor: "#aaff00" 
+                      },
+                      { 
+                        label: "Média por Nicho", 
+                        value: (dashboardData.total / dashboardData.nicheData.length).toFixed(0), 
+                        trend: "up", 
+                        iconColor: "#4C86FF" 
+                      },
+                      { 
+                        label: "Taxa de Conversão", 
+                        value: "12%", 
+                        trend: "down", 
+                        iconColor: "#E84045" 
+                      }
+                    ]}
+                  />
 
                   <Card className="bg-zinc-800 border-zinc-700 shadow-none">
                     <CardContent className="p-6">
