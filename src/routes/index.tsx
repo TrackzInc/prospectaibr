@@ -21,7 +21,8 @@ import {
   Users,
   Target,
   LayoutDashboard,
-  Plus
+  Plus,
+  Columns
 } from "lucide-react";
 import {
   BarChart,
@@ -500,6 +501,22 @@ function Index() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
+    // Funnel Stages
+    const funnelStages = ["Novo Lead", "Contato Iniciado", "Respondeu", "Em Negociação", "Fechado"];
+    const funnelCounts: Record<string, number> = {};
+    funnelStages.forEach(s => funnelCounts[s] = 0);
+    
+    allCompanies.forEach(c => {
+      if (c.pipeline_stage && funnelCounts[c.pipeline_stage] !== undefined) {
+        funnelCounts[c.pipeline_stage]++;
+      }
+    });
+    
+    const funnelData = funnelStages.map(name => ({ name, value: funnelCounts[name] }));
+    const totalFunnel = allCompanies.filter(c => c.pipeline_stage).length;
+    const movedFromStart = totalFunnel - funnelCounts["Novo Lead"];
+    const advanceRate = totalFunnel > 0 ? ((movedFromStart / totalFunnel) * 100).toFixed(1) : "0";
+
     // Contact Rate (Phone)
     const withPhone = allCompanies.filter(c => c.phone).length;
     const phoneData = [
@@ -510,7 +527,7 @@ function Index() {
     // Leads by City
     const cityCounts: Record<string, number> = {};
     allCompanies.forEach(c => {
-      const city = c.city_state || "Não informado";
+      const city = (c.city_state || "Não informado").split(',')[0].trim();
       cityCounts[city] = (cityCounts[city] || 0) + 1;
     });
     const cityData = Object.entries(cityCounts)
@@ -518,11 +535,11 @@ function Index() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
-    // Leads over time (from history)
+    // Leads over time (from companies created_at for line chart)
     const historyByDate: Record<string, number> = {};
-    history.forEach(h => {
-      const date = new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      historyByDate[date] = (historyByDate[date] || 0) + h.leads_count;
+    allCompanies.forEach(c => {
+      const date = new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      historyByDate[date] = (historyByDate[date] || 0) + 1;
     });
     
     // Create last 7 days even if no data
@@ -543,9 +560,11 @@ function Index() {
       nicheData,
       phoneData,
       cityData,
-      historyData: last7Days
+      historyData: last7Days,
+      funnelData,
+      advanceRate
     };
-  }, [allCompanies, history]);
+  }, [allCompanies]);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -611,25 +630,48 @@ function Index() {
               </div>
             ) : dashboardData ? (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <MetricCard icon={Users} label="Total de Leads" value={dashboardData.total.toString()} />
-                  <MetricCard icon={Target} label="Taxa de Contato" value={`${dashboardData.contactRate}%`} />
-                  <MetricCard icon={MapPin} label="Cidades Atendidas" value={dashboardData.cityData.length.toString()} />
+                  <MetricCard icon={Target} label="No Funil" value={allCompanies.filter(c => c.pipeline_stage).length.toString()} />
+                  <MetricCard icon={TrendingUp} label="Taxa de Avanço" value={`${dashboardData.advanceRate}%`} />
+                  <MetricCard icon={MapPin} label="Cidades" value={dashboardData.cityData.length.toString()} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-zinc-800 border-zinc-700 shadow-none lg:col-span-2">
+                  <Card className="bg-zinc-800 border-zinc-700 shadow-none">
+                    <CardContent className="p-6">
+                      <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-8 flex items-center gap-2">
+                        <Columns className="h-3.5 w-3.5 text-primary" />
+                        Distribuição por Etapa do Funil
+                      </h3>
+                      <div className="h-72 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={dashboardData.funnelData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+                            <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
+                            <YAxis fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
+                            <Tooltip 
+                              cursor={{ fill: '#18181b' }}
+                              contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                              itemStyle={{ color: '#fafafa' }}
+                              labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
+                            />
+                            <Bar dataKey="value" fill="#aaff00" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-zinc-800 border-zinc-700 shadow-none">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-8">
                         <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
                           <TrendingUp className="h-3.5 w-3.5 text-primary" />
-                          Performance de Busca (Últimos 7 dias)
+                          Leads Adicionados (Últimos 7 dias)
                         </h3>
-                        <Badge variant="outline" className="text-[10px] font-bold border-zinc-700 text-zinc-400">
-                          {dashboardData.historyData.reduce((acc, curr) => acc + curr.Leads, 0)} LEADS NO TOTAL
-                        </Badge>
                       </div>
-                      <div className="h-[300px] w-full">
+                      <div className="h-72 w-full">
                         <AreaChart 
                           data={dashboardData.historyData} 
                           index="date" 
