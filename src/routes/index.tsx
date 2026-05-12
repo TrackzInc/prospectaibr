@@ -20,6 +20,8 @@ import {
   BarChart3,
   Users,
   Target,
+  LayoutDashboard,
+  Plus
 } from "lucide-react";
 import {
   BarChart,
@@ -83,6 +85,7 @@ type Company = {
   rating: number;
   reviews: number;
   open: boolean;
+  pipeline_stage?: string | null;
 };
 
 type SearchHistory = {
@@ -334,6 +337,38 @@ function Index() {
     }
     localStorage.setItem("serp_api_key", apiKey);
     toast.success("API Key salva no navegador");
+  };
+
+  const sendToPipeline = async (company: Company) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado.");
+        return;
+      }
+
+      const { error } = await supabase.from('companies').upsert({
+        user_id: user.id,
+        name: company.name,
+        phone: company.phone,
+        website: company.website,
+        address: company.address,
+        rating: company.rating,
+        reviews: company.reviews,
+        is_open: company.open,
+        segment: segment,
+        city_state: location,
+        pipeline_stage: 'Novo Lead'
+      }, {
+        onConflict: 'user_id,name,address'
+      });
+
+      if (error) throw error;
+      toast.success(`${company.name} enviado ao funil!`);
+      fetchAllCompanies(); // Refresh dashboard
+    } catch (err: any) {
+      toast.error("Erro ao enviar ao funil: " + err.message);
+    }
   };
 
   const exportCSV = (rows: Company[]) => {
@@ -860,6 +895,15 @@ function Index() {
                           >
                             <Mail className="h-3.5 w-3.5" />
                             Buscar e-mail
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => sendToPipeline(r)}
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Funil
                           </Button>
                           <Button
                             variant="ghost"

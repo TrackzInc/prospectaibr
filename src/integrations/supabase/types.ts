@@ -23,6 +23,7 @@ export type Database = {
           is_open: boolean | null
           name: string
           phone: string | null
+          pipeline_stage: string | null
           rating: number | null
           reviews: number | null
           segment: string | null
@@ -38,6 +39,7 @@ export type Database = {
           is_open?: boolean | null
           name: string
           phone?: string | null
+          pipeline_stage?: string | null
           rating?: number | null
           reviews?: number | null
           segment?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           is_open?: boolean | null
           name?: string
           phone?: string | null
+          pipeline_stage?: string | null
           rating?: number | null
           reviews?: number | null
           segment?: string | null
