@@ -58,7 +58,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
@@ -428,7 +427,7 @@ function Index() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <Toaster richColors position="top-right" />
+      {/* Removed local Toaster as it is now in __root.tsx */}
 
       {/* Header - Simplified as we have Sidebar now */}
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur md:hidden">
