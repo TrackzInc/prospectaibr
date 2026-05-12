@@ -963,8 +963,10 @@ function Index() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                            className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
+                            disabled={!!r.website}
                             onClick={() => sendToPipeline(r)}
+                            title={r.website ? "Somente leads sem site podem ser enviados" : ""}
                           >
                             <Plus className="h-3.5 w-3.5" />
                             Funil
@@ -1115,11 +1117,13 @@ function Index() {
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                                    className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
+                                    disabled={!!lead.website}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       sendToPipeline(lead);
                                     }}
+                                    title={lead.website ? "Somente leads sem site podem ser enviados" : ""}
                                   >
                                     <Plus className="h-3 w-3" />
                                     Funil
