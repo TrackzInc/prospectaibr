@@ -1037,7 +1037,7 @@ function Index() {
                         {history.map((item) => (
                           <TableRow 
                             key={item.id} 
-                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                            className="cursor-pointer border-zinc-700/50 hover:bg-zinc-700/30 transition-colors group"
                             onClick={() => fetchHistoryLeads(item)}
                           >
                             <TableCell className="text-sm">
