@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import {
-  Search,
+  Search as SearchIcon,
   Download,
   Phone,
   Globe,
@@ -17,7 +17,23 @@ import {
   ExternalLink,
   History,
   Calendar,
+  BarChart3,
+  Users,
+  Target,
 } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -129,6 +145,10 @@ function MetricCard({
 }
 
 function Index() {
+  const navigate = useNavigate();
+  const searchParams = useSearch({ from: "/" }) as any;
+  const currentTab = searchParams.tab || "search";
+
   const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("serp_api_key") : "") || "");
   const [segment, setSegment] = useState("");
   const [location, setLocation] = useState("");
@@ -137,10 +157,29 @@ function Index() {
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<SearchHistory[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [allCompanies, setAllCompanies] = useState<any[]>([]);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   useEffect(() => {
     fetchHistory();
+    fetchAllCompanies();
   }, []);
+
+  const fetchAllCompanies = async () => {
+    try {
+      setLoadingStats(true);
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*');
+      
+      if (error) throw error;
+      setAllCompanies(data || []);
+    } catch (err) {
+      console.error("Erro ao carregar empresas para dashboard:", err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const fetchHistory = async () => {
     try {
@@ -240,6 +279,7 @@ function Index() {
       } else {
         toast.success(`${detailedResults.length} empresas encontradas!`);
         saveSearchToHistory(detailedResults.length);
+        fetchAllCompanies(); // Update dashboard data
       }
     } catch (err: any) {
       toast.error(err.message || "Erro inesperado na busca.");
@@ -279,6 +319,7 @@ function Index() {
 
       if (error) throw error;
       toast.success("Resultados salvos no banco de dados!");
+      fetchAllCompanies(); // Update dashboard data
     } catch (err: any) {
       toast.error("Erro ao salvar resultados: " + err.message);
       console.error(err);
@@ -344,6 +385,47 @@ function Index() {
     };
   }, [filteredResults]);
 
+  const dashboardData = useMemo(() => {
+    if (allCompanies.length === 0) return null;
+
+    // Leads by Niche
+    const nicheCounts: Record<string, number> = {};
+    allCompanies.forEach(c => {
+      const niche = c.segment || "Outros";
+      nicheCounts[niche] = (nicheCounts[niche] || 0) + 1;
+    });
+    const nicheData = Object.entries(nicheCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+
+    // Contact Rate (Phone)
+    const withPhone = allCompanies.filter(c => c.phone).length;
+    const phoneData = [
+      { name: "Com Telefone", value: withPhone, color: "#10b981" },
+      { name: "Sem Telefone", value: allCompanies.length - withPhone, color: "#ef4444" }
+    ];
+
+    // Leads by City
+    const cityCounts: Record<string, number> = {};
+    allCompanies.forEach(c => {
+      const city = c.city_state || "Não informado";
+      cityCounts[city] = (cityCounts[city] || 0) + 1;
+    });
+    const cityData = Object.entries(cityCounts)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+
+    return {
+      total: allCompanies.length,
+      contactRate: ((withPhone / allCompanies.length) * 100).toFixed(1),
+      nicheData,
+      phoneData,
+      cityData
+    };
+  }, [allCompanies]);
+
   return (
     <div className="min-h-screen bg-muted/30">
       <Toaster richColors position="top-right" />
@@ -383,10 +465,14 @@ function Index() {
       </div>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-        <Tabs defaultValue="search" className="space-y-6">
+        <Tabs value={currentTab} onValueChange={(val) => navigate({ to: '/', search: { tab: val } as any })} className="space-y-6">
           <TabsList className="bg-background border border-border/60">
+            <TabsTrigger value="dashboard" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
             <TabsTrigger value="search" className="gap-2">
-              <Search className="h-4 w-4" />
+              <SearchIcon className="h-4 w-4" />
               Busca
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
@@ -394,6 +480,118 @@ function Index() {
               Histórico
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard" className="space-y-6 mt-0">
+            {loadingStats ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full rounded-xl" />)}
+              </div>
+            ) : dashboardData ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <MetricCard icon={Users} label="Total de Leads" value={dashboardData.total.toString()} />
+                  <MetricCard icon={Target} label="Taxa de Contato" value={`${dashboardData.contactRate}%`} />
+                  <MetricCard icon={MapPin} label="Cidades Atendidas" value={dashboardData.cityData.length.toString()} />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="border-border/60">
+                    <CardContent className="p-6">
+                      <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-primary" />
+                        Leads por Nicho
+                      </h3>
+                      <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={dashboardData.nicheData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                            <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
+                            <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                            <Tooltip 
+                              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            />
+                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-border/60">
+                    <CardContent className="p-6">
+                      <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
+                        <PhoneCall className="h-4 w-4 text-primary" />
+                        Qualificação de Contato
+                      </h3>
+                      <div className="h-64 w-full flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={dashboardData.phoneData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {dashboardData.phoneData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute flex flex-col items-center">
+                          <span className="text-2xl font-bold">{dashboardData.contactRate}%</span>
+                          <span className="text-[10px] text-muted-foreground uppercase">Com Telefone</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-border/60 lg:col-span-2">
+                    <CardContent className="p-6">
+                      <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        Conversão por Localidade
+                      </h3>
+                      <div className="h-64 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={dashboardData.cityData} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
+                            <XAxis type="number" fontSize={10} axisLine={false} tickLine={false} />
+                            <YAxis dataKey="name" type="category" fontSize={10} axisLine={false} tickLine={false} width={100} />
+                            <Tooltip 
+                              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                            />
+                            <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <Card className="border-dashed border-2">
+                <CardContent className="flex flex-col items-center justify-center py-20 text-center">
+                  <Inbox className="h-12 w-12 text-muted-foreground mb-4 opacity-20" />
+                  <h3 className="text-lg font-medium text-foreground">Sem dados para exibir</h3>
+                  <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-2">
+                    Realize uma busca e salve os resultados no banco de dados para começar a ver estatísticas.
+                  </p>
+                  <Button variant="outline" className="mt-6" onClick={() => navigate({ to: '/', search: { tab: 'search' } as any })}>
+                    Ir para Busca
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="search" className="space-y-6 mt-0">
             {/* Search & Filters */}
