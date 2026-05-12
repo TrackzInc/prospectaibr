@@ -161,6 +161,9 @@ function Index() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [allCompanies, setAllCompanies] = useState<any[]>([]);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState<SearchHistory | null>(null);
+  const [historyLeads, setHistoryLeads] = useState<Company[]>([]);
+  const [loadingHistoryLeads, setLoadingHistoryLeads] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -200,6 +203,39 @@ function Index() {
       console.error("Erro ao carregar histórico:", err);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const fetchHistoryLeads = async (historyItem: SearchHistory) => {
+    try {
+      setLoadingHistoryLeads(true);
+      setSelectedHistory(historyItem);
+      
+      const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('segment', historyItem.segment)
+        .eq('city_state', historyItem.location);
+
+      if (error) throw error;
+      
+      const mappedLeads: Company[] = (data || []).map(res => ({
+        id: res.id,
+        name: res.name,
+        phone: res.phone,
+        website: res.website,
+        address: res.address,
+        rating: Number(res.rating) || 0,
+        reviews: res.reviews || 0,
+        open: res.is_open ?? false,
+      }));
+      
+      setHistoryLeads(mappedLeads);
+    } catch (err) {
+      console.error("Erro ao carregar leads do histórico:", err);
+      toast.error("Erro ao carregar leads deste histórico");
+    } finally {
+      setLoadingHistoryLeads(false);
     }
   };
 
@@ -993,7 +1029,11 @@ function Index() {
                       </TableHeader>
                       <TableBody>
                         {history.map((item) => (
-                          <TableRow key={item.id}>
+                          <TableRow 
+                            key={item.id} 
+                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => fetchHistoryLeads(item)}
+                          >
                             <TableCell className="text-sm">
                               <div className="flex items-center gap-2 text-muted-foreground">
                                 <Calendar className="h-3.5 w-3.5" />
@@ -1017,6 +1057,80 @@ function Index() {
                         ))}
                       </TableBody>
                     </Table>
+                  </div>
+                )}
+
+                {selectedHistory && (
+                  <div className="mt-8 border-t border-border/60 pt-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-primary" />
+                          Leads de: <span className="text-primary capitalize">{selectedHistory.segment}</span> em <span className="text-primary capitalize">{selectedHistory.location}</span>
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {historyLeads.length} leads encontrados no banco de dados para esta busca.
+                        </p>
+                      </div>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedHistory(null)}>
+                        Fechar
+                      </Button>
+                    </div>
+
+                    {loadingHistoryLeads ? (
+                      <div className="space-y-3 p-5">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-12 w-full rounded-md" />
+                        ))}
+                      </div>
+                    ) : historyLeads.length === 0 ? (
+                      <div className="bg-muted/20 rounded-xl p-8 text-center">
+                        <p className="text-sm text-muted-foreground italic">Nenhum lead salvo foi encontrado para estes critérios.</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-xl border border-border/60 bg-white/50">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nome</TableHead>
+                              <TableHead>Contato</TableHead>
+                              <TableHead>Avaliação</TableHead>
+                              <TableHead className="text-right">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {historyLeads.map((lead) => (
+                              <TableRow key={lead.id}>
+                                <TableCell className="font-medium">{lead.name}</TableCell>
+                                <TableCell>
+                                  <div className="flex flex-col gap-0.5 text-xs">
+                                    {lead.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {lead.phone}</span>}
+                                    {lead.website && <span className="flex items-center gap-1 text-primary"><Globe className="h-3 w-3" /> Website</span>}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Stars rating={lead.rating} />
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      sendToPipeline(lead);
+                                    }}
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                    Funil
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
