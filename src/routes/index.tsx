@@ -501,8 +501,8 @@ function Index() {
     // Contact Rate (Phone)
     const withPhone = allCompanies.filter(c => c.phone).length;
     const phoneData = [
-      { name: "Com Telefone", value: withPhone, color: "#10b981" },
-      { name: "Sem Telefone", value: allCompanies.length - withPhone, color: "#ef4444" }
+      { name: "Com Telefone", value: withPhone, color: "#aaff00" },
+      { name: "Sem Telefone", value: allCompanies.length - withPhone, color: "#3f3f46" }
     ];
 
     // Leads by City
@@ -516,14 +516,34 @@ function Index() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
+    // Leads over time (from history)
+    const historyByDate: Record<string, number> = {};
+    history.forEach(h => {
+      const date = new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      historyByDate[date] = (historyByDate[date] || 0) + h.leads_count;
+    });
+    
+    // Create last 7 days even if no data
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      last7Days.push({
+        date: dateStr,
+        "Leads": historyByDate[dateStr] || 0
+      });
+    }
+
     return {
       total: allCompanies.length,
       contactRate: ((withPhone / allCompanies.length) * 100).toFixed(1),
       nicheData,
       phoneData,
-      cityData
+      cityData,
+      historyData: last7Days
     };
-  }, [allCompanies]);
+  }, [allCompanies, history]);
 
   return (
     <div className="min-h-screen bg-muted/30">
