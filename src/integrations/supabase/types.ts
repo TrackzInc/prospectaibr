@@ -65,6 +65,33 @@ export type Database = {
         }
         Relationships: []
       }
+      evolution_config: {
+        Row: {
+          api_key: string
+          api_url: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          api_url: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          api_url?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       search_history: {
         Row: {
           created_at: string
@@ -88,6 +115,36 @@ export type Database = {
           leads_count?: number
           location?: string
           segment?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_instances: {
+        Row: {
+          created_at: string
+          id: string
+          instance_id: string | null
+          instance_name: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          instance_name: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          instance_id?: string | null
+          instance_name?: string
+          status?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

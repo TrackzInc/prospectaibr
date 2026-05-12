@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunilRouteImport } from './routes/funil'
+import { Route as ConexoesRouteImport } from './routes/conexoes'
 import { Route as IndexRouteImport } from './routes/index'
 
 const LoginRoute = LoginRouteImport.update({
@@ -23,6 +24,11 @@ const FunilRoute = FunilRouteImport.update({
   path: '/funil',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConexoesRoute = ConexoesRouteImport.update({
+  id: '/conexoes',
+  path: '/conexoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,30 +37,34 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/funil' | '/login'
+  fullPaths: '/' | '/conexoes' | '/funil' | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/funil' | '/login'
-  id: '__root__' | '/' | '/funil' | '/login'
+  to: '/' | '/conexoes' | '/funil' | '/login'
+  id: '__root__' | '/' | '/conexoes' | '/funil' | '/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConexoesRoute: typeof ConexoesRoute
   FunilRoute: typeof FunilRoute
   LoginRoute: typeof LoginRoute
 }
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FunilRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conexoes': {
+      id: '/conexoes'
+      path: '/conexoes'
+      fullPath: '/conexoes'
+      preLoaderRoute: typeof ConexoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConexoesRoute: ConexoesRoute,
   FunilRoute: FunilRoute,
   LoginRoute: LoginRoute,
 }
