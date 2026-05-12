@@ -160,7 +160,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster richColors position="top-right" />
-      <div className="flex min-h-screen w-full bg-muted/30">
+      <div className="flex min-h-screen w-full bg-zinc-900 overflow-hidden">
         {!isLoginPage && <Sidebar />}
         <div className="flex-1 flex flex-col min-w-0">
           <Outlet />

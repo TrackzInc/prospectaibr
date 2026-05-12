@@ -321,10 +321,10 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
-      <div className="relative hidden lg:flex flex-col justify-between bg-gradient-to-br from-primary/90 via-primary to-primary/80 p-12 text-primary-foreground overflow-hidden">
+      <div className="relative hidden lg:flex flex-col justify-between bg-[#0f172a] p-12 text-zinc-50 overflow-hidden border-r border-zinc-800">
         <div className="relative z-20">
           <div className="flex items-center gap-2.5 text-xl font-bold">
-            <div className="size-10 rounded-xl bg-primary-foreground/10 backdrop-blur-sm flex items-center justify-center border border-white/10 shadow-lg">
+            <div className="size-10 rounded-xl bg-primary flex items-center justify-center border border-white/10 shadow-[0_0_20px_rgba(170,255,0,0.3)] text-black">
               <TrendingUp className="size-6" />
             </div>
             <span>ProspectAI</span>
@@ -457,17 +457,17 @@ export function LoginPage() {
         </div>
 
         <div className="relative z-20 flex items-center gap-8 text-sm text-primary-foreground/60">
-          <a href="#" className="hover:text-primary-foreground transition-colors">Privacidade</a>
-          <a href="#" className="hover:text-primary-foreground transition-colors">Termos</a>
-          <a href="#" className="hover:text-primary-foreground transition-colors">Suporte</a>
+          <a href="#" className="hover:text-primary transition-colors">Privacidade</a>
+          <a href="#" className="hover:text-primary transition-colors">Termos</a>
+          <a href="#" className="hover:text-primary transition-colors">Suporte</a>
         </div>
 
-        <div className="absolute inset-0 bg-grid-white/[0.05] bg-[size:20px_20px]" />
-        <div className="absolute top-1/4 right-1/4 size-64 bg-primary-foreground/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 left-1/4 size-96 bg-primary-foreground/5 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:40px_40px]" />
+        <div className="absolute top-1/4 right-1/4 size-64 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-1/4 size-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="flex items-center justify-center p-8 bg-background">
+      <div className="flex items-center justify-center p-8 bg-zinc-900">
         <div className="w-full max-w-[420px]">
           <div className="lg:hidden flex items-center justify-center gap-2 text-lg font-semibold mb-12">
             <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -498,7 +498,7 @@ export function LoginPage() {
                 onFocus={() => setIsTyping(true)}
                 onBlur={() => setIsTyping(false)}
                 required
-                className="h-12 bg-background border-border/60 focus:border-primary"
+                className="h-12 bg-zinc-900 border-zinc-700 focus:border-primary"
               />
             </div>
 
@@ -512,7 +512,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-12 pr-10 bg-background border-border/60 focus:border-primary"
+                  className="h-12 pr-10 bg-zinc-900 border-zinc-700 focus:border-primary"
                 />
                 <button
                   type="button"
@@ -530,7 +530,7 @@ export function LoginPage() {
           </form>
 
           <div className="mt-6">
-            <Button variant="outline" className="w-full h-12 bg-background border-border/60 hover:bg-accent" type="button" onClick={handleGoogleLogin}>
+            <Button variant="outline" className="w-full h-12 bg-zinc-900 border-zinc-700 hover:bg-accent" type="button" onClick={handleGoogleLogin}>
               <Mail className="mr-2 size-5" />
               Entrar com Google
             </Button>
