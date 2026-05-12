@@ -300,16 +300,16 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
     <Card 
       ref={setNodeRef}
       style={style}
-      className={`group border-border/40 shadow-sm hover:shadow-md transition-all duration-200 bg-white ${isOverlay ? 'shadow-lg border-primary/20 ring-2 ring-primary/10' : ''}`}
+      className={`group border-zinc-700 shadow-none hover:border-zinc-500 transition-all duration-200 bg-zinc-800 ${isOverlay ? 'shadow-2xl border-primary/50 ring-1 ring-primary/20 z-50' : ''}`}
     >
-      <CardContent className="p-3.5 space-y-3">
+      <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0 pr-6">
-            <h4 className="font-semibold text-slate-800 truncate text-sm leading-tight mb-0.5">
+            <h4 className="font-bold text-zinc-50 truncate text-sm leading-tight mb-2">
               {lead.name}
             </h4>
             {lead.segment && (
-              <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 font-medium uppercase tracking-wider text-primary border-primary/20 bg-primary/5">
+              <Badge variant="outline" className="text-[10px] h-5 px-1.5 font-bold uppercase tracking-widest text-primary border-primary/20 bg-primary/5">
                 {lead.segment}
               </Badge>
             )}
