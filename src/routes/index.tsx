@@ -36,6 +36,7 @@ import {
   Cell,
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { AreaChart } from "@/components/ui/area-chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
