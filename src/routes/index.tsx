@@ -551,43 +551,45 @@ function Index() {
     <div className="min-h-screen bg-muted/30">
       {/* Removed local Toaster as it is now in __root.tsx */}
 
-      {/* Header - Simplified as we have Sidebar now */}
-      <header className="sticky top-0 z-30 border-b border-zinc-700 bg-zinc-900/80 backdrop-blur md:hidden">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
-          <div className="flex items-center gap-2.5 ml-12">
-            <h1 className="text-lg font-bold leading-none text-zinc-50">
-              ProspectAI
-            </h1>
+      <div className="sticky top-0 z-30 flex flex-col">
+        {/* Header - Simplified as we have Sidebar now */}
+        <header className="border-b border-zinc-700 bg-zinc-900/80 backdrop-blur md:hidden">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
+            <div className="flex items-center gap-2.5 ml-12">
+              <h1 className="text-lg font-bold leading-none text-zinc-50">
+                ProspectAI
+              </h1>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* API Key Banner for all screens */}
-      <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md sticky top-0 z-20">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-end md:px-8">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Label htmlFor="api-key" className="sr-only">
-              API Key
-            </Label>
-            <Input
-              id="api-key"
-              type="password"
-              placeholder="Sua SerpApi Key"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="sm:w-64 h-8 text-sm"
-            />
-            <Button onClick={handleSaveKey} size="sm" className="gap-2 h-8">
-              <Save className="h-3.5 w-3.5" />
-              Salvar Key
-            </Button>
+        {/* API Key Banner for all screens */}
+        <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-end md:px-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Label htmlFor="api-key" className="sr-only">
+                API Key
+              </Label>
+              <Input
+                id="api-key"
+                type="password"
+                placeholder="Sua SerpApi Key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="sm:w-64 h-8 text-sm bg-zinc-900/50 border-zinc-700"
+              />
+              <Button onClick={handleSaveKey} size="sm" className="gap-2 h-8">
+                <Save className="h-3.5 w-3.5" />
+                Salvar Key
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
         <Tabs value={currentTab} onValueChange={(val) => navigate({ to: '/', search: { tab: val } as any })} className="space-y-6">
-          <TabsList className="bg-zinc-800 border border-zinc-700 p-1">
+          <TabsList className="bg-zinc-900/90 border border-zinc-700 p-1 sticky top-[57px] z-10 backdrop-blur-sm shadow-xl">
             <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary text-[10px] font-bold uppercase tracking-widest px-4">
               <BarChart3 className="h-4 w-4" />
               Dashboard
