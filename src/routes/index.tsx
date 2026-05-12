@@ -128,16 +128,16 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <Card className="border-border/60">
-      <CardContent className="flex items-center gap-4 p-5">
-        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="h-5 w-5" />
+    <Card className="bg-zinc-800 border-zinc-700 hover:border-zinc-600 transition-colors shadow-none">
+      <CardContent className="flex flex-col items-start gap-4 p-6">
+        <div className="flex h-8 w-8 items-center justify-center rounded bg-zinc-700 text-primary">
+          <Icon className="h-4 w-4" />
         </div>
-        <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">
             {label}
           </p>
-          <p className="mt-0.5 text-2xl font-semibold text-foreground">
+          <p className="mt-2 text-3xl font-bold text-zinc-50 tracking-tight">
             {value}
           </p>
         </div>
