@@ -36,6 +36,7 @@ import {
   Cell,
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { AreaChart } from "@/components/ui/area-chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -500,8 +501,8 @@ function Index() {
     // Contact Rate (Phone)
     const withPhone = allCompanies.filter(c => c.phone).length;
     const phoneData = [
-      { name: "Com Telefone", value: withPhone, color: "#10b981" },
-      { name: "Sem Telefone", value: allCompanies.length - withPhone, color: "#ef4444" }
+      { name: "Com Telefone", value: withPhone, color: "#aaff00" },
+      { name: "Sem Telefone", value: allCompanies.length - withPhone, color: "#3f3f46" }
     ];
 
     // Leads by City
@@ -515,14 +516,34 @@ function Index() {
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
 
+    // Leads over time (from history)
+    const historyByDate: Record<string, number> = {};
+    history.forEach(h => {
+      const date = new Date(h.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      historyByDate[date] = (historyByDate[date] || 0) + h.leads_count;
+    });
+    
+    // Create last 7 days even if no data
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      last7Days.push({
+        date: dateStr,
+        "Leads": historyByDate[dateStr] || 0
+      });
+    }
+
     return {
       total: allCompanies.length,
       contactRate: ((withPhone / allCompanies.length) * 100).toFixed(1),
       nicheData,
       phoneData,
-      cityData
+      cityData,
+      historyData: last7Days
     };
-  }, [allCompanies]);
+  }, [allCompanies, history]);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -593,6 +614,28 @@ function Index() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="bg-zinc-800 border-zinc-700 shadow-none lg:col-span-2">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                          <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                          Performance de Busca (Últimos 7 dias)
+                        </h3>
+                        <Badge variant="outline" className="text-[10px] font-bold border-zinc-700 text-zinc-400">
+                          {dashboardData.historyData.reduce((acc, curr) => acc + curr.Leads, 0)} LEADS NO TOTAL
+                        </Badge>
+                      </div>
+                      <div className="h-[300px] w-full">
+                        <AreaChart 
+                          data={dashboardData.historyData} 
+                          index="date" 
+                          categories={["Leads"]} 
+                          className="h-full"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
                   <Card className="bg-zinc-800 border-zinc-700 shadow-none">
                     <CardContent className="p-6">
                       <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-8 flex items-center gap-2">
@@ -602,14 +645,16 @@ function Index() {
                       <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={dashboardData.nicheData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} />
-                            <YAxis fontSize={10} axisLine={false} tickLine={false} />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
+                            <XAxis dataKey="name" fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
+                            <YAxis fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
                             <Tooltip 
-                              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                              cursor={{ fill: '#18181b' }}
+                              contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                              itemStyle={{ color: '#fafafa' }}
+                              labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
                             />
-                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="value" fill="#aaff00" radius={[4, 4, 0, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
@@ -622,30 +667,32 @@ function Index() {
                         <PhoneCall className="h-3.5 w-3.5 text-primary" />
                         Qualificação de Contato
                       </h3>
-                      <div className="h-64 w-full flex items-center justify-center">
+                      <div className="h-64 w-full flex items-center justify-center relative">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
                               data={dashboardData.phoneData}
                               cx="50%"
                               cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={5}
+                              innerRadius={65}
+                              outerRadius={85}
+                              paddingAngle={8}
                               dataKey="value"
+                              stroke="none"
                             >
                               {dashboardData.phoneData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={entry.color} />
                               ))}
                             </Pie>
                             <Tooltip 
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                              contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                              itemStyle={{ color: '#fafafa' }}
                             />
                           </PieChart>
                         </ResponsiveContainer>
-                        <div className="absolute flex flex-col items-center">
-                          <span className="text-2xl font-bold">{dashboardData.contactRate}%</span>
-                          <span className="text-[10px] text-zinc-400 uppercase">Com Telefone</span>
+                        <div className="absolute flex flex-col items-center justify-center">
+                          <span className="text-3xl font-bold text-zinc-50">{dashboardData.contactRate}%</span>
+                          <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Sucesso</span>
                         </div>
                       </div>
                     </CardContent>
@@ -655,19 +702,21 @@ function Index() {
                     <CardContent className="p-6">
                       <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-8 flex items-center gap-2">
                         <MapPin className="h-3.5 w-3.5 text-primary" />
-                        Conversão por Localidade
+                        Leads por Localidade
                       </h3>
                       <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart data={dashboardData.cityData} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
-                            <XAxis type="number" fontSize={10} axisLine={false} tickLine={false} />
-                            <YAxis dataKey="name" type="category" fontSize={10} axisLine={false} tickLine={false} width={100} />
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#27272a" />
+                            <XAxis type="number" fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
+                            <YAxis dataKey="name" type="category" fontSize={10} axisLine={false} tickLine={false} width={100} stroke="#71717a" />
                             <Tooltip 
-                              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                              contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                              cursor={{ fill: '#18181b' }}
+                              contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                              itemStyle={{ color: '#fafafa' }}
+                              labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
                             />
-                            <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                            <Bar dataKey="value" fill="#aaff00" radius={[0, 4, 4, 0]} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
