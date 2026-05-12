@@ -173,16 +173,16 @@ function FunilPage() {
   const activeLead = activeId ? leads.find(l => l.id === activeId) : null;
 
   return (
-    <div className="flex flex-col h-screen bg-muted/30">
-      <header className="flex items-center justify-between px-8 py-6 border-b border-border/60 bg-white shadow-sm">
+    <div className="flex flex-col h-screen bg-zinc-900 text-zinc-50">
+      <header className="flex items-center justify-between px-8 py-6 border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Funil de Vendas</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gerencie seus leads e acompanhe as negociações.</p>
+          <h1 className="text-xl font-bold uppercase tracking-tight text-zinc-50">Funil de Vendas</h1>
+          <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-medium">Gerencie seus leads e acompanhe as negociações.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" size="sm" onClick={fetchLeads} className="gap-2">
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
+          <Button variant="outline" size="sm" onClick={fetchLeads} className="gap-2 border-zinc-700 bg-zinc-800 text-zinc-300 hover:text-zinc-50 font-bold">
+            <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+            ATUALIZAR
           </Button>
         </div>
       </header>
