@@ -67,68 +67,7 @@ type Company = {
   open: boolean;
 };
 
-const MOCK: Company[] = [
-  {
-    id: "1",
-    name: "Clínica Vida Plena",
-    phone: "(11) 4002-8922",
-    website: "vidaplena.com.br",
-    address: "Av. Paulista, 1200 — São Paulo, SP",
-    rating: 4.8,
-    reviews: 312,
-    open: true,
-  },
-  {
-    id: "2",
-    name: "Espaço Saúde Integrada",
-    phone: "(11) 3344-5566",
-    website: null,
-    address: "R. Augusta, 540 — São Paulo, SP",
-    rating: 4.5,
-    reviews: 188,
-    open: true,
-  },
-  {
-    id: "3",
-    name: "Centro Médico Bem Estar",
-    phone: "(11) 2233-4455",
-    website: "bemestarcm.com.br",
-    address: "R. Oscar Freire, 88 — São Paulo, SP",
-    rating: 4.2,
-    reviews: 96,
-    open: false,
-  },
-  {
-    id: "4",
-    name: "Clínica Ortomed",
-    phone: null,
-    website: "ortomed.com.br",
-    address: "Av. Faria Lima, 3477 — São Paulo, SP",
-    rating: 3.9,
-    reviews: 41,
-    open: true,
-  },
-  {
-    id: "5",
-    name: "Instituto Saúde+",
-    phone: "(11) 5566-7788",
-    website: "saudemais.com.br",
-    address: "R. Haddock Lobo, 220 — São Paulo, SP",
-    rating: 4.7,
-    reviews: 502,
-    open: true,
-  },
-  {
-    id: "6",
-    name: "Clínica Reviver",
-    phone: "(11) 9988-7766",
-    website: null,
-    address: "R. Teodoro Sampaio, 1010 — São Paulo, SP",
-    rating: 4.0,
-    reviews: 73,
-    open: false,
-  },
-];
+// MOCK data removed as we are now using the Google Places API via Edge Functions.
 
 function Stars({ rating }: { rating: number }) {
   return (
@@ -372,53 +311,100 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-        {/* Search */}
-        <Card className="border-border/60">
-          <CardContent className="p-5 md:p-6">
-            <div className="mb-4">
-              <h2 className="text-base font-semibold text-foreground">
-                Buscar empresas
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Encontre leads qualificados por segmento e localização.
-              </p>
-            </div>
-            <form
-              onSubmit={handleSearch}
-              className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]"
-            >
-              <div className="space-y-1.5">
-                <Label htmlFor="segment">Segmento</Label>
-                <Input
-                  id="segment"
-                  placeholder="ex: clínica, academia, restaurante"
-                  value={segment}
-                  onChange={(e) => setSegment(e.target.value)}
-                />
+        {/* Search & Filters */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card className="border-border/60 lg:col-span-2">
+            <CardContent className="p-5 md:p-6">
+              <div className="mb-4">
+                <h2 className="text-base font-semibold text-foreground">
+                  Buscar empresas
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Encontre leads qualificados via Google Places API.
+                </p>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="location">Cidade / Estado</Label>
-                <Input
-                  id="location"
-                  placeholder="ex: São Paulo, SP"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                />
+              <form
+                onSubmit={handleSearch}
+                className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto]"
+              >
+                <div className="space-y-1.5">
+                  <Label htmlFor="segment">Tipo de negócio</Label>
+                  <Input
+                    id="segment"
+                    placeholder="ex: clínica, academia, restaurante"
+                    value={segment}
+                    onChange={(e) => setSegment(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="location">Cidade / Estado</Label>
+                  <Input
+                    id="location"
+                    placeholder="ex: São Paulo, SP"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button type="submit" className="w-full gap-2 md:w-auto" disabled={loading}>
+                    <Search className="h-4 w-4" />
+                    {loading ? "Buscando..." : "Buscar"}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardContent className="p-5 md:p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <Filter className="h-4 w-4 text-primary" />
+                <h2 className="text-base font-semibold text-foreground">
+                  Filtros
+                </h2>
               </div>
-              <div className="flex items-end">
-                <Button type="submit" className="w-full gap-2 md:w-auto" disabled={loading}>
-                  <Search className="h-4 w-4" />
-                  Buscar
-                </Button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Avaliação mínima</Label>
+                  <Select value={minRating} onValueChange={setMinRating}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="0">Todas</SelectItem>
+                      <SelectItem value="3">3.0+ Estrelas</SelectItem>
+                      <SelectItem value="4">4.0+ Estrelas</SelectItem>
+                      <SelectItem value="4.5">4.5+ Estrelas</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="phone-filter" 
+                      checked={onlyWithPhone}
+                      onCheckedChange={(checked) => setOnlyWithPhone(checked as boolean)}
+                    />
+                    <Label htmlFor="phone-filter" className="cursor-pointer">Apenas com telefone</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="website-filter" 
+                      checked={onlyWithWebsite}
+                      onCheckedChange={(checked) => setOnlyWithWebsite(checked as boolean)}
+                    />
+                    <Label htmlFor="website-filter" className="cursor-pointer">Apenas com site</Label>
+                  </div>
+                </div>
               </div>
-            </form>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Metrics */}
         {(loading || metrics) && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {loading && !metrics
+            {loading && !results
               ? Array.from({ length: 4 }).map((_, i) => (
                   <Card key={i} className="border-border/60">
                     <CardContent className="p-5">
@@ -432,7 +418,7 @@ function Index() {
                   <>
                     <MetricCard
                       icon={Building2}
-                      label="Total encontrado"
+                      label="Total filtrado"
                       value={metrics.total.toString()}
                     />
                     <MetricCard
