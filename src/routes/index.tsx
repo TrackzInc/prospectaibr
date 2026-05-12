@@ -159,8 +159,8 @@ function Index() {
         body: { action: 'geocode', apiKey, params: { address: location } }
       });
 
-      if (geocodeError || !geocodeData.results?.[0]) {
-        throw new Error("Erro ao converter localização.");
+      if (geocodeError || !geocodeData?.results?.[0]) {
+        throw new Error(geocodeError?.message || "Localização não encontrada ou erro no Geocoding.");
       }
 
       const { lat, lng } = geocodeData.results[0].geometry.location;
@@ -175,12 +175,12 @@ function Index() {
         }
       });
 
-      if (searchError || !searchData.results) {
-        throw new Error("Erro na busca por estabelecimentos.");
+      if (searchError || !searchData?.results) {
+        throw new Error(searchError?.message || "Erro na busca por estabelecimentos.");
       }
 
-      // 3. Place Details for each result (limit to top 15 for better performance/cost)
-      const topResults = searchData.results.slice(0, 15);
+      // 3. Place Details for each result (limit to top 10 for performance and cost)
+      const topResults = searchData.results.slice(0, 10);
       const detailedResults: Company[] = [];
 
       for (const place of topResults) {
@@ -188,7 +188,7 @@ function Index() {
           body: { action: 'placedetails', apiKey, params: { placeId: place.place_id } }
         });
 
-        if (!detailsError && detailsData.result) {
+        if (!detailsError && detailsData?.result) {
           const res = detailsData.result;
           detailedResults.push({
             id: place.place_id,
