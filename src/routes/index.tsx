@@ -560,9 +560,11 @@ function Index() {
       nicheData,
       phoneData,
       cityData,
-      historyData: last7Days
+      historyData: last7Days,
+      funnelData,
+      advanceRate
     };
-  }, [allCompanies, history]);
+  }, [allCompanies]);
 
   return (
     <div className="min-h-screen bg-muted/30">
