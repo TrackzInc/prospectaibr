@@ -1,0 +1,1 @@
+ALTER TABLE public.companies ADD CONSTRAINT companies_user_id_name_address_key UNIQUE (user_id, name, address);

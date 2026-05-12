@@ -123,6 +123,7 @@ function Index() {
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Company[] | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Filters
   const [minRating, setMinRating] = useState("0");
@@ -188,6 +189,44 @@ function Index() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveResultsToDatabase = async () => {
+    if (!results || results.length === 0) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Você precisa estar logado para salvar resultados.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const companiesToSave = results.map(r => ({
+        user_id: user.id,
+        name: r.name,
+        phone: r.phone,
+        website: r.website,
+        address: r.address,
+        rating: r.rating,
+        reviews: r.reviews,
+        is_open: r.open,
+        segment: segment,
+        city_state: location
+      }));
+
+      const { error } = await supabase.from('companies').upsert(companiesToSave, {
+        onConflict: 'user_id,name,address'
+      });
+
+      if (error) throw error;
+      toast.success("Resultados salvos no banco de dados!");
+    } catch (err: any) {
+      toast.error("Erro ao salvar resultados: " + err.message);
+      console.error(err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -433,15 +472,26 @@ function Index() {
                     : "Configure a API Key e faça uma busca"}
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="gap-2"
-              disabled={!filteredResults || filteredResults.length === 0}
-              onClick={() => filteredResults && exportCSV(filteredResults)}
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Exportar CSV</span>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={!filteredResults || filteredResults.length === 0 || saving}
+                onClick={saveResultsToDatabase}
+              >
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">{saving ? "Salvando..." : "Salvar no Banco"}</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={!filteredResults || filteredResults.length === 0}
+                onClick={() => filteredResults && exportCSV(filteredResults)}
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Exportar CSV</span>
+              </Button>
+            </div>
           </div>
 
           {loading ? (
