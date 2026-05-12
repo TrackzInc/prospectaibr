@@ -224,7 +224,7 @@ function Index() {
         name: res.name,
         phone: res.phone,
         website: res.website,
-        address: res.address,
+        address: res.address || "",
         rating: Number(res.rating) || 0,
         reviews: res.reviews || 0,
         open: res.is_open ?? false,
