@@ -882,13 +882,13 @@ function Index() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Contato & Links</TableHead>
-                    <TableHead>Endereço</TableHead>
-                    <TableHead>Avaliação</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                  <TableRow className="border-zinc-700 hover:bg-transparent">
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Nome</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Contato & Links</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Endereço</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Avaliação</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Status</TableHead>
+                    <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-zinc-500">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
