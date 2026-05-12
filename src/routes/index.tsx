@@ -593,10 +593,10 @@ function Index() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="border-border/60">
+                  <Card className="bg-zinc-800 border-zinc-700 shadow-none">
                     <CardContent className="p-6">
-                      <h3 className="text-sm font-semibold mb-6 flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-primary" />
+                      <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-8 flex items-center gap-2">
+                        <Building2 className="h-3.5 w-3.5 text-primary" />
                         Leads por Nicho
                       </h3>
                       <div className="h-64 w-full">
