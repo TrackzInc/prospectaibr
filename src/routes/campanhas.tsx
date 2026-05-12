@@ -110,6 +110,17 @@ function CampanhasPage() {
     fetchLeads();
   }, []);
 
+  const handleApplyLimit = () => {
+    const limit = parseInt(maxLeadsToSelect);
+    if (isNaN(limit) || limit <= 0) {
+      toast.error("Informe um número válido");
+      return;
+    }
+    const limitedLeads = filteredLeads.slice(0, limit).map(l => l.id);
+    setSelectedLeads(limitedLeads);
+    toast.success(`${limitedLeads.length} leads selecionados`);
+  };
+
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
       const stageMatch = stageFilter === "all" || lead.pipeline_stage === stageFilter;
