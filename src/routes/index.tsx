@@ -37,6 +37,7 @@ import {
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { AreaChart } from "@/components/ui/area-chart";
+import AreaChartXS from "@/components/ui/area-chart-xs";
 import IncidentReportCard from "@/components/ui/incident-bar-chart";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -701,25 +702,42 @@ function Index() {
 
                   <Card className="bg-zinc-800 border-zinc-700 shadow-none lg:col-span-2">
                     <CardContent className="p-6">
-                      <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-8 flex items-center gap-2">
-                        <MapPin className="h-3.5 w-3.5 text-primary" />
-                        Leads por Localidade
-                      </h3>
-                      <div className="h-64 w-full">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={dashboardData.cityData} layout="vertical">
-                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#27272a" />
-                            <XAxis type="number" fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
-                            <YAxis dataKey="name" type="category" fontSize={10} axisLine={false} tickLine={false} width={100} stroke="#71717a" />
-                            <Tooltip 
-                              cursor={{ fill: '#18181b' }}
-                              contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
-                              itemStyle={{ color: '#fafafa' }}
-                              labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
-                            />
-                            <Bar dataKey="value" fill="#aaff00" radius={[0, 4, 4, 0]} />
-                          </BarChart>
-                        </ResponsiveContainer>
+                      <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          Leads por Localidade
+                        </h3>
+                        <Badge variant="outline" className="text-[10px] font-bold border-zinc-700 text-zinc-400">
+                          {dashboardData.cityData.length} CIDADES
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="h-64 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={dashboardData.cityData} layout="vertical">
+                              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#27272a" />
+                              <XAxis type="number" fontSize={10} axisLine={false} tickLine={false} stroke="#71717a" />
+                              <YAxis dataKey="name" type="category" fontSize={10} axisLine={false} tickLine={false} width={100} stroke="#71717a" />
+                              <Tooltip 
+                                cursor={{ fill: '#18181b' }}
+                                contentStyle={{ backgroundColor: '#18181b', borderRadius: '8px', border: '1px solid #3f3f46', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}
+                                itemStyle={{ color: '#fafafa' }}
+                                labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
+                              />
+                              <Bar dataKey="value" fill="#aaff00" radius={[0, 4, 4, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="h-64 w-full flex flex-col justify-center">
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Volume Histórico</p>
+                          <AreaChartXS 
+                            id="cityHistoryChart"
+                            data={dashboardData.historyData.map(d => ({
+                              key: new Date(new Date().getFullYear(), parseInt(d.date.split('/')[1]) - 1, parseInt(d.date.split('/')[0])),
+                              data: d.Leads
+                            }))}
+                          />
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
