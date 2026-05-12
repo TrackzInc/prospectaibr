@@ -33,8 +33,9 @@ interface SidebarProps {
 }
 
 const navigationItems: NavigationItem[] = [
+  { id: "dashboard", name: "Dashboard", icon: BarChart3, href: "/?tab=dashboard" },
   { id: "search", name: "Busca", icon: Search, href: "/" },
-  { id: "history", name: "Histórico", icon: History, href: "/?tab=history" }, // We'll handle tabs via search params if needed, but for now just pointing to home
+  { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
 ];
 
 export function Sidebar({ className = "" }: SidebarProps) {
