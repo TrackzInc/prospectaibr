@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff, Mail, Sparkles, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -311,13 +312,8 @@ export function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
+      const result = await lovable.auth.signInWithOAuth("google");
+      if (result.error) throw result.error;
     } catch (err: any) {
       toast.error(err.message || "Erro ao entrar com Google.");
     }
