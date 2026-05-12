@@ -17,7 +17,8 @@ import {
   History,
   TrendingUp,
   Columns,
-  Link2
+  Link2,
+  Send
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -39,6 +40,7 @@ const navigationItems: NavigationItem[] = [
   { id: "search", name: "Busca", icon: Search, href: "/" },
   { id: "funil", name: "Funil", icon: Columns, href: "/funil" },
   { id: "conexoes", name: "Conexões", icon: Link2, href: "/conexoes" },
+  { id: "campanhas", name: "Campanhas", icon: Send, href: "/campanhas" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
 ];
 
