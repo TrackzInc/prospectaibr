@@ -587,7 +587,7 @@ function Index() {
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
         <Tabs value={currentTab} onValueChange={(val) => navigate({ to: '/', search: { tab: val } as any })} className="space-y-6">
-          <TabsList className="bg-zinc-800 border border-zinc-700 p-1">
+          <TabsList className="bg-zinc-900/90 border border-zinc-700 p-1 sticky top-[57px] z-10 backdrop-blur-sm shadow-xl">
             <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary text-[10px] font-bold uppercase tracking-widest px-4">
               <BarChart3 className="h-4 w-4" />
               Dashboard
