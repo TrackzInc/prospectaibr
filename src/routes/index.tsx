@@ -281,6 +281,8 @@ function Index() {
       } else {
         toast.success(`${detailedResults.length} empresas encontradas!`);
         saveSearchToHistory(detailedResults.length);
+        // Automatically save results to the database as requested
+        saveResultsToDatabaseAuto(detailedResults);
         fetchAllCompanies(); // Update dashboard data
       }
     } catch (err: any) {
