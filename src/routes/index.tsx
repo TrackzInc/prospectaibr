@@ -630,7 +630,7 @@ function Index() {
                 </div>
                 <div className="flex items-end">
                   <Button type="submit" className="w-full gap-2 md:w-auto" disabled={loading}>
-                    <Search className="h-4 w-4" />
+                    <SearchIcon className="h-4 w-4" />
                     {loading ? "Buscando..." : "Buscar"}
                   </Button>
                 </div>
