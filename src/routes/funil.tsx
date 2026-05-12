@@ -235,15 +235,15 @@ function KanbanColumn({ id, title, leads, onMoveLead }: {
   const nextStage = STAGES[STAGES.indexOf(title) + 1];
 
   return (
-    <div className="flex flex-col w-80 shrink-0 bg-slate-100/50 rounded-xl border border-border/40 overflow-hidden">
-      <div className="p-4 flex items-center justify-between bg-white/80 border-b border-border/40 sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-slate-700">{title}</h3>
-          <Badge variant="secondary" className="bg-slate-200 text-slate-600 border-none font-medium px-2">
+    <div className="flex flex-col w-80 shrink-0 bg-zinc-800/30 rounded-lg border border-zinc-800 overflow-hidden">
+      <div className="p-4 flex items-center justify-between bg-zinc-800/50 border-b border-zinc-800 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400">{title}</h3>
+          <Badge variant="secondary" className="bg-zinc-700 text-primary border-none font-bold text-[10px] h-5 px-1.5">
             {leads.length}
           </Badge>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-600 hover:text-zinc-400">
           <MoreVertical className="h-4 w-4" />
         </Button>
       </div>
