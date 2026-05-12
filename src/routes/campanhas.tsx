@@ -81,6 +81,7 @@ function CampanhasPage() {
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
   const [stageFilter, setStageFilter] = useState<string>("all");
   const [segmentFilter, setSegmentFilter] = useState<string>("all");
+  const [maxLeadsToSelect, setMaxLeadsToSelect] = useState<string>("");
 
   const fetchCampaigns = async () => {
     try {
@@ -108,6 +109,17 @@ function CampanhasPage() {
     fetchCampaigns();
     fetchLeads();
   }, []);
+
+  const handleApplyLimit = () => {
+    const limit = parseInt(maxLeadsToSelect);
+    if (isNaN(limit) || limit <= 0) {
+      toast.error("Informe um número válido");
+      return;
+    }
+    const limitedLeads = filteredLeads.slice(0, limit).map(l => l.id);
+    setSelectedLeads(limitedLeads);
+    toast.success(`${limitedLeads.length} leads selecionados`);
+  };
 
   const filteredLeads = useMemo(() => {
     return leads.filter(lead => {
@@ -180,6 +192,7 @@ function CampanhasPage() {
     setMessage("");
     setDelay(60);
     setSelectedLeads([]);
+    setMaxLeadsToSelect("");
   };
 
   const deleteCampaign = async (id: string) => {
@@ -299,15 +312,35 @@ function CampanhasPage() {
 
                   <div className="bg-zinc-950/50 rounded-lg p-4 border border-zinc-800 max-h-48 overflow-y-auto">
                     <div className="flex items-center justify-between mb-3 pb-2 border-b border-zinc-800">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase">{filteredLeads.length} Leads Encontrados</span>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-6 text-[10px] font-bold text-primary"
-                        onClick={() => setSelectedLeads(filteredLeads.map(l => l.id))}
-                      >
-                        Selecionar Todos
-                      </Button>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase">{filteredLeads.length} Leads Encontrados</span>
+                        <span className="text-[10px] font-bold text-primary uppercase">{selectedLeads.length} Selecionados</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-zinc-900 border border-zinc-700 rounded h-7 overflow-hidden">
+                          <Input 
+                            type="number" 
+                            placeholder="Qtd" 
+                            className="w-12 h-full border-none bg-transparent text-[10px] focus-visible:ring-0 px-2"
+                            value={maxLeadsToSelect}
+                            onChange={(e) => setMaxLeadsToSelect(e.target.value)}
+                          />
+                          <button 
+                            onClick={handleApplyLimit}
+                            className="bg-zinc-800 px-2 h-full text-[10px] font-bold text-zinc-300 hover:bg-zinc-700 transition-colors"
+                          >
+                            OK
+                          </button>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 text-[10px] font-bold text-primary p-0"
+                          onClick={() => setSelectedLeads(filteredLeads.map(l => l.id))}
+                        >
+                          TUDO
+                        </Button>
+                      </div>
                     </div>
                     {filteredLeads.map(lead => (
                       <div key={lead.id} className="flex items-center gap-3 py-1.5">
