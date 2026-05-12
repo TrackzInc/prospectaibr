@@ -98,20 +98,20 @@ type SearchHistory = {
 
 function Stars({ rating }: { rating: number }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       <div className="flex">
         {[1, 2, 3, 4, 5].map((i) => (
           <Star
             key={i}
-            className={`h-3.5 w-3.5 ${
+            className={`h-3 w-3 ${
               i <= Math.round(rating)
-                ? "fill-accent text-accent"
-                : "text-muted-foreground/30"
+                ? "fill-primary text-primary"
+                : "text-zinc-700"
             }`}
           />
         ))}
       </div>
-      <span className="text-sm font-medium text-foreground">
+      <span className="text-xs font-bold text-zinc-300">
         {rating.toFixed(1)}
       </span>
     </div>
