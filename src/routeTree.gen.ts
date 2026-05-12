@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunilRouteImport } from './routes/funil'
 import { Route as ConexoesRouteImport } from './routes/conexoes'
+import { Route as CampanhasRouteImport } from './routes/campanhas'
 import { Route as IndexRouteImport } from './routes/index'
 
 const LoginRoute = LoginRouteImport.update({
@@ -29,6 +30,11 @@ const ConexoesRoute = ConexoesRouteImport.update({
   path: '/conexoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CampanhasRoute = CampanhasRouteImport.update({
+  id: '/campanhas',
+  path: '/campanhas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/conexoes' | '/funil' | '/login'
+  fullPaths: '/' | '/campanhas' | '/conexoes' | '/funil' | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/conexoes' | '/funil' | '/login'
-  id: '__root__' | '/' | '/conexoes' | '/funil' | '/login'
+  to: '/' | '/campanhas' | '/conexoes' | '/funil' | '/login'
+  id: '__root__' | '/' | '/campanhas' | '/conexoes' | '/funil' | '/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CampanhasRoute: typeof CampanhasRoute
   ConexoesRoute: typeof ConexoesRoute
   FunilRoute: typeof FunilRoute
   LoginRoute: typeof LoginRoute
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConexoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/campanhas': {
+      id: '/campanhas'
+      path: '/campanhas'
+      fullPath: '/campanhas'
+      preLoaderRoute: typeof CampanhasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CampanhasRoute: CampanhasRoute,
   ConexoesRoute: ConexoesRoute,
   FunilRoute: FunilRoute,
   LoginRoute: LoginRoute,

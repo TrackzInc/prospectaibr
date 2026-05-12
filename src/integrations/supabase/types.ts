@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      campaign_logs: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          created_at: string
+          delay_seconds: number
+          failed_leads: number
+          id: string
+          message_template: string
+          name: string
+          pending_leads: number
+          scheduled_at: string | null
+          sent_leads: number
+          status: string
+          total_leads: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delay_seconds?: number
+          failed_leads?: number
+          id?: string
+          message_template: string
+          name: string
+          pending_leads?: number
+          scheduled_at?: string | null
+          sent_leads?: number
+          status?: string
+          total_leads?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delay_seconds?: number
+          failed_leads?: number
+          id?: string
+          message_template?: string
+          name?: string
+          pending_leads?: number
+          scheduled_at?: string | null
+          sent_leads?: number
+          status?: string
+          total_leads?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           address: string | null
