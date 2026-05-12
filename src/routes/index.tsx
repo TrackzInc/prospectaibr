@@ -676,14 +676,14 @@ function Index() {
                 </div>
               </div>
             ) : (
-              <Card className="border-dashed border-2">
+              <Card className="bg-zinc-800 border-zinc-700 border-dashed shadow-none">
                 <CardContent className="flex flex-col items-center justify-center py-20 text-center">
-                  <Inbox className="h-12 w-12 text-zinc-400 mb-4 opacity-20" />
-                  <h3 className="text-lg font-medium text-zinc-50">Sem dados para exibir</h3>
+                  <Inbox className="h-12 w-12 text-zinc-700 mb-6" />
+                  <h3 className="text-lg font-bold text-zinc-50 uppercase tracking-tight">Sem dados para exibir</h3>
                   <p className="text-sm text-zinc-400 max-w-xs mx-auto mt-2">
                     Realize uma busca e salve os resultados no banco de dados para começar a ver estatísticas.
                   </p>
-                  <Button variant="outline" className="mt-6" onClick={() => navigate({ to: '/', search: { tab: 'search' } as any })}>
+                  <Button variant="outline" className="mt-8 border-zinc-700 hover:bg-zinc-700 text-zinc-300 hover:text-zinc-50 font-bold uppercase tracking-widest text-xs" onClick={() => navigate({ to: '/', search: { tab: 'search' } as any })}>
                     Ir para Busca
                   </Button>
                 </CardContent>
