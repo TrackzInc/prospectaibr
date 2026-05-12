@@ -348,23 +348,20 @@ function Index() {
     <div className="min-h-screen bg-muted/30">
       <Toaster richColors position="top-right" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-center md:justify-between md:px-8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold leading-none text-foreground">
-                ProspectAI
-              </h1>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Prospecção inteligente
-              </p>
-            </div>
+      {/* Header - Simplified as we have Sidebar now */}
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:px-8">
+          <div className="flex items-center gap-2.5 ml-12">
+            <h1 className="text-lg font-bold leading-none text-foreground">
+              ProspectAI
+            </h1>
           </div>
+        </div>
+      </header>
 
+      {/* API Key Banner for all screens */}
+      <div className="border-b border-border/60 bg-background/50">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-end md:px-8">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Label htmlFor="api-key" className="sr-only">
               API Key
@@ -372,18 +369,18 @@ function Index() {
             <Input
               id="api-key"
               type="password"
-              placeholder="Cole sua API Key"
+              placeholder="Sua SerpApi Key"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              className="sm:w-72"
+              className="sm:w-64 h-8 text-sm"
             />
-            <Button onClick={handleSaveKey} className="gap-2">
-              <Save className="h-4 w-4" />
-              Salvar
+            <Button onClick={handleSaveKey} size="sm" className="gap-2 h-8">
+              <Save className="h-3.5 w-3.5" />
+              Salvar Key
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
         <Tabs defaultValue="search" className="space-y-6">
