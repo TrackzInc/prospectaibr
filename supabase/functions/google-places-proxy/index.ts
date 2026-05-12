@@ -20,7 +20,7 @@ serve(async (req) => {
     let url = ''
     if (action === 'search') {
       const { q, location } = params
-      url = `https://serpapi.com/search?engine=google_maps&q=${encodeURIComponent(q)}&location=${encodeURIComponent(location)}&api_key=${apiKey}`
+      url = `https://serpapi.com/search?engine=google_maps&q=${encodeURIComponent(q)}&location=${encodeURIComponent(location)}&type=search&z=13&api_key=${apiKey}`
     } else {
       throw new Error('Invalid action')
     }
