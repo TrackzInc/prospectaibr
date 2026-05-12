@@ -281,6 +281,8 @@ function Index() {
       } else {
         toast.success(`${detailedResults.length} empresas encontradas!`);
         saveSearchToHistory(detailedResults.length);
+        // Automatically save results to the database as requested
+        saveResultsToDatabaseAuto(detailedResults);
         fetchAllCompanies(); // Update dashboard data
       }
     } catch (err: any) {
@@ -327,6 +329,32 @@ function Index() {
       console.error(err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveResultsToDatabaseAuto = async (companies: Company[]) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      const companiesToSave = companies.map(r => ({
+        user_id: user.id,
+        name: r.name,
+        phone: r.phone,
+        website: r.website,
+        address: r.address,
+        rating: r.rating,
+        reviews: r.reviews,
+        is_open: r.open,
+        segment: segment,
+        city_state: location
+      }));
+
+      await supabase.from('companies').upsert(companiesToSave, {
+        onConflict: 'user_id,name,address'
+      });
+    } catch (err) {
+      console.error("Erro ao salvar automaticamente:", err);
     }
   };
 
