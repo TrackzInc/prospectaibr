@@ -15,6 +15,8 @@ import {
   Filter,
   Mail,
   ExternalLink,
+  History,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +68,14 @@ type Company = {
   rating: number;
   reviews: number;
   open: boolean;
+};
+
+type SearchHistory = {
+  id: string;
+  segment: string;
+  location: string;
+  leads_count: number;
+  created_at: string;
 };
 
 function Stars({ rating }: { rating: number }) {
@@ -124,6 +135,51 @@ function Index() {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Company[] | null>(null);
   const [saving, setSaving] = useState(false);
+  const [history, setHistory] = useState<SearchHistory[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      setLoadingHistory(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('search_history')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setHistory(data || []);
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const saveSearchToHistory = async (count: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from('search_history').insert({
+        user_id: user.id,
+        segment: segment,
+        location: location,
+        leads_count: count
+      });
+
+      if (error) throw error;
+      fetchHistory(); // Refresh history
+    } catch (err) {
+      console.error("Erro ao salvar busca no histórico:", err);
+    }
+  };
 
   // Filters
   const [minRating, setMinRating] = useState("0");
@@ -183,6 +239,7 @@ function Index() {
         toast.info("Nenhum resultado encontrado.");
       } else {
         toast.success(`${detailedResults.length} empresas encontradas!`);
+        saveSearchToHistory(detailedResults.length);
       }
     } catch (err: any) {
       toast.error(err.message || "Erro inesperado na busca.");
@@ -329,7 +386,20 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-8 md:px-8">
-        {/* Search & Filters */}
+        <Tabs defaultValue="search" className="space-y-6">
+          <TabsList className="bg-background border border-border/60">
+            <TabsTrigger value="search" className="gap-2">
+              <Search className="h-4 w-4" />
+              Busca
+            </TabsTrigger>
+            <TabsTrigger value="history" className="gap-2">
+              <History className="h-4 w-4" />
+              Histórico
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="search" className="space-y-6 mt-0">
+            {/* Search & Filters */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <Card className="border-border/60 lg:col-span-2">
             <CardContent className="p-5 md:p-6">
@@ -615,6 +685,78 @@ function Index() {
             </div>
           )}
         </Card>
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-0">
+            <Card className="border-border/60">
+              <div className="border-b border-border/60 p-5">
+                <h2 className="text-base font-semibold text-foreground">
+                  Histórico de buscas
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Suas últimas pesquisas realizadas.
+                </p>
+              </div>
+              <div className="p-0">
+                {loadingHistory ? (
+                  <div className="p-10 space-y-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                    ))}
+                  </div>
+                ) : history.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <History className="h-12 w-12 text-muted-foreground/30 mb-4" />
+                    <h3 className="text-base font-semibold text-foreground">
+                      Nenhuma busca registrada
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      As buscas que você realizar aparecerão aqui.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Segmento</TableHead>
+                          <TableHead>Cidade/Estado</TableHead>
+                          <TableHead className="text-right">Leads</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {history.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell className="text-sm">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {new Date(item.created_at).toLocaleDateString('pt-BR', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-medium capitalize">{item.segment}</TableCell>
+                            <TableCell className="text-muted-foreground capitalize">{item.location}</TableCell>
+                            <TableCell className="text-right font-semibold">
+                              <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/15 border-none">
+                                {item.leads_count} {item.leads_count === 1 ? 'lead' : 'leads'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
