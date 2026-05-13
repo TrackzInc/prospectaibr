@@ -48,6 +48,7 @@ const navigationItems: NavigationItem[] = [
   { id: "etiquetas", name: "Etiquetas", icon: Tag, href: "/etiquetas" },
   { id: "relatorios", name: "Relatórios", icon: PieChart, href: "/relatorios" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
+  { id: "configuracoes", name: "Configurações", icon: Settings, href: "/configuracoes" },
 ];
 
 const automationItems: NavigationItem[] = [
