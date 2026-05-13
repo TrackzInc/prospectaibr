@@ -273,100 +273,100 @@ function ConexoesPage() {
     }
   };
 
-  const getQRCode = async (instanceName: string, isAuto = false) => {
+  const getQRCode = async (instanceName: string, attempt = 0) => {
     if (!config) return;
-    
-    // Evitar duplicar polling se já estiver rodando e for uma chamada manual
-    if (!isAuto && pollingInstances.has(instanceName)) {
-      console.log(`Polling já ativo para ${instanceName}, ignorando chamada manual.`);
-      return;
+
+    const MAX_ATTEMPTS = 6; // 6 tentativas x 5s = 30s
+    const INTERVAL_MS = 5000;
+
+    // Marcar polling ativo
+    if (attempt === 0) {
+      if (pollingInstances.has(instanceName)) {
+        console.log(`Polling já ativo para ${instanceName}, ignorando.`);
+        return;
+      }
+      setPollingInstances(prev => new Set(prev).add(instanceName));
     }
 
     try {
-      if (!isAuto) setLoadingQr(instanceName);
-      
+      setLoadingQr(instanceName);
+
       const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
       const url = `${baseUrl}/instance/connect/${instanceName}`;
-      
-      console.log(`Buscando QR Code (${isAuto ? 'Auto' : 'Manual'}):`, url);
-      
+
+      console.log(`[QR] Tentativa ${attempt + 1}/${MAX_ATTEMPTS} →`, url);
+
       const response = await fetch(url, {
         headers: { 'apikey': config.api_key }
       });
-      
+
       const data = await response.json();
-      console.log(`Resposta Evolution API (${instanceName}):`, data);
-      
-      const qrBase64 = data.base64 || data.qrcode?.base64 || data.code;
-      const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open' || data.instance?.status === 'open';
+      console.log(`[QR] Resposta:`, data);
+
+      const qrBase64 = data.base64 || data.qrcode?.base64;
+      const isConnected =
+        data.instance?.state === 'open' ||
+        data.state === 'open' ||
+        data.status === 'open' ||
+        data.instance?.status === 'open';
 
       if (qrBase64) {
-        setInstances(prev => prev.map(inst => 
+        // QR Code recebido - exibir e parar polling
+        setInstances(prev => prev.map(inst =>
           inst.instance_name === instanceName ? { ...inst, qrcode: qrBase64 } : inst
         ));
-        
-        if (!isAuto) {
-          toast.success("QR Code gerado! Iniciando atualização automática...");
-        }
-
-        // Se gerou QR e ainda não estamos em polling, iniciar
-        setPollingInstances(prev => {
-          const next = new Set(prev);
-          next.add(instanceName);
-          return next;
-        });
-
-        // Agendar próxima verificação em 10 segundos
-        setTimeout(() => {
-          // Verificar se a instância ainda existe e não está conectada antes de continuar
-          setInstances(currentInstances => {
-            const inst = currentInstances.find(i => i.instance_name === instanceName);
-            if (inst && inst.status !== 'connected') {
-              getQRCode(instanceName, true);
-            } else {
-              // Parar polling
-              setPollingInstances(p => {
-                const next = new Set(p);
-                next.delete(instanceName);
-                return next;
-              });
-            }
-            return currentInstances;
-          });
-        }, 10000);
-
-      } else if (isConnected) {
-        toast.success(`Instância ${instanceName} conectada!`);
-        updateStatus(instanceName, 'connected');
-        
-        // Parar polling
         setPollingInstances(prev => {
           const next = new Set(prev);
           next.delete(instanceName);
           return next;
         });
-        
-        // Limpar QR code local
-        setInstances(prev => prev.map(inst => 
+        setLoadingQr(null);
+        toast.success("QR Code gerado! Escaneie com o WhatsApp.");
+        return;
+      }
+
+      if (isConnected) {
+        toast.success(`Instância ${instanceName} conectada!`);
+        updateStatus(instanceName, 'connected');
+        setPollingInstances(prev => {
+          const next = new Set(prev);
+          next.delete(instanceName);
+          return next;
+        });
+        setInstances(prev => prev.map(inst =>
           inst.instance_name === instanceName ? { ...inst, qrcode: undefined, status: 'connected' } : inst
         ));
+        setLoadingQr(null);
+        return;
+      }
+
+      // QR não disponível ainda - tentar novamente
+      if (attempt + 1 < MAX_ATTEMPTS) {
+        console.log(`[QR] Indisponível. Nova tentativa em ${INTERVAL_MS / 1000}s...`);
+        setTimeout(() => getQRCode(instanceName, attempt + 1), INTERVAL_MS);
       } else {
-        console.warn("Dados não encontrados, tentando novamente em 10s...", data);
-        if (!isAuto) toast.error("QR Code não disponível. Tentando novamente...");
-        
-        // Continuar tentando se for erro temporário
-        setTimeout(() => getQRCode(instanceName, true), 10000);
+        console.warn(`[QR] Timeout após ${MAX_ATTEMPTS} tentativas.`);
+        toast.error("QR Code não disponível após 30s. Tente novamente.");
+        setPollingInstances(prev => {
+          const next = new Set(prev);
+          next.delete(instanceName);
+          return next;
+        });
+        setLoadingQr(null);
       }
     } catch (err: any) {
-      console.error("Erro ao obter QR Code:", err);
-      if (!isAuto) toast.error("Erro ao obter QR Code: " + err.message);
-      
-      // Tentar novamente após erro se estiver em modo auto
-      if (isAuto || !isAuto) { // Sempre tentar recuperar se der erro de rede
-         setTimeout(() => getQRCode(instanceName, true), 15000);
+      console.error("[QR] Erro:", err);
+      if (attempt + 1 < MAX_ATTEMPTS) {
+        setTimeout(() => getQRCode(instanceName, attempt + 1), INTERVAL_MS);
+      } else {
+        toast.error("Erro ao obter QR Code: " + err.message);
+        setPollingInstances(prev => {
+          const next = new Set(prev);
+          next.delete(instanceName);
+          return next;
+        });
+        setLoadingQr(null);
       }
-    } finally {
-      if (!isAuto) setLoadingQr(null);
     }
   };
 
