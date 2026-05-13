@@ -39,6 +39,7 @@ type EvolutionConfig = {
 function ConexoesPage() {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingQr, setLoadingQr] = useState<string | null>(null);
   const [newInstanceName, setNewInstanceName] = useState("");
   const [config, setConfig] = useState<EvolutionConfig | null>(null);
   const [showConfig, setShowConfig] = useState(false);
@@ -208,7 +209,7 @@ function ConexoesPage() {
       const { data: existingInstance } = await supabase
         .from('whatsapp_instances')
         .select('id')
-        .eq('instance_name', newInstanceName)
+        .eq('instance_name', sanitizedName)
         .maybeSingle();
 
       if (!existingInstance) {
@@ -217,19 +218,19 @@ function ConexoesPage() {
           .from('whatsapp_instances')
           .insert({
             user_id: user.id,
-            instance_name: newInstanceName,
-            instance_id: evoData.instance?.instanceId || evoData.instance?.name || newInstanceName,
+            instance_name: sanitizedName,
+            instance_id: evoData.instance?.instanceId || evoData.instance?.name || sanitizedName,
             status: 'disconnected'
           });
 
         if (error) throw error;
       }
 
-      toast.success("Instância criada com sucesso! Buscando QR Code...");
+      toast.success("Instância pronta! Buscando QR Code...");
       setNewInstanceName("");
       
       // 3. Get QR Code immediately after creation
-      await getQRCode(newInstanceName);
+      await getQRCode(sanitizedName);
       
       fetchInstances();
     } catch (err: any) {
@@ -274,11 +275,13 @@ function ConexoesPage() {
   const getQRCode = async (instanceName: string) => {
     if (!config) return;
     try {
+      setLoadingQr(instanceName);
       const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      const url = `${baseUrl}/instance/connect/${instanceName}`;
       
-      console.log("Buscando QR Code em:", `${baseUrl}/instance/connect/${instanceName}`);
+      console.log("Buscando QR Code em:", url);
       
-      const response = await fetch(`${baseUrl}/instance/connect/${instanceName}`, {
+      const response = await fetch(url, {
         headers: { 'apikey': config.api_key }
       });
       
@@ -287,22 +290,25 @@ function ConexoesPage() {
       
       // Handle different Evolution API response formats for QR code
       const qrBase64 = data.base64 || data.qrcode?.base64 || data.code;
-      const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open';
+      const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open' || data.instance?.status === 'open';
 
       if (qrBase64) {
         setInstances(prev => prev.map(inst => 
           inst.instance_name === instanceName ? { ...inst, qrcode: qrBase64 } : inst
         ));
+        toast.success("QR Code gerado!");
       } else if (isConnected) {
         toast.success("Instância já conectada!");
         updateStatus(instanceName, 'connected');
       } else {
-        console.error("Dados do QR Code não encontrados:", data);
-        toast.error("QR Code não encontrado na resposta. Verifique o console.");
+        console.warn("Dados do QR Code não encontrados na resposta:", data);
+        toast.error("QR Code não disponível. Tente novamente em alguns segundos.");
       }
     } catch (err: any) {
       console.error("Erro ao obter QR Code:", err);
       toast.error("Erro ao obter QR Code: " + err.message);
+    } finally {
+      setLoadingQr(null);
     }
   };
 
@@ -461,8 +467,13 @@ function ConexoesPage() {
                 </div>
 
                 <div className="flex flex-col items-center justify-center bg-zinc-900/50 rounded-lg p-6 mb-6 border border-zinc-700/30">
-                  {inst.qrcode ? (
-                    <div className="bg-white p-2 rounded-lg">
+                  {loadingQr === inst.instance_name ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCw className="h-12 w-12 text-primary animate-spin" />
+                      <p className="text-[10px] font-bold text-primary tracking-widest uppercase">Buscando...</p>
+                    </div>
+                  ) : inst.qrcode ? (
+                    <div className="bg-white p-2 rounded-lg animate-in zoom-in duration-300">
                       <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
                     </div>
                   ) : inst.status === 'connected' ? (
@@ -482,6 +493,7 @@ function ConexoesPage() {
                   {inst.status !== 'connected' ? (
                     <Button 
                       onClick={() => getQRCode(inst.instance_name)}
+                      disabled={loadingQr === inst.instance_name}
                       className="col-span-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-[10px] tracking-widest uppercase"
                     >
                       {inst.qrcode ? 'ATUALIZAR QR CODE' : 'CONECTAR'}
