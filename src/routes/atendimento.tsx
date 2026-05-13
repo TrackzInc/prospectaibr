@@ -35,6 +35,13 @@ type Lead = {
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number | null;
+  tags?: Tag[];
+};
+
+type Tag = {
+  id: string;
+  name: string;
+  color: string;
 };
 
 type Message = {
@@ -48,6 +55,7 @@ function AtendimentoPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -56,7 +64,8 @@ function AtendimentoPage() {
 
   useEffect(() => {
     fetchLeads();
-    
+    fetchTags();
+
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -97,18 +106,68 @@ function AtendimentoPage() {
 
   const fetchLeads = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('*')
         .order('last_message_at', { ascending: false });
 
-      if (error) throw error;
-      setLeads((data as any[]) || []);
+      if (leadsError) throw leadsError;
+
+      const { data: leadTagsData, error: leadTagsError } = await supabase
+        .from('lead_tags')
+        .select('lead_id, tags(*)');
+
+      if (leadTagsError) throw leadTagsError;
+
+      const tagsByLead: Record<string, any[]> = {};
+      (leadTagsData || []).forEach((lt: any) => {
+        if (!tagsByLead[lt.lead_id]) tagsByLead[lt.lead_id] = [];
+        if (lt.tags) tagsByLead[lt.lead_id].push(lt.tags);
+      });
+
+      const formattedLeads = leadsData.map(l => ({
+        ...l,
+        tags: tagsByLead[l.id] || []
+      }));
+
+      setLeads(formattedLeads);
+      
+      if (selectedLead) {
+        const updatedSelected = formattedLeads.find(l => l.id === selectedLead.id);
+        if (updatedSelected) setSelectedLead(updatedSelected);
+      }
     } catch (err: any) {
       toast.error("Erro ao carregar leads: " + err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTags = async () => {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    if (data) setAvailableTags(data);
+  };
+
+  const toggleTag = async (leadId: string, tag: Tag, isSelected: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (isSelected) {
+      await supabase
+        .from('lead_tags')
+        .delete()
+        .eq('lead_id', leadId)
+        .eq('tag_id', tag.id);
+    } else {
+      await supabase
+        .from('lead_tags')
+        .insert({
+          user_id: user.id,
+          lead_id: leadId,
+          tag_id: tag.id
+        });
+    }
+    fetchLeads();
   };
 
   const fetchMessages = async (leadId: string) => {
