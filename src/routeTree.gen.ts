@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SdrRouteImport } from './routes/sdr'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunilRouteImport } from './routes/funil'
@@ -19,6 +20,11 @@ import { Route as AtendimentoRouteImport } from './routes/atendimento'
 import { Route as AgendamentosRouteImport } from './routes/agendamentos'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SdrRoute = SdrRouteImport.update({
+  id: '/sdr',
+  path: '/sdr',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
   id: '/relatorios',
   path: '/relatorios',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
+  '/sdr': typeof SdrRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
+  '/sdr': typeof SdrRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
+  '/sdr': typeof SdrRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/funil'
     | '/login'
     | '/relatorios'
+    | '/sdr'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/funil'
     | '/login'
     | '/relatorios'
+    | '/sdr'
   id:
     | '__root__'
     | '/'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/funil'
     | '/login'
     | '/relatorios'
+    | '/sdr'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -145,10 +157,18 @@ export interface RootRouteChildren {
   FunilRoute: typeof FunilRoute
   LoginRoute: typeof LoginRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  SdrRoute: typeof SdrRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sdr': {
+      id: '/sdr'
+      path: '/sdr'
+      fullPath: '/sdr'
+      preLoaderRoute: typeof SdrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorios': {
       id: '/relatorios'
       path: '/relatorios'
@@ -225,6 +245,7 @@ const rootRouteChildren: RootRouteChildren = {
   FunilRoute: FunilRoute,
   LoginRoute: LoginRoute,
   RelatoriosRoute: RelatoriosRoute,
+  SdrRoute: SdrRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

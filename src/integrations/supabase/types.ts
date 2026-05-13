@@ -310,6 +310,95 @@ export type Database = {
           },
         ]
       }
+      robot_config: {
+        Row: {
+          assistant_name: string
+          business_context: string | null
+          created_at: string | null
+          delay_minutes: number | null
+          id: string
+          is_active: boolean | null
+          objective: string
+          specific_instructions: string | null
+          updated_at: string | null
+          user_id: string
+          work_days: number[] | null
+          work_end_time: string | null
+          work_start_time: string | null
+          working_hours_enabled: boolean | null
+        }
+        Insert: {
+          assistant_name?: string
+          business_context?: string | null
+          created_at?: string | null
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          objective?: string
+          specific_instructions?: string | null
+          updated_at?: string | null
+          user_id: string
+          work_days?: number[] | null
+          work_end_time?: string | null
+          work_start_time?: string | null
+          working_hours_enabled?: boolean | null
+        }
+        Update: {
+          assistant_name?: string
+          business_context?: string | null
+          created_at?: string | null
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          objective?: string
+          specific_instructions?: string | null
+          updated_at?: string | null
+          user_id?: string
+          work_days?: number[] | null
+          work_end_time?: string | null
+          work_start_time?: string | null
+          working_hours_enabled?: boolean | null
+        }
+        Relationships: []
+      }
+      robot_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          lead_id: string
+          received_message: string
+          sent_response: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          received_message: string
+          sent_response?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          received_message?: string
+          sent_response?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "robot_logs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedules: {
         Row: {
           campaign_id: string | null
