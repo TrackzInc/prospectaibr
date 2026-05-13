@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SdrRouteImport } from './routes/sdr'
+import { Route as ScriptsRouteImport } from './routes/scripts'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunilRouteImport } from './routes/funil'
@@ -23,6 +24,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const SdrRoute = SdrRouteImport.update({
   id: '/sdr',
   path: '/sdr',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ScriptsRoute = ScriptsRouteImport.update({
+  id: '/scripts',
+  path: '/scripts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelatoriosRoute = RelatoriosRouteImport.update({
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
+  '/scripts': typeof ScriptsRoute
   '/sdr': typeof SdrRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
+  '/scripts': typeof ScriptsRoute
   '/sdr': typeof SdrRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
   '/relatorios': typeof RelatoriosRoute
+  '/scripts': typeof ScriptsRoute
   '/sdr': typeof SdrRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/funil'
     | '/login'
     | '/relatorios'
+    | '/scripts'
     | '/sdr'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/funil'
     | '/login'
     | '/relatorios'
+    | '/scripts'
     | '/sdr'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/funil'
     | '/login'
     | '/relatorios'
+    | '/scripts'
     | '/sdr'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   FunilRoute: typeof FunilRoute
   LoginRoute: typeof LoginRoute
   RelatoriosRoute: typeof RelatoriosRoute
+  ScriptsRoute: typeof ScriptsRoute
   SdrRoute: typeof SdrRoute
 }
 
@@ -167,6 +180,13 @@ declare module '@tanstack/react-router' {
       path: '/sdr'
       fullPath: '/sdr'
       preLoaderRoute: typeof SdrRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/scripts': {
+      id: '/scripts'
+      path: '/scripts'
+      fullPath: '/scripts'
+      preLoaderRoute: typeof ScriptsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relatorios': {
@@ -245,8 +265,19 @@ const rootRouteChildren: RootRouteChildren = {
   FunilRoute: FunilRoute,
   LoginRoute: LoginRoute,
   RelatoriosRoute: RelatoriosRoute,
+  ScriptsRoute: ScriptsRoute,
   SdrRoute: SdrRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
