@@ -112,6 +112,31 @@ function ConexoesPage() {
     }
   };
 
+  const testConnection = async () => {
+    if (!tempUrl || !tempKey) {
+      toast.error("Informe a URL e a API Key para testar");
+      return;
+    }
+
+    try {
+      const baseUrl = tempUrl.endsWith('/') ? tempUrl.slice(0, -1) : tempUrl;
+      const response = await fetch(baseUrl, {
+        headers: {
+          'apikey': tempKey
+        }
+      });
+
+      if (response.ok) {
+        toast.success("Conexão estabelecida com sucesso! (It is working)");
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(`Falha na conexão: ${response.status} ${errorData.message || ''}`);
+      }
+    } catch (err: any) {
+      toast.error("Erro ao testar conexão: " + err.message);
+    }
+  };
+
   const createInstance = async () => {
     if (!newInstanceName.trim()) {
       toast.error("Informe um nome para a instância");
@@ -332,6 +357,13 @@ function ConexoesPage() {
               </div>
               <div className="md:col-span-2 flex justify-end gap-3 mt-4">
                 <Button variant="ghost" onClick={() => setShowConfig(false)} className="text-zinc-500">Cancelar</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={testConnection} 
+                  className="border-primary text-primary hover:bg-primary/10"
+                >
+                  TESTAR CONEXÃO
+                </Button>
                 <Button onClick={saveConfig} className="bg-primary text-black font-bold">SALVAR CONFIGURAÇÃO</Button>
               </div>
             </div>
