@@ -138,9 +138,11 @@ export function Sidebar({ className = "" }: SidebarProps) {
         <div className="flex items-center justify-between p-6 border-b border-zinc-800/50">
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-primary rounded flex items-center justify-center shadow-[0_0_15px_rgba(170,255,0,0.3)]">
-                <TrendingUp className="text-primary-foreground h-4 w-4" />
-              </div>
+              <img 
+                src="https://velovable.notiffly.com.br/uploads/9dd6233d4c029a981d6f1cebac1c805a.png" 
+                alt="Prospect AI Logo" 
+                className="w-8 h-8 object-contain"
+              />
               <div className="flex flex-col">
                 <span className="font-bold text-zinc-50 text-sm tracking-tight">PROSPECT AI</span>
               </div>
@@ -148,9 +150,11 @@ export function Sidebar({ className = "" }: SidebarProps) {
           )}
 
           {isCollapsed && (
-            <div className="w-8 h-8 bg-primary rounded flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(170,255,0,0.3)]">
-              <TrendingUp className="text-primary-foreground h-4 w-4" />
-            </div>
+            <img 
+              src="https://velovable.notiffly.com.br/uploads/9dd6233d4c029a981d6f1cebac1c805a.png" 
+              alt="Prospect AI Logo" 
+              className="w-8 h-8 object-contain mx-auto"
+            />
           )}
 
           {/* Desktop collapse button */}
