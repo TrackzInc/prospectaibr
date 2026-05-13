@@ -178,8 +178,7 @@ function FunilPage() {
       let syncedCount = 0;
 
       for (const lead of unsyncedLeads) {
-        // Inserir no CRM (contacts)
-        const { error: contactError } = await supabase.from('contacts' as any).insert({
+        const leadData = {
           user_id: user.id,
           name: lead.name,
           phone: lead.phone,
@@ -195,20 +194,37 @@ function FunilPage() {
           optin_email: false,
           optin_whatsapp: false,
           tags: lead.segment ? [lead.segment] : [],
-        });
+        };
 
-        if (!contactError) {
-          // Marcar como sincronizado localmente
-          await supabase
-            .from('companies')
-            .update({ crm_synced: true })
-            .eq('id', lead.id);
-          
+        console.log('Tentando sincronizar lead:', lead.name, leadData);
+
+        // Inserir no CRM (contacts)
+        const { data, error: contactError } = await supabase.from('contacts' as any).insert(leadData).select();
+
+        console.log('Resultado do insert:', { data, error: contactError });
+
+        if (contactError) {
+          console.error(`Erro ao inserir lead ${lead.name} no CRM:`, contactError);
+          toast.error(`Erro ao sincronizar ${lead.name}: ${contactError.message || JSON.stringify(contactError)}`);
+          continue; // Pula para o próximo se este falhar
+        }
+
+        // Marcar como sincronizado localmente
+        const { error: updateError } = await supabase
+          .from('companies')
+          .update({ crm_synced: true })
+          .eq('id', lead.id);
+        
+        if (updateError) {
+          console.error(`Erro ao atualizar flag crm_synced para ${lead.name}:`, updateError);
+        } else {
           syncedCount++;
         }
       }
 
-      toast.success(`${syncedCount} leads sincronizados com o CRM com sucesso!`);
+      if (syncedCount > 0) {
+        toast.success(`${syncedCount} leads sincronizados com o CRM com sucesso!`);
+      }
       fetchLeads();
     } catch (err: any) {
       toast.error("Erro na sincronização: " + err.message);
