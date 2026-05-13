@@ -275,11 +275,13 @@ function ConexoesPage() {
   const getQRCode = async (instanceName: string) => {
     if (!config) return;
     try {
+      setLoadingQr(instanceName);
       const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      const url = `${baseUrl}/instance/connect/${instanceName}`;
       
-      console.log("Buscando QR Code em:", `${baseUrl}/instance/connect/${instanceName}`);
+      console.log("Buscando QR Code em:", url);
       
-      const response = await fetch(`${baseUrl}/instance/connect/${instanceName}`, {
+      const response = await fetch(url, {
         headers: { 'apikey': config.api_key }
       });
       
@@ -288,22 +290,25 @@ function ConexoesPage() {
       
       // Handle different Evolution API response formats for QR code
       const qrBase64 = data.base64 || data.qrcode?.base64 || data.code;
-      const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open';
+      const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open' || data.instance?.status === 'open';
 
       if (qrBase64) {
         setInstances(prev => prev.map(inst => 
           inst.instance_name === instanceName ? { ...inst, qrcode: qrBase64 } : inst
         ));
+        toast.success("QR Code gerado!");
       } else if (isConnected) {
         toast.success("Instância já conectada!");
         updateStatus(instanceName, 'connected');
       } else {
-        console.error("Dados do QR Code não encontrados:", data);
-        toast.error("QR Code não encontrado na resposta. Verifique o console.");
+        console.warn("Dados do QR Code não encontrados na resposta:", data);
+        toast.error("QR Code não disponível. Tente novamente em alguns segundos.");
       }
     } catch (err: any) {
       console.error("Erro ao obter QR Code:", err);
       toast.error("Erro ao obter QR Code: " + err.message);
+    } finally {
+      setLoadingQr(null);
     }
   };
 
