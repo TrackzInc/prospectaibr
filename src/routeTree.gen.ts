@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunilRouteImport } from './routes/funil'
 import { Route as ConexoesRouteImport } from './routes/conexoes'
 import { Route as CampanhasRouteImport } from './routes/campanhas'
+import { Route as AtendimentoRouteImport } from './routes/atendimento'
 import { Route as IndexRouteImport } from './routes/index'
 
 const LoginRoute = LoginRouteImport.update({
@@ -35,6 +36,11 @@ const CampanhasRoute = CampanhasRouteImport.update({
   path: '/campanhas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AtendimentoRoute = AtendimentoRouteImport.update({
+  id: '/atendimento',
+  path: '/atendimento',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/atendimento': typeof AtendimentoRoute
   '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/atendimento': typeof AtendimentoRoute
   '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/atendimento': typeof AtendimentoRoute
   '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
   '/funil': typeof FunilRoute
@@ -65,14 +74,28 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/campanhas' | '/conexoes' | '/funil' | '/login'
+  fullPaths:
+    | '/'
+    | '/atendimento'
+    | '/campanhas'
+    | '/conexoes'
+    | '/funil'
+    | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/campanhas' | '/conexoes' | '/funil' | '/login'
-  id: '__root__' | '/' | '/campanhas' | '/conexoes' | '/funil' | '/login'
+  to: '/' | '/atendimento' | '/campanhas' | '/conexoes' | '/funil' | '/login'
+  id:
+    | '__root__'
+    | '/'
+    | '/atendimento'
+    | '/campanhas'
+    | '/conexoes'
+    | '/funil'
+    | '/login'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AtendimentoRoute: typeof AtendimentoRoute
   CampanhasRoute: typeof CampanhasRoute
   ConexoesRoute: typeof ConexoesRoute
   FunilRoute: typeof FunilRoute
@@ -109,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CampanhasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/atendimento': {
+      id: '/atendimento'
+      path: '/atendimento'
+      fullPath: '/atendimento'
+      preLoaderRoute: typeof AtendimentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -121,6 +151,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AtendimentoRoute: AtendimentoRoute,
   CampanhasRoute: CampanhasRoute,
   ConexoesRoute: ConexoesRoute,
   FunilRoute: FunilRoute,
@@ -129,13 +160,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

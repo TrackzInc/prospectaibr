@@ -18,7 +18,8 @@ import {
   TrendingUp,
   Columns,
   Link2,
-  Send
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -27,8 +28,8 @@ interface NavigationItem {
   id: string;
   name: string;
   icon: React.ComponentType<{ className?: string }>;
-  href: string;
   badge?: string;
+  href: string;
 }
 
 interface SidebarProps {
@@ -41,6 +42,7 @@ const navigationItems: NavigationItem[] = [
   { id: "funil", name: "Funil", icon: Columns, href: "/funil" },
   { id: "conexoes", name: "Conexões", icon: Link2, href: "/conexoes" },
   { id: "campanhas", name: "Campanhas", icon: Send, href: "/campanhas" },
+  { id: "atendimento", name: "Atendimento", icon: MessageSquare, href: "/atendimento" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
 ];
 
