@@ -134,7 +134,7 @@ function RelatoriosPage() {
       const topCity = Object.entries(cityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
       const topNiche = Object.entries(segmentCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
-      // 3. Campaigns and messages for rates
+      // 3. Campaigns
       const { data: campaigns } = await supabase
         .from('campaigns')
         .select('*')
@@ -155,14 +155,14 @@ function RelatoriosPage() {
       setData({
         totalLeads: leadsCount || 0,
         responseRate: `${responseRate}%`,
-        bestTime: "11:30", // Placeholder until we have detailed logs
+        bestTime: "11:30", 
         topNiche,
         topCity,
         leadsHistory: historyData,
         campaignPerformance: campaigns?.slice(0, 5).map(c => ({
             name: c.name.length > 15 ? c.name.substring(0, 15) + '...' : c.name,
-            sent: c.sent_count,
-            replied: c.replied_count
+            sent: c.sent_leads,
+            replied: 0
         })) || [],
         funnelDistribution: Object.entries(funnelCounts).map(([name, value]) => ({ name, value })),
         topSegments: Object.entries(segmentCounts)
@@ -343,7 +343,7 @@ function RelatoriosPage() {
       <Card className="bg-zinc-800 border-zinc-700 shadow-none overflow-hidden">
         <div className="p-6 border-b border-zinc-700">
             <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 flex items-center gap-2">
-                <List className="h-3.5 w-3.5 text-primary" /> Detalhamento de Campanhas
+                <ListIcon className="h-3.5 w-3.5 text-primary" /> Detalhamento de Campanhas
             </h3>
         </div>
         <Table>
@@ -367,11 +367,11 @@ function RelatoriosPage() {
                         <TableRow key={c.id} className="border-zinc-700/50 hover:bg-zinc-700/30 transition-colors">
                             <TableCell className="font-bold text-zinc-100 text-xs uppercase tracking-tight">{c.name}</TableCell>
                             <TableCell className="text-zinc-400 text-xs font-medium">{format(new Date(c.created_at), 'dd/MM/yyyy')}</TableCell>
-                            <TableCell className="font-black text-zinc-300 text-sm">{c.sent_count}</TableCell>
-                            <TableCell className="font-black text-primary text-sm">{c.replied_count}</TableCell>
+                            <TableCell className="font-black text-zinc-300 text-sm">{c.sent_leads}</TableCell>
+                            <TableCell className="font-black text-primary text-sm">0</TableCell>
                             <TableCell>
                                 <Badge className="bg-primary/10 text-primary border-none text-[10px] font-black">
-                                    {c.sent_count > 0 ? ((c.replied_count / c.sent_count) * 100).toFixed(1) : 0}%
+                                    0%
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-right">
@@ -389,7 +389,7 @@ function RelatoriosPage() {
   );
 }
 
-function List({ className }: { className?: string }) {
+function ListIcon({ className }: { className?: string }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
     )
