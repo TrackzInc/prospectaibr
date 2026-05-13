@@ -140,8 +140,8 @@ function RelatoriosPage() {
         .select('*')
         .gte('created_at', startDate);
 
-      const totalSent = campaigns?.reduce((acc, c) => acc + (c.sent_count || 0), 0) || 0;
-      const totalReplied = campaigns?.reduce((acc, c) => acc + (c.replied_count || 0), 0) || 0;
+      const totalSent = campaigns?.reduce((acc, c) => acc + (c.sent_leads || 0), 0) || 0;
+      const totalReplied = 0; // Placeholder
       const responseRate = totalSent > 0 ? ((totalReplied / totalSent) * 100).toFixed(1) : 0;
 
       // History Data (Last X days)
