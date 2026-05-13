@@ -44,14 +44,17 @@ const navigationItems: NavigationItem[] = [
   { id: "dashboard", name: "Dashboard", icon: BarChart3, href: "/?tab=dashboard" },
   { id: "search", name: "Busca", icon: Search, href: "/" },
   { id: "funil", name: "Funil", icon: Columns, href: "/funil" },
-  { id: "conexoes", name: "Conexões", icon: Link2, href: "/conexoes" },
-  { id: "campanhas", name: "Campanhas", icon: Send, href: "/campanhas" },
-  { id: "atendimento", name: "Atendimento", icon: MessageSquare, href: "/atendimento" },
   { id: "agendamentos", name: "Agendamentos", icon: Calendar, href: "/agendamentos" },
   { id: "etiquetas", name: "Etiquetas", icon: Tag, href: "/etiquetas" },
   { id: "relatorios", name: "Relatórios", icon: PieChart, href: "/relatorios" },
-  { id: "sdr", name: "SDR Robô", icon: Bot, href: "/sdr" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
+];
+
+const automationItems: NavigationItem[] = [
+  { id: "conexoes", name: "Conexões", icon: Link2, href: "/conexoes" },
+  { id: "campanhas", name: "Campanhas", icon: Send, href: "/campanhas" },
+  { id: "atendimento", name: "Atendimento", icon: MessageSquare, href: "/atendimento" },
+  { id: "sdr", name: "SDR Robô", icon: Bot, href: "/sdr" },
 ];
 
 export function Sidebar({ className = "" }: SidebarProps) {
