@@ -158,6 +158,69 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          interest: string | null
+          is_lead: boolean | null
+          name: string
+          notes: string | null
+          optin_email: boolean | null
+          optin_whatsapp: boolean | null
+          origin: string | null
+          phone: string | null
+          potential_value: number | null
+          stage: string | null
+          status: string | null
+          tag: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          interest?: string | null
+          is_lead?: boolean | null
+          name: string
+          notes?: string | null
+          optin_email?: boolean | null
+          optin_whatsapp?: boolean | null
+          origin?: string | null
+          phone?: string | null
+          potential_value?: number | null
+          stage?: string | null
+          status?: string | null
+          tag?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          interest?: string | null
+          is_lead?: boolean | null
+          name?: string
+          notes?: string | null
+          optin_email?: boolean | null
+          optin_whatsapp?: boolean | null
+          origin?: string | null
+          phone?: string | null
+          potential_value?: number | null
+          stage?: string | null
+          status?: string | null
+          tag?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       evolution_config: {
         Row: {
           api_key: string
