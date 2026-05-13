@@ -8,7 +8,8 @@ import {
   User, 
   ArrowRight,
   ChevronLeft,
-  CheckCheck
+  CheckCheck,
+  Columns
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -311,8 +312,14 @@ function AtendimentoPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-700">
-                  MOVER FUNIL <ArrowRight className="h-3 w-3 ml-2" />
+                <Button 
+                  variant="outline" 
+                  className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-700"
+                  onClick={() => {
+                    window.location.href = `/funil?leadId=${selectedLead.id}`;
+                  }}
+                >
+                  MOVER FUNIL <Columns className="h-3 w-3 ml-2" />
                 </Button>
                 <Button variant="ghost" size="icon" className="text-zinc-500">
                   <MoreVertical className="h-5 w-5" />
