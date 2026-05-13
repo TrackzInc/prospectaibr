@@ -351,7 +351,7 @@ function ConexoesPage() {
                 <Input 
                   placeholder="https://api.suaevolution.com.br" 
                   value={tempUrl}
-                  onChange={(e) => setTempUrl(e.target.value)}
+                  onChange={(e) => { setTempUrl(e.target.value); setConnectionTested(false); }}
                   className="bg-zinc-900 border-zinc-700 h-10"
                 />
               </div>
