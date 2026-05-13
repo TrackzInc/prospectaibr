@@ -90,6 +90,13 @@ type Company = {
   reviews: number;
   open: boolean;
   pipeline_stage?: string | null;
+  tags?: Tag[];
+};
+
+type Tag = {
+  id: string;
+  name: string;
+  color: string;
 };
 
 type SearchHistory = {
@@ -168,11 +175,19 @@ function Index() {
   const [selectedHistory, setSelectedHistory] = useState<SearchHistory | null>(null);
   const [historyLeads, setHistoryLeads] = useState<Company[]>([]);
   const [loadingHistoryLeads, setLoadingHistoryLeads] = useState(false);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchHistory();
     fetchAllCompanies();
+    fetchTags();
   }, []);
+
+  const fetchTags = async () => {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    if (data) setAvailableTags(data);
+  };
 
   const fetchAllCompanies = async () => {
     try {
