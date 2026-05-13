@@ -149,20 +149,34 @@ function ConexoesPage() {
       console.log("Resposta Evolution API (Create):", evoData);
       
       if (!response.ok) {
-        throw new Error(evoData.message || JSON.stringify(evoData) || "Erro na Evolution API");
+        // Handle specific error case where instance already exists but we want to connect it
+        if (evoData.status === 400 && evoData.message?.includes('já existe')) {
+          toast.info("A instância já existe na API. Tentando conectar...");
+        } else {
+          throw new Error(evoData.message || JSON.stringify(evoData) || "Erro na Evolution API");
+        }
       }
 
-      // 2. Save in Supabase
-      const { error } = await supabase
+      // Check if instance already exists in Supabase
+      const { data: existingInstance } = await supabase
         .from('whatsapp_instances')
-        .insert({
-          user_id: user.id,
-          instance_name: newInstanceName,
-          instance_id: evoData.instance?.instanceId || newInstanceName,
-          status: 'disconnected'
-        });
+        .select('id')
+        .eq('instance_name', newInstanceName)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (!existingInstance) {
+        // 2. Save in Supabase
+        const { error } = await supabase
+          .from('whatsapp_instances')
+          .insert({
+            user_id: user.id,
+            instance_name: newInstanceName,
+            instance_id: evoData.instance?.instanceId || evoData.instance?.name || newInstanceName,
+            status: 'disconnected'
+          });
+
+        if (error) throw error;
+      }
 
       toast.success("Instância criada com sucesso! Buscando QR Code...");
       setNewInstanceName("");
