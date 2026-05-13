@@ -224,15 +224,20 @@ function ConexoesPage() {
       const data = await response.json();
       console.log("Resposta Evolution API (QR Code):", data);
       
-      if (data.base64) {
+      // Handle different Evolution API response formats for QR code
+      const qrBase64 = data.base64 || data.qrcode?.base64 || data.code;
+      const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open';
+
+      if (qrBase64) {
         setInstances(prev => prev.map(inst => 
-          inst.instance_name === instanceName ? { ...inst, qrcode: data.base64 } : inst
+          inst.instance_name === instanceName ? { ...inst, qrcode: qrBase64 } : inst
         ));
-      } else if (data.instance?.state === 'open' || data.state === 'open') {
+      } else if (isConnected) {
         toast.success("Instância já conectada!");
         updateStatus(instanceName, 'connected');
       } else {
-        toast.error("Não foi possível obter o QR Code. Verifique o console.");
+        console.error("Dados do QR Code não encontrados:", data);
+        toast.error("QR Code não encontrado na resposta. Verifique o console.");
       }
     } catch (err: any) {
       console.error("Erro ao obter QR Code:", err);
