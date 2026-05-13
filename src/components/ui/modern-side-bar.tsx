@@ -373,9 +373,13 @@ export function Sidebar({ className = "" }: SidebarProps) {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-primary text-xs font-bold">
+              <Link
+                to="/configuracoes"
+                className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-primary text-xs font-bold hover:bg-zinc-700 transition-colors"
+                title="Configurações"
+              >
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="p-2 text-zinc-500 hover:text-zinc-50 transition-colors"
