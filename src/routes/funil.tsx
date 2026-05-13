@@ -443,9 +443,24 @@ function LeadCard({ lead, onNext, showNext, isOverlay, onRefresh }: {
 
         <div className="space-y-2">
           {lead.phone && (
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              <Phone className="h-3 w-3 shrink-0 text-primary/70" />
-              <span className="truncate">{lead.phone}</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs text-zinc-400">
+                <Phone className="h-3 w-3 shrink-0 text-primary/70" />
+                <span className="truncate">{lead.phone}</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-[10px] font-bold uppercase tracking-widest gap-1 text-[#25D366] hover:text-[#25D366] hover:bg-[#25D366]/10 px-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const cleaned = lead.phone!.replace(/\D/g, '');
+                  window.open(`https://wa.me/${cleaned}`, '_blank');
+                }}
+              >
+                <Phone className="h-3 w-3" />
+                WhatsApp
+              </Button>
             </div>
           )}
           <div className="flex items-center justify-between">

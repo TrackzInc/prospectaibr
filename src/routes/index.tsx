@@ -1101,6 +1101,20 @@ function Index() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {r.phone && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 text-[#25D366] hover:text-[#25D366] hover:bg-[#25D366]/10"
+                              onClick={() => {
+                                const cleaned = r.phone!.replace(/\D/g, '');
+                                window.open(`https://wa.me/${cleaned}`, '_blank');
+                              }}
+                            >
+                              <Phone className="h-3.5 w-3.5" />
+                              WhatsApp
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
