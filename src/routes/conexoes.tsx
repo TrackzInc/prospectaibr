@@ -129,7 +129,11 @@ function ConexoesPage() {
       if (!user) return;
 
       // 1. Create in Evolution API
-      const response = await fetch(`${config.api_url}/instance/create`, {
+      const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      
+      console.log("Criando instância na URL:", `${baseUrl}/instance/create`);
+      
+      const response = await fetch(`${baseUrl}/instance/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,14 +141,16 @@ function ConexoesPage() {
         },
         body: JSON.stringify({
           instanceName: newInstanceName,
-          token: Math.random().toString(36).substring(7),
           qrcode: true
         })
       });
 
       const evoData = await response.json();
+      console.log("Resposta Evolution API (Create):", evoData);
       
-      if (!response.ok) throw new Error(evoData.message || "Erro na Evolution API");
+      if (!response.ok) {
+        throw new Error(evoData.message || JSON.stringify(evoData) || "Erro na Evolution API");
+      }
 
       // 2. Save in Supabase
       const { error } = await supabase
@@ -158,10 +164,15 @@ function ConexoesPage() {
 
       if (error) throw error;
 
-      toast.success("Instância criada com sucesso!");
+      toast.success("Instância criada com sucesso! Buscando QR Code...");
       setNewInstanceName("");
+      
+      // 3. Get QR Code immediately after creation
+      await getQRCode(newInstanceName);
+      
       fetchInstances();
     } catch (err: any) {
+      console.error("Erro detalhado ao criar instância:", err);
       toast.error("Erro ao criar instância: " + err.message);
     }
   };
@@ -170,11 +181,18 @@ function ConexoesPage() {
     if (!config) return;
 
     try {
+      const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      
       // 1. Delete from Evolution API
-      await fetch(`${config.api_url}/instance/delete/${instanceName}`, {
+      const response = await fetch(`${baseUrl}/instance/delete/${instanceName}`, {
         method: 'DELETE',
         headers: { 'apikey': config.api_key }
       });
+      
+      if (!response.ok) {
+        const errData = await response.json();
+        console.warn("Aviso ao excluir na API (pode já não existir):", errData);
+      }
 
       // 2. Delete from Supabase
       const { error } = await supabase
@@ -187,6 +205,7 @@ function ConexoesPage() {
       toast.success("Instância excluída");
       fetchInstances();
     } catch (err: any) {
+      console.error("Erro ao excluir instância:", err);
       toast.error("Erro ao excluir: " + err.message);
     }
   };
@@ -194,22 +213,30 @@ function ConexoesPage() {
   const getQRCode = async (instanceName: string) => {
     if (!config) return;
     try {
-      const response = await fetch(`${config.api_url}/instance/connect/${instanceName}`, {
+      const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      
+      console.log("Buscando QR Code em:", `${baseUrl}/instance/connect/${instanceName}`);
+      
+      const response = await fetch(`${baseUrl}/instance/connect/${instanceName}`, {
         headers: { 'apikey': config.api_key }
       });
+      
       const data = await response.json();
+      console.log("Resposta Evolution API (QR Code):", data);
       
       if (data.base64) {
         setInstances(prev => prev.map(inst => 
           inst.instance_name === instanceName ? { ...inst, qrcode: data.base64 } : inst
         ));
-      } else if (data.instance?.state === 'open') {
+      } else if (data.instance?.state === 'open' || data.state === 'open') {
         toast.success("Instância já conectada!");
         updateStatus(instanceName, 'connected');
+      } else {
+        toast.error("Não foi possível obter o QR Code. Verifique o console.");
       }
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao obter QR Code");
+    } catch (err: any) {
+      console.error("Erro ao obter QR Code:", err);
+      toast.error("Erro ao obter QR Code: " + err.message);
     }
   };
 
