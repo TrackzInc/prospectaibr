@@ -106,7 +106,17 @@ function SDRPage() {
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        setConfig(data);
+        setConfig({
+          ...data,
+          is_active: !!data.is_active,
+          business_context: data.business_context || '',
+          specific_instructions: data.specific_instructions || '',
+          delay_minutes: data.delay_minutes || 2,
+          working_hours_enabled: !!data.working_hours_enabled,
+          work_start_time: data.work_start_time || '09:00',
+          work_end_time: data.work_end_time || '18:00',
+          work_days: data.work_days || [1, 2, 3, 4, 5]
+        } as any);
       } else {
         // Default initial config
         setConfig({
