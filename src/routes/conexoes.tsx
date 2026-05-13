@@ -164,6 +164,9 @@ function ConexoesPage() {
       if (!user) return;
 
       // 1. Create in Evolution API
+      // Sanitize instance name: no spaces, only alphanumeric and underscores
+      const sanitizedName = newInstanceName.trim().replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      
       const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
       const url = `${baseUrl}/instance/create`;
       const headers = {
@@ -171,7 +174,7 @@ function ConexoesPage() {
         'Content-Type': 'application/json'
       };
       const body = {
-        instanceName: newInstanceName,
+        instanceName: sanitizedName,
         qrcode: true,
         integration: "WHATSAPP-BAILEYS"
       };
@@ -190,7 +193,10 @@ function ConexoesPage() {
       if (!response.ok) {
         console.error("ERRO API (Create):", evoData);
         // Handle specific error case where instance already exists but we want to connect it
-        if ((evoData.status === 400 || evoData.code === 400) && (evoData.message?.includes('já existe') || evoData.message?.includes('already exists'))) {
+        if ((evoData.status === 400 || evoData.code === 400) && 
+            (evoData.message?.toLowerCase().includes('existe') || 
+             evoData.message?.toLowerCase().includes('exists') ||
+             evoData.message?.toLowerCase().includes('taken'))) {
           toast.info("A instância já existe na API. Tentando conectar...");
         } else {
           const apiError = evoData.message || evoData.error || JSON.stringify(evoData);
