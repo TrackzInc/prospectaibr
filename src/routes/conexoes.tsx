@@ -381,6 +381,16 @@ function ConexoesPage() {
         </Card>
       )}
 
+      {/* Connection status banner */}
+      {!connectionTested && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+          <AlertCircle className="h-4 w-4 text-yellow-500 shrink-0" />
+          <p className="text-xs text-yellow-200/80">
+            Antes de criar instâncias, abra a configuração e clique em <span className="font-bold text-yellow-300">TESTAR CONEXÃO</span>. A criação só será liberada após status 200.
+          </p>
+        </div>
+      )}
+
       {/* Create Instance */}
       <div className="flex flex-col sm:flex-row gap-4 mb-12">
         <Input 
@@ -388,10 +398,12 @@ function ConexoesPage() {
           value={newInstanceName}
           onChange={(e) => setNewInstanceName(e.target.value)}
           className="bg-zinc-800 border-zinc-700 h-12 text-zinc-100 flex-1"
+          disabled={!connectionTested}
         />
         <Button 
           onClick={createInstance}
-          className="bg-primary hover:bg-primary/90 text-black font-black px-8 h-12 text-xs tracking-widest shadow-[0_0_20px_rgba(170,255,0,0.2)]"
+          disabled={!connectionTested}
+          className="bg-primary hover:bg-primary/90 text-black font-black px-8 h-12 text-xs tracking-widest shadow-[0_0_20px_rgba(170,255,0,0.2)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4 mr-2" />
           CRIAR INSTÂNCIA
