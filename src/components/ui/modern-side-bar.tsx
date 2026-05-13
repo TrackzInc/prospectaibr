@@ -169,8 +169,67 @@ export function Sidebar({ className = "" }: SidebarProps) {
               </p>
             )}
           </div>
-          <ul className="space-y-1">
+          <ul className="space-y-1 mb-8">
             {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.href || (item.href === "/" && location.pathname === "/" && !(location.search as any).tab) || ((location.search as any).tab === item.id);
+
+              return (
+                <li key={item.id} className="relative">
+                  {isActive && !isCollapsed && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full shadow-[0_0_10px_rgba(170,255,0,0.5)]" />
+                  )}
+                  <Link
+                    to={item.href as any}
+                    onClick={() => {
+                      if (window.innerWidth < 768) setIsOpen(false);
+                    }}
+                    className={`
+                      w-full flex items-center space-x-3 px-6 py-2 transition-all duration-200 group
+                      ${isActive
+                        ? "text-zinc-50"
+                        : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50"
+                      }
+                      ${isCollapsed ? "justify-center px-0" : ""}
+                    `}
+                    title={isCollapsed ? item.name : undefined}
+                  >
+                    <div className="flex items-center justify-center min-w-[20px]">
+                      <Icon
+                        className={`
+                          h-5 w-5 flex-shrink-0 transition-colors
+                          ${isActive 
+                            ? "text-primary" 
+                            : "text-zinc-500 group-hover:text-zinc-400"
+                          }
+                        `}
+                      />
+                    </div>
+                    
+                    {!isCollapsed && (
+                      <span className={`text-sm ${isActive ? "font-medium" : "font-normal"}`}>{item.name}</span>
+                    )}
+
+                    {isCollapsed && (
+                      <div className="absolute left-full ml-2 px-2 py-1 bg-zinc-800 text-zinc-50 text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 border border-zinc-700">
+                        {item.name}
+                      </div>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="px-4 mb-4">
+            {!isCollapsed && (
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 mb-4 px-2">
+                Automação
+              </p>
+            )}
+          </div>
+          <ul className="space-y-1">
+            {automationItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.href || (item.href === "/" && location.pathname === "/" && !(location.search as any).tab) || ((location.search as any).tab === item.id);
 
