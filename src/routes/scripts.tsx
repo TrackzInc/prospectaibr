@@ -336,8 +336,8 @@ function ScriptsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredScripts.map((script) => (
-            <Card key={script.id} className="bg-zinc-800 border-zinc-700 overflow-hidden group hover:border-primary/30 transition-all duration-500 shadow-2xl relative">
-              <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: script.color }} />
+            <Card key={script.id} className="bg-zinc-800 border-zinc-700 overflow-hidden group hover:border-primary transition-all duration-300 shadow-2xl relative">
+
               
               {/* Corner Actions */}
               <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
