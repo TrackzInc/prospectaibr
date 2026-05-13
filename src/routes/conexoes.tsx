@@ -208,7 +208,7 @@ function ConexoesPage() {
       const { data: existingInstance } = await supabase
         .from('whatsapp_instances')
         .select('id')
-        .eq('instance_name', newInstanceName)
+        .eq('instance_name', sanitizedName)
         .maybeSingle();
 
       if (!existingInstance) {
@@ -217,19 +217,19 @@ function ConexoesPage() {
           .from('whatsapp_instances')
           .insert({
             user_id: user.id,
-            instance_name: newInstanceName,
-            instance_id: evoData.instance?.instanceId || evoData.instance?.name || newInstanceName,
+            instance_name: sanitizedName,
+            instance_id: evoData.instance?.instanceId || evoData.instance?.name || sanitizedName,
             status: 'disconnected'
           });
 
         if (error) throw error;
       }
 
-      toast.success("Instância criada com sucesso! Buscando QR Code...");
+      toast.success("Instância pronta! Buscando QR Code...");
       setNewInstanceName("");
       
       // 3. Get QR Code immediately after creation
-      await getQRCode(newInstanceName);
+      await getQRCode(sanitizedName);
       
       fetchInstances();
     } catch (err: any) {
