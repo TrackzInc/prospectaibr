@@ -165,19 +165,23 @@ function ConexoesPage() {
 
       // 1. Create in Evolution API
       const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      const url = `${baseUrl}/instance/create`;
+      const headers = {
+        'apikey': config.api_key,
+        'Content-Type': 'application/json'
+      };
+      const body = {
+        instanceName: newInstanceName,
+        qrcode: true,
+        integration: "WHATSAPP-BAILEYS"
+      };
+
+      console.log("DEBUG: Request Criar Instância", { url, headers, body });
       
-      console.log("Criando instância na URL:", `${baseUrl}/instance/create`);
-      
-      const response = await fetch(`${baseUrl}/instance/create`, {
+      const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': config.api_key
-        },
-        body: JSON.stringify({
-          instanceName: newInstanceName,
-          qrcode: true
-        })
+        headers: headers,
+        body: JSON.stringify(body)
       });
 
       const evoData = await response.json();
