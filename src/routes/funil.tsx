@@ -198,6 +198,29 @@ function FunilPage() {
 
         console.log('Tentando sincronizar lead:', lead.name, leadData);
 
+        // Verificar se já existe um contato com mesmo user_id, name e phone
+        const { data: existingContacts, error: checkError } = await supabase
+          .from('contacts' as any)
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('name', lead.name)
+          .eq('phone', lead.phone)
+          .limit(1);
+
+        if (checkError) {
+          console.error(`Erro ao verificar duplicidade para ${lead.name}:`, checkError);
+        }
+
+        if (existingContacts && existingContacts.length > 0) {
+          console.log(`Lead ${lead.name} já existe no CRM, marcando apenas como sincronizado localmente.`);
+          // Apenas atualizamos localmente para não tentar sincronizar novamente
+          await supabase
+            .from('companies')
+            .update({ crm_synced: true })
+            .eq('id', lead.id);
+          continue;
+        }
+
         // Inserir no CRM (contacts)
         const { data, error: contactError } = await supabase.from('contacts' as any).insert(leadData).select();
 
