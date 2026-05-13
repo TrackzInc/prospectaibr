@@ -304,9 +304,13 @@ function Index() {
       const ratingMatch = r.rating >= parseFloat(minRating);
       const phoneMatch = onlyWithPhone ? !!r.phone : true;
       const websiteMatch = onlyWithWebsite ? !!r.website : true;
-      return ratingMatch && phoneMatch && websiteMatch;
+      
+      const companyFromAll = allCompanies.find(c => c.name === r.name && c.address === r.address);
+      const tagMatch = selectedTagFilter === "all" || (companyFromAll?.tags?.some((t: any) => t.id === selectedTagFilter));
+
+      return ratingMatch && phoneMatch && websiteMatch && tagMatch;
     });
-  }, [results, minRating, onlyWithPhone, onlyWithWebsite]);
+  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
