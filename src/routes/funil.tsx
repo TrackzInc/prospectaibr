@@ -33,7 +33,8 @@ import {
   Building2,
   Filter,
   RefreshCw,
-  Tag as TagIcon
+  Tag as TagIcon,
+  CloudSync
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,7 @@ type Tag = {
 function FunilPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -153,6 +155,68 @@ function FunilPage() {
     }
   };
 
+  const syncWithCRM = async () => {
+    try {
+      setSyncing(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Buscar leads não sincronizados
+      const { data: unsyncedLeads, error: fetchError } = await supabase
+        .from('companies')
+        .select('*')
+        .not('pipeline_stage', 'is', null)
+        .eq('crm_synced', false);
+
+      if (fetchError) throw fetchError;
+
+      if (!unsyncedLeads || unsyncedLeads.length === 0) {
+        toast.info("Todos os leads já estão sincronizados!");
+        return;
+      }
+
+      let syncedCount = 0;
+
+      for (const lead of unsyncedLeads) {
+        // Inserir no CRM (contacts)
+        const { error: contactError } = await supabase.from('contacts' as any).insert({
+          user_id: user.id,
+          name: lead.name,
+          phone: lead.phone,
+          email: '',
+          origin: 'ProspectAI',
+          status: 'novo',
+          stage: 'novo_lead',
+          is_lead: true,
+          tag: lead.segment,
+          interest: lead.segment,
+          notes: `Lead gerado via ProspectAI - ${lead.city_state || 'Localização não informada'}`,
+          potential_value: 0,
+          optin_email: false,
+          optin_whatsapp: false,
+          tags: lead.segment ? [lead.segment] : [],
+        });
+
+        if (!contactError) {
+          // Marcar como sincronizado localmente
+          await supabase
+            .from('companies')
+            .update({ crm_synced: true })
+            .eq('id', lead.id);
+          
+          syncedCount++;
+        }
+      }
+
+      toast.success(`${syncedCount} leads sincronizados com o CRM com sucesso!`);
+      fetchLeads();
+    } catch (err: any) {
+      toast.error("Erro na sincronização: " + err.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
   };
@@ -212,6 +276,16 @@ function FunilPage() {
           <p className="text-xs text-zinc-500 mt-1 uppercase tracking-widest font-medium">Gerencie seus leads e acompanhe as negociações.</p>
         </div>
         <div className="flex gap-3">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={syncWithCRM} 
+            disabled={syncing}
+            className="gap-2 border-zinc-700 bg-zinc-800 text-primary hover:text-primary hover:bg-zinc-700 font-bold"
+          >
+            <CloudSync className={`h-3.5 w-3.5 ${syncing ? 'animate-pulse' : ''}`} />
+            {syncing ? 'SINCRONIZANDO...' : 'SINCRONIZAR COM CRM'}
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchLeads} className="gap-2 border-zinc-700 bg-zinc-800 text-zinc-300 hover:text-zinc-50 font-bold">
             <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
             ATUALIZAR
