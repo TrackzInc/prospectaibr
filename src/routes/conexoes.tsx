@@ -153,6 +153,12 @@ function ConexoesPage() {
       return;
     }
 
+    if (!connectionTested) {
+      setShowConfig(true);
+      toast.error("⚠️ Teste a conexão antes de criar uma instância");
+      return;
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
