@@ -41,6 +41,7 @@ const navigationItems: NavigationItem[] = [
   { id: "funil", name: "Funil", icon: Columns, href: "/funil" },
   { id: "conexoes", name: "Conexões", icon: Link2, href: "/conexoes" },
   { id: "campanhas", name: "Campanhas", icon: Send, href: "/campanhas" },
+  { id: "atendimento", name: "Atendimento", icon: MessageSquare, href: "/atendimento" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
 ];
 
