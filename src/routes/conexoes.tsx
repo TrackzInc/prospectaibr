@@ -467,8 +467,13 @@ function ConexoesPage() {
                 </div>
 
                 <div className="flex flex-col items-center justify-center bg-zinc-900/50 rounded-lg p-6 mb-6 border border-zinc-700/30">
-                  {inst.qrcode ? (
-                    <div className="bg-white p-2 rounded-lg">
+                  {loadingQr === inst.instance_name ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCw className="h-12 w-12 text-primary animate-spin" />
+                      <p className="text-[10px] font-bold text-primary tracking-widest uppercase">Buscando...</p>
+                    </div>
+                  ) : inst.qrcode ? (
+                    <div className="bg-white p-2 rounded-lg animate-in zoom-in duration-300">
                       <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
                     </div>
                   ) : inst.status === 'connected' ? (
@@ -488,6 +493,7 @@ function ConexoesPage() {
                   {inst.status !== 'connected' ? (
                     <Button 
                       onClick={() => getQRCode(inst.instance_name)}
+                      disabled={loadingQr === inst.instance_name}
                       className="col-span-2 bg-zinc-700 hover:bg-zinc-600 text-white font-bold text-[10px] tracking-widest uppercase"
                     >
                       {inst.qrcode ? 'ATUALIZAR QR CODE' : 'CONECTAR'}
