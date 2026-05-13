@@ -128,13 +128,16 @@ function ConexoesPage() {
       });
 
       if (response.ok) {
+        setConnectionTested(true);
         toast.success("Conexão estabelecida com sucesso! (It is working)");
       } else {
+        setConnectionTested(false);
         const errorData = await response.json().catch(() => ({}));
-        toast.error(`Falha na conexão: ${response.status} ${errorData.message || ''}`);
+        toast.error(`⚠️ Falha na conexão: ${response.status} ${errorData.message || 'Verifique URL e API Key'}`);
       }
     } catch (err: any) {
-      toast.error("Erro ao testar conexão: " + err.message);
+      setConnectionTested(false);
+      toast.error("⚠️ Erro ao testar conexão: " + err.message);
     }
   };
 
