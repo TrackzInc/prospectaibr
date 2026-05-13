@@ -9,7 +9,8 @@ import {
   ArrowRight,
   ChevronLeft,
   CheckCheck,
-  Columns
+  Columns,
+  Tag as TagIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -96,7 +106,7 @@ function AtendimentoPage() {
       fetchMessages(selectedLead.id);
       markAsRead(selectedLead.id);
     }
-  }, [selectedLead]);
+  }, [selectedLead?.id]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -359,6 +369,17 @@ function AtendimentoPage() {
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
                 <div>
+                   <div className="flex gap-1 mb-1">
+                    {selectedLead.tags?.map(tag => (
+                      <Badge 
+                        key={tag.id}
+                        style={{ backgroundColor: tag.color, color: tag.color === '#AAFF00' ? 'black' : 'white' }}
+                        className="px-1.5 py-0 text-[8px] font-black uppercase tracking-widest border-none"
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
                   <h2 className="font-black text-white uppercase tracking-tight text-lg leading-tight">{selectedLead.name}</h2>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-xs text-zinc-500 flex items-center gap-1">
@@ -371,6 +392,38 @@ function AtendimentoPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-700 gap-2">
+                      <TagIcon className="h-3 w-3" /> ETIQUETAS
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-zinc-800 border-zinc-700 text-zinc-200 w-48">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-zinc-500">Etiquetas</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-zinc-700" />
+                    {availableTags.length === 0 ? (
+                      <div className="p-2 text-[10px] text-zinc-500 italic">Nenhuma etiqueta criada</div>
+                    ) : (
+                      availableTags.map(tag => {
+                        const isSelected = selectedLead.tags?.some(t => t.id === tag.id);
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={tag.id}
+                            checked={isSelected}
+                            onCheckedChange={() => toggleTag(selectedLead.id, tag, !!isSelected)}
+                            className="text-xs focus:bg-primary focus:text-black"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                              {tag.name}
+                            </div>
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button 
                   variant="outline" 
                   className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-700"
