@@ -48,6 +48,7 @@ const navigationItems: NavigationItem[] = [
   { id: "etiquetas", name: "Etiquetas", icon: Tag, href: "/etiquetas" },
   { id: "relatorios", name: "Relatórios", icon: PieChart, href: "/relatorios" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
+  { id: "configuracoes", name: "Configurações", icon: Settings, href: "/configuracoes" },
 ];
 
 const automationItems: NavigationItem[] = [
@@ -348,15 +349,20 @@ export function Sidebar({ className = "" }: SidebarProps) {
         <div className="mt-auto border-t border-zinc-800/50 p-4">
           {!isCollapsed ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 px-2">
-                <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-primary text-xs font-bold">
+              <Link
+                to="/configuracoes"
+                className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-zinc-800/50 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-primary text-xs font-bold shrink-0">
                   {user?.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-zinc-50 truncate">{user?.name || 'Usuário'}</p>
-                  <p className="text-[10px] text-zinc-500 truncate">{user?.email || 'Acessando...'}</p>
-                </div>
-              </div>
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-zinc-50 truncate">{user?.name || 'Usuário'}</p>
+                    <p className="text-[10px] text-zinc-500 truncate">{user?.email || 'Acessando...'}</p>
+                  </div>
+                )}
+              </Link>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-2 px-2 py-2 text-xs font-medium text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800 rounded-md transition-colors"
@@ -367,9 +373,13 @@ export function Sidebar({ className = "" }: SidebarProps) {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-primary text-xs font-bold">
+              <Link
+                to="/configuracoes"
+                className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-primary text-xs font-bold hover:bg-zinc-700 transition-colors"
+                title="Configurações"
+              >
                 {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="p-2 text-zinc-500 hover:text-zinc-50 transition-colors"
