@@ -383,7 +383,7 @@ function ConexoesPage() {
                 <div className="flex flex-col items-center justify-center bg-zinc-900/50 rounded-lg p-6 mb-6 border border-zinc-700/30">
                   {inst.qrcode ? (
                     <div className="bg-white p-2 rounded-lg">
-                      <img src={inst.qrcode} alt="QR Code" className="w-32 h-32" />
+                      <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
                     </div>
                   ) : inst.status === 'connected' ? (
                     <div className="flex flex-col items-center gap-3">
