@@ -192,12 +192,28 @@ function Index() {
   const fetchAllCompanies = async () => {
     try {
       setLoadingStats(true);
-      const { data, error } = await supabase
+      const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*');
       
-      if (error) throw error;
-      setAllCompanies(data || []);
+      if (companiesError) throw companiesError;
+
+      const { data: leadTagsData, error: leadTagsError } = await supabase
+        .from('lead_tags')
+        .select('lead_id, tags(*)');
+
+      if (leadTagsError) throw leadTagsError;
+
+      const tagsByLead: Record<string, any[]> = {};
+      (leadTagsData || []).forEach((lt: any) => {
+        if (!tagsByLead[lt.lead_id]) tagsByLead[lt.lead_id] = [];
+        if (lt.tags) tagsByLead[lt.lead_id].push(lt.tags);
+      });
+
+      setAllCompanies(companiesData.map(c => ({
+        ...c,
+        tags: tagsByLead[c.id] || []
+      })));
     } catch (err) {
       console.error("Erro ao carregar empresas para dashboard:", err);
     } finally {
