@@ -1279,20 +1279,37 @@ function Index() {
                                   <Stars rating={lead.rating} />
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
-                                    disabled={!!lead.website}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      sendToPipeline(lead);
-                                    }}
-                                    title={lead.website ? "Somente leads sem site podem ser enviados" : ""}
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                    Funil
-                                  </Button>
+                                  <div className="flex items-center justify-end gap-2">
+                                    {lead.phone && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 gap-1.5 text-[#25D366] hover:text-[#25D366] hover:bg-[#25D366]/10"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const cleaned = lead.phone!.replace(/\D/g, '');
+                                          window.open(`https://wa.me/${cleaned}`, '_blank');
+                                        }}
+                                      >
+                                        <Phone className="h-3 w-3" />
+                                        WhatsApp
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
+                                      disabled={!!lead.website}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        sendToPipeline(lead);
+                                      }}
+                                      title={lead.website ? "Somente leads sem site podem ser enviados" : ""}
+                                    >
+                                      <Plus className="h-3 w-3" />
+                                      Funil
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
