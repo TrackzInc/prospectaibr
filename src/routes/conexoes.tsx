@@ -129,7 +129,11 @@ function ConexoesPage() {
       if (!user) return;
 
       // 1. Create in Evolution API
-      const response = await fetch(`${config.api_url}/instance/create`, {
+      const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
+      
+      console.log("Criando instância na URL:", `${baseUrl}/instance/create`);
+      
+      const response = await fetch(`${baseUrl}/instance/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,14 +141,16 @@ function ConexoesPage() {
         },
         body: JSON.stringify({
           instanceName: newInstanceName,
-          token: Math.random().toString(36).substring(7),
           qrcode: true
         })
       });
 
       const evoData = await response.json();
+      console.log("Resposta Evolution API (Create):", evoData);
       
-      if (!response.ok) throw new Error(evoData.message || "Erro na Evolution API");
+      if (!response.ok) {
+        throw new Error(evoData.message || JSON.stringify(evoData) || "Erro na Evolution API");
+      }
 
       // 2. Save in Supabase
       const { error } = await supabase
@@ -158,10 +164,15 @@ function ConexoesPage() {
 
       if (error) throw error;
 
-      toast.success("Instância criada com sucesso!");
+      toast.success("Instância criada com sucesso! Buscando QR Code...");
       setNewInstanceName("");
+      
+      // 3. Get QR Code immediately after creation
+      await getQRCode(newInstanceName);
+      
       fetchInstances();
     } catch (err: any) {
+      console.error("Erro detalhado ao criar instância:", err);
       toast.error("Erro ao criar instância: " + err.message);
     }
   };
