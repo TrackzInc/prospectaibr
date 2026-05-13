@@ -32,13 +32,23 @@ import {
   GripVertical,
   Building2,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Tag as TagIcon
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -62,6 +72,13 @@ type Lead = {
   segment: string | null;
   created_at: string;
   pipeline_stage: string;
+  tags?: Tag[];
+};
+
+type Tag = {
+  id: string;
+  name: string;
+  color: string;
 };
 
 function FunilPage() {
@@ -83,13 +100,30 @@ function FunilPage() {
   const fetchLeads = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      const { data: leadsData, error: leadsError } = await supabase
         .from('companies')
         .select('*')
         .not('pipeline_stage', 'is', null);
 
-      if (error) throw error;
-      setLeads(data || []);
+      if (leadsError) throw leadsError;
+
+      const { data: leadTagsData, error: leadTagsError } = await supabase
+        .from('lead_tags')
+        .select('lead_id, tags(*)');
+
+      if (leadTagsError) throw leadTagsError;
+
+      const tagsByLead: Record<string, any[]> = {};
+      (leadTagsData || []).forEach((lt: any) => {
+        if (!tagsByLead[lt.lead_id]) tagsByLead[lt.lead_id] = [];
+        if (lt.tags) tagsByLead[lt.lead_id].push(lt.tags);
+      });
+
+      setLeads(leadsData.map(l => ({
+        ...l,
+        tags: tagsByLead[l.id] || []
+      })));
     } catch (err: any) {
       toast.error("Erro ao carregar leads: " + err.message);
     } finally {
@@ -115,7 +149,7 @@ function FunilPage() {
       ));
     } catch (err: any) {
       toast.error("Erro ao atualizar estágio: " + err.message);
-      fetchLeads(); // Revert on error
+      fetchLeads(); 
     }
   };
 
@@ -133,7 +167,6 @@ function FunilPage() {
     const activeLead = leads.find(l => l.id === activeId);
     if (!activeLead) return;
 
-    // Check if dropping over a column or another card
     const overStage = STAGES.includes(overId) 
       ? overId 
       : leads.find(l => l.id === overId)?.pipeline_stage;
@@ -155,7 +188,6 @@ function FunilPage() {
     const activeLead = leads.find(l => l.id === leadId);
     if (!activeLead) return;
 
-    // Persist the change
     await updateLeadStage(leadId, activeLead.pipeline_stage);
   };
 
@@ -203,6 +235,7 @@ function FunilPage() {
                 title={stage} 
                 leads={leadsByStage[stage] || []} 
                 onMoveLead={updateLeadStage}
+                onRefresh={fetchLeads}
               />
             ))}
           </div>
@@ -217,7 +250,7 @@ function FunilPage() {
             }),
           }}>
             {activeLead ? (
-              <LeadCard lead={activeLead} isOverlay />
+              <LeadCard lead={activeLead} isOverlay onRefresh={fetchLeads} />
             ) : null}
           </DragOverlay>
         </DndContext>
@@ -226,11 +259,12 @@ function FunilPage() {
   );
 }
 
-function KanbanColumn({ id, title, leads, onMoveLead }: { 
+function KanbanColumn({ id, title, leads, onMoveLead, onRefresh }: { 
   id: string; 
   title: string; 
   leads: Lead[];
   onMoveLead: (id: string, nextStage: string) => void;
+  onRefresh: () => void;
 }) {
   const nextStage = STAGES[STAGES.indexOf(title) + 1];
 
@@ -257,6 +291,7 @@ function KanbanColumn({ id, title, leads, onMoveLead }: {
                 lead={lead} 
                 onNext={() => nextStage && onMoveLead(lead.id, nextStage)} 
                 showNext={!!nextStage}
+                onRefresh={onRefresh}
               />
             ))}
           </div>
@@ -266,11 +301,12 @@ function KanbanColumn({ id, title, leads, onMoveLead }: {
   );
 }
 
-function LeadCard({ lead, onNext, showNext, isOverlay }: { 
+function LeadCard({ lead, onNext, showNext, isOverlay, onRefresh }: { 
   lead: Lead; 
   onNext?: () => void;
   showNext?: boolean;
   isOverlay?: boolean;
+  onRefresh?: () => void;
 }) {
   const {
     attributes,
@@ -280,6 +316,43 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
     transition,
     isDragging
   } = useSortable({ id: lead.id });
+
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+
+  useEffect(() => {
+    if (!isOverlay) {
+      fetchTags();
+    }
+  }, [isOverlay]);
+
+  const fetchTags = async () => {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    if (data) setAvailableTags(data);
+  };
+
+  const toggleTag = async (tag: Tag, isSelected: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (isSelected) {
+      await supabase
+        .from('lead_tags')
+        .delete()
+        .eq('lead_id', lead.id)
+        .eq('tag_id', tag.id);
+      toast.success(`Etiqueta ${tag.name} removida`);
+    } else {
+      await supabase
+        .from('lead_tags')
+        .insert({
+          user_id: user.id,
+          lead_id: lead.id,
+          tag_id: tag.id
+        });
+      toast.success(`Etiqueta ${tag.name} aplicada`);
+    }
+    onRefresh?.();
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -305,6 +378,17 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
       <CardContent className="p-4 space-y-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0 pr-6">
+            <div className="flex flex-wrap gap-1 mb-2">
+              {lead.tags?.map(tag => (
+                <Badge 
+                  key={tag.id}
+                  style={{ backgroundColor: tag.color, color: tag.color === '#AAFF00' ? 'black' : 'white' }}
+                  className="px-1.5 py-0 text-[8px] font-black uppercase tracking-widest border-none"
+                >
+                  {tag.name}
+                </Badge>
+              ))}
+            </div>
             <h4 className="font-bold text-zinc-50 truncate text-sm leading-tight mb-2">
               {lead.name}
             </h4>
@@ -314,12 +398,46 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
               </Badge>
             )}
           </div>
-          <div 
-            {...attributes} 
-            {...listeners} 
-            className="cursor-grab active:cursor-grabbing p-1 -mt-1 -mr-1 text-zinc-600 group-hover:text-zinc-400 transition-colors"
-          >
-            <GripVertical className="h-4 w-4" />
+          <div className="flex flex-col gap-2">
+            <div 
+              {...attributes} 
+              {...listeners} 
+              className="cursor-grab active:cursor-grabbing p-1 -mt-1 -mr-1 text-zinc-600 group-hover:text-zinc-400 transition-colors"
+            >
+              <GripVertical className="h-4 w-4" />
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 text-zinc-600 hover:text-primary">
+                  <TagIcon className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-zinc-800 border-zinc-700 text-zinc-200 w-48">
+                <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-zinc-500">Etiquetas</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-zinc-700" />
+                {availableTags.length === 0 ? (
+                  <div className="p-2 text-[10px] text-zinc-500 italic">Nenhuma etiqueta criada</div>
+                ) : (
+                  availableTags.map(tag => {
+                    const isSelected = lead.tags?.some(t => t.id === tag.id);
+                    return (
+                      <DropdownMenuCheckboxItem
+                        key={tag.id}
+                        checked={isSelected}
+                        onCheckedChange={() => toggleTag(tag, !!isSelected)}
+                        className="text-xs focus:bg-primary focus:text-black"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                          {tag.name}
+                        </div>
+                      </DropdownMenuCheckboxItem>
+                    );
+                  })
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

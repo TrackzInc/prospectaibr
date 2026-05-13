@@ -9,7 +9,8 @@ import {
   ArrowRight,
   ChevronLeft,
   CheckCheck,
-  Columns
+  Columns,
+  Tag as TagIcon
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,6 +45,13 @@ type Lead = {
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number | null;
+  tags?: Tag[];
+};
+
+type Tag = {
+  id: string;
+  name: string;
+  color: string;
 };
 
 type Message = {
@@ -48,6 +65,7 @@ function AtendimentoPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -56,7 +74,8 @@ function AtendimentoPage() {
 
   useEffect(() => {
     fetchLeads();
-    
+    fetchTags();
+
     const channel = supabase
       .channel('schema-db-changes')
       .on(
@@ -87,7 +106,7 @@ function AtendimentoPage() {
       fetchMessages(selectedLead.id);
       markAsRead(selectedLead.id);
     }
-  }, [selectedLead]);
+  }, [selectedLead?.id]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -97,18 +116,68 @@ function AtendimentoPage() {
 
   const fetchLeads = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: leadsData, error: leadsError } = await supabase
         .from('leads')
         .select('*')
         .order('last_message_at', { ascending: false });
 
-      if (error) throw error;
-      setLeads((data as any[]) || []);
+      if (leadsError) throw leadsError;
+
+      const { data: leadTagsData, error: leadTagsError } = await supabase
+        .from('lead_tags')
+        .select('lead_id, tags(*)');
+
+      if (leadTagsError) throw leadTagsError;
+
+      const tagsByLead: Record<string, any[]> = {};
+      (leadTagsData || []).forEach((lt: any) => {
+        if (!tagsByLead[lt.lead_id]) tagsByLead[lt.lead_id] = [];
+        if (lt.tags) tagsByLead[lt.lead_id].push(lt.tags);
+      });
+
+      const formattedLeads = leadsData.map(l => ({
+        ...l,
+        tags: tagsByLead[l.id] || []
+      }));
+
+      setLeads(formattedLeads);
+      
+      if (selectedLead) {
+        const updatedSelected = formattedLeads.find(l => l.id === selectedLead.id);
+        if (updatedSelected) setSelectedLead(updatedSelected);
+      }
     } catch (err: any) {
       toast.error("Erro ao carregar leads: " + err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchTags = async () => {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    if (data) setAvailableTags(data);
+  };
+
+  const toggleTag = async (leadId: string, tag: Tag, isSelected: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (isSelected) {
+      await supabase
+        .from('lead_tags')
+        .delete()
+        .eq('lead_id', leadId)
+        .eq('tag_id', tag.id);
+    } else {
+      await supabase
+        .from('lead_tags')
+        .insert({
+          user_id: user.id,
+          lead_id: leadId,
+          tag_id: tag.id
+        });
+    }
+    fetchLeads();
   };
 
   const fetchMessages = async (leadId: string) => {
@@ -300,6 +369,17 @@ function AtendimentoPage() {
                   <ChevronLeft className="h-5 w-5" />
                 </Button>
                 <div>
+                   <div className="flex gap-1 mb-1">
+                    {selectedLead.tags?.map(tag => (
+                      <Badge 
+                        key={tag.id}
+                        style={{ backgroundColor: tag.color, color: tag.color === '#AAFF00' ? 'black' : 'white' }}
+                        className="px-1.5 py-0 text-[8px] font-black uppercase tracking-widest border-none"
+                      >
+                        {tag.name}
+                      </Badge>
+                    ))}
+                  </div>
                   <h2 className="font-black text-white uppercase tracking-tight text-lg leading-tight">{selectedLead.name}</h2>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-xs text-zinc-500 flex items-center gap-1">
@@ -312,6 +392,38 @@ function AtendimentoPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-700 gap-2">
+                      <TagIcon className="h-3 w-3" /> ETIQUETAS
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-zinc-800 border-zinc-700 text-zinc-200 w-48">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-zinc-500">Etiquetas</DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-zinc-700" />
+                    {availableTags.length === 0 ? (
+                      <div className="p-2 text-[10px] text-zinc-500 italic">Nenhuma etiqueta criada</div>
+                    ) : (
+                      availableTags.map(tag => {
+                        const isSelected = selectedLead.tags?.some(t => t.id === tag.id);
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={tag.id}
+                            checked={isSelected}
+                            onCheckedChange={() => toggleTag(selectedLead.id, tag, !!isSelected)}
+                            className="text-xs focus:bg-primary focus:text-black"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.color }} />
+                              {tag.name}
+                            </div>
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <Button 
                   variant="outline" 
                   className="border-zinc-700 bg-zinc-800 text-zinc-300 text-xs font-bold hover:bg-zinc-700"

@@ -20,7 +20,8 @@ import {
   Link2,
   Send,
   MessageSquare,
-  Calendar
+  Calendar,
+  Tag
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -45,6 +46,7 @@ const navigationItems: NavigationItem[] = [
   { id: "campanhas", name: "Campanhas", icon: Send, href: "/campanhas" },
   { id: "atendimento", name: "Atendimento", icon: MessageSquare, href: "/atendimento" },
   { id: "agendamentos", name: "Agendamentos", icon: Calendar, href: "/agendamentos" },
+  { id: "etiquetas", name: "Etiquetas", icon: Tag, href: "/etiquetas" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
 ];
 

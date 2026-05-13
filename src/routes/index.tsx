@@ -90,6 +90,13 @@ type Company = {
   reviews: number;
   open: boolean;
   pipeline_stage?: string | null;
+  tags?: Tag[];
+};
+
+type Tag = {
+  id: string;
+  name: string;
+  color: string;
 };
 
 type SearchHistory = {
@@ -168,21 +175,45 @@ function Index() {
   const [selectedHistory, setSelectedHistory] = useState<SearchHistory | null>(null);
   const [historyLeads, setHistoryLeads] = useState<Company[]>([]);
   const [loadingHistoryLeads, setLoadingHistoryLeads] = useState(false);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchHistory();
     fetchAllCompanies();
+    fetchTags();
   }, []);
+
+  const fetchTags = async () => {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    if (data) setAvailableTags(data);
+  };
 
   const fetchAllCompanies = async () => {
     try {
       setLoadingStats(true);
-      const { data, error } = await supabase
+      const { data: companiesData, error: companiesError } = await supabase
         .from('companies')
         .select('*');
       
-      if (error) throw error;
-      setAllCompanies(data || []);
+      if (companiesError) throw companiesError;
+
+      const { data: leadTagsData, error: leadTagsError } = await supabase
+        .from('lead_tags')
+        .select('lead_id, tags(*)');
+
+      if (leadTagsError) throw leadTagsError;
+
+      const tagsByLead: Record<string, any[]> = {};
+      (leadTagsData || []).forEach((lt: any) => {
+        if (!tagsByLead[lt.lead_id]) tagsByLead[lt.lead_id] = [];
+        if (lt.tags) tagsByLead[lt.lead_id].push(lt.tags);
+      });
+
+      setAllCompanies(companiesData.map(c => ({
+        ...c,
+        tags: tagsByLead[c.id] || []
+      })));
     } catch (err) {
       console.error("Erro ao carregar empresas para dashboard:", err);
     } finally {
@@ -273,9 +304,13 @@ function Index() {
       const ratingMatch = r.rating >= parseFloat(minRating);
       const phoneMatch = onlyWithPhone ? !!r.phone : true;
       const websiteMatch = onlyWithWebsite ? !!r.website : true;
-      return ratingMatch && phoneMatch && websiteMatch;
+      
+      const companyFromAll = allCompanies.find(c => c.name === r.name && c.address === r.address);
+      const tagMatch = selectedTagFilter === "all" || (companyFromAll?.tags?.some((t: any) => t.id === selectedTagFilter));
+
+      return ratingMatch && phoneMatch && websiteMatch && tagMatch;
     });
-  }, [results, minRating, onlyWithPhone, onlyWithWebsite]);
+  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
