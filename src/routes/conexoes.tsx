@@ -100,7 +100,7 @@ function ConexoesPage() {
           user_id: user.id,
           api_url: tempUrl,
           api_key: tempKey
-        });
+        }, { onConflict: 'user_id' });
 
       if (error) throw error;
       
