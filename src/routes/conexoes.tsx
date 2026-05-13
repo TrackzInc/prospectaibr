@@ -44,6 +44,7 @@ function ConexoesPage() {
   const [showConfig, setShowConfig] = useState(false);
   const [tempUrl, setTempUrl] = useState("");
   const [tempKey, setTempKey] = useState("");
+  const [connectionTested, setConnectionTested] = useState(false);
 
   const fetchConfig = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -127,13 +128,16 @@ function ConexoesPage() {
       });
 
       if (response.ok) {
+        setConnectionTested(true);
         toast.success("Conexão estabelecida com sucesso! (It is working)");
       } else {
+        setConnectionTested(false);
         const errorData = await response.json().catch(() => ({}));
-        toast.error(`Falha na conexão: ${response.status} ${errorData.message || ''}`);
+        toast.error(`⚠️ Falha na conexão: ${response.status} ${errorData.message || 'Verifique URL e API Key'}`);
       }
     } catch (err: any) {
-      toast.error("Erro ao testar conexão: " + err.message);
+      setConnectionTested(false);
+      toast.error("⚠️ Erro ao testar conexão: " + err.message);
     }
   };
 
@@ -146,6 +150,12 @@ function ConexoesPage() {
     if (!config) {
       setShowConfig(true);
       toast.error("Configure a Evolution API primeiro");
+      return;
+    }
+
+    if (!connectionTested) {
+      setShowConfig(true);
+      toast.error("⚠️ Teste a conexão antes de criar uma instância");
       return;
     }
 
@@ -341,7 +351,7 @@ function ConexoesPage() {
                 <Input 
                   placeholder="https://api.suaevolution.com.br" 
                   value={tempUrl}
-                  onChange={(e) => setTempUrl(e.target.value)}
+                  onChange={(e) => { setTempUrl(e.target.value); setConnectionTested(false); }}
                   className="bg-zinc-900 border-zinc-700 h-10"
                 />
               </div>
@@ -351,7 +361,7 @@ function ConexoesPage() {
                   type="password"
                   placeholder="Sua API Key" 
                   value={tempKey}
-                  onChange={(e) => setTempKey(e.target.value)}
+                  onChange={(e) => { setTempKey(e.target.value); setConnectionTested(false); }}
                   className="bg-zinc-900 border-zinc-700 h-10"
                 />
               </div>
@@ -371,6 +381,16 @@ function ConexoesPage() {
         </Card>
       )}
 
+      {/* Connection status banner */}
+      {!connectionTested && (
+        <div className="mb-4 flex items-center gap-3 px-4 py-3 rounded-lg border border-yellow-500/30 bg-yellow-500/5">
+          <AlertCircle className="h-4 w-4 text-yellow-500 shrink-0" />
+          <p className="text-xs text-yellow-200/80">
+            Antes de criar instâncias, abra a configuração e clique em <span className="font-bold text-yellow-300">TESTAR CONEXÃO</span>. A criação só será liberada após status 200.
+          </p>
+        </div>
+      )}
+
       {/* Create Instance */}
       <div className="flex flex-col sm:flex-row gap-4 mb-12">
         <Input 
@@ -378,10 +398,12 @@ function ConexoesPage() {
           value={newInstanceName}
           onChange={(e) => setNewInstanceName(e.target.value)}
           className="bg-zinc-800 border-zinc-700 h-12 text-zinc-100 flex-1"
+          disabled={!connectionTested}
         />
         <Button 
           onClick={createInstance}
-          className="bg-primary hover:bg-primary/90 text-black font-black px-8 h-12 text-xs tracking-widest shadow-[0_0_20px_rgba(170,255,0,0.2)]"
+          disabled={!connectionTested}
+          className="bg-primary hover:bg-primary/90 text-black font-black px-8 h-12 text-xs tracking-widest shadow-[0_0_20px_rgba(170,255,0,0.2)] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4 mr-2" />
           CRIAR INSTÂNCIA
