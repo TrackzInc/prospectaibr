@@ -39,6 +39,7 @@ type EvolutionConfig = {
 function ConexoesPage() {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingQr, setLoadingQr] = useState<string | null>(null);
   const [newInstanceName, setNewInstanceName] = useState("");
   const [config, setConfig] = useState<EvolutionConfig | null>(null);
   const [showConfig, setShowConfig] = useState(false);
