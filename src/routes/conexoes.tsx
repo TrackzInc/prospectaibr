@@ -112,6 +112,31 @@ function ConexoesPage() {
     }
   };
 
+  const testConnection = async () => {
+    if (!tempUrl || !tempKey) {
+      toast.error("Informe a URL e a API Key para testar");
+      return;
+    }
+
+    try {
+      const baseUrl = tempUrl.endsWith('/') ? tempUrl.slice(0, -1) : tempUrl;
+      const response = await fetch(baseUrl, {
+        headers: {
+          'apikey': tempKey
+        }
+      });
+
+      if (response.ok) {
+        toast.success("Conexão estabelecida com sucesso! (It is working)");
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error(`Falha na conexão: ${response.status} ${errorData.message || ''}`);
+      }
+    } catch (err: any) {
+      toast.error("Erro ao testar conexão: " + err.message);
+    }
+  };
+
   const createInstance = async () => {
     if (!newInstanceName.trim()) {
       toast.error("Informe um nome para a instância");
