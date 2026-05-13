@@ -44,6 +44,7 @@ function ConexoesPage() {
   const [showConfig, setShowConfig] = useState(false);
   const [tempUrl, setTempUrl] = useState("");
   const [tempKey, setTempKey] = useState("");
+  const [connectionTested, setConnectionTested] = useState(false);
 
   const fetchConfig = async () => {
     const { data: { user } } = await supabase.auth.getUser();
