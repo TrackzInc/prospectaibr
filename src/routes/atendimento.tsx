@@ -8,7 +8,6 @@ import {
   User, 
   ArrowRight,
   ChevronLeft,
-  Check,
   CheckCheck
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,20 +27,20 @@ export const Route = createFileRoute("/atendimento")({
 type Lead = {
   id: string;
   name: string;
-  company_name: string;
+  company_name: string | null;
   phone: string;
-  segment: string;
-  status: string;
-  last_message: string;
-  last_message_at: string;
-  unread_count: number;
+  segment: string | null;
+  status: string | null;
+  last_message: string | null;
+  last_message_at: string | null;
+  unread_count: number | null;
 };
 
 type Message = {
   id: string;
   content: string;
   type: 'sent' | 'received';
-  created_at: string;
+  created_at: string | null;
 };
 
 function AtendimentoPage() {
@@ -57,18 +56,22 @@ function AtendimentoPage() {
   useEffect(() => {
     fetchLeads();
     
-    // Subscribe to new messages
     const channel = supabase
       .channel('schema-db-changes')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
-          const newMsg = payload.new as Message;
-          // If message is for currently selected lead, update messages
-          // Note: In a real app, you'd verify the lead_id
-          setMessages(prev => [...prev, newMsg]);
-          fetchLeads(); // Refresh list to update previews
+          const newMsg = payload.new as any;
+          if (selectedLead && newMsg.lead_id === selectedLead.id) {
+            setMessages(prev => [...prev, {
+              id: newMsg.id,
+              content: newMsg.content,
+              type: newMsg.type as 'sent' | 'received',
+              created_at: newMsg.created_at
+            }]);
+          }
+          fetchLeads();
         }
       )
       .subscribe();
@@ -76,7 +79,7 @@ function AtendimentoPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [selectedLead]);
 
   useEffect(() => {
     if (selectedLead) {
@@ -99,7 +102,7 @@ function AtendimentoPage() {
         .order('last_message_at', { ascending: false });
 
       if (error) throw error;
-      setLeads(data || []);
+      setLeads((data as any[]) || []);
     } catch (err: any) {
       toast.error("Erro ao carregar leads: " + err.message);
     } finally {
@@ -116,7 +119,12 @@ function AtendimentoPage() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data as any[]).map(m => ({
+        id: m.id,
+        content: m.content,
+        type: m.type as 'sent' | 'received',
+        created_at: m.created_at
+      })));
     } catch (err: any) {
       toast.error("Erro ao carregar mensagens");
     }
@@ -138,8 +146,6 @@ function AtendimentoPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Send to Evolution API (Simplified integration)
-      // In a real scenario, you'd fetch the evolution config here
       const { data: config } = await supabase
         .from('evolution_config')
         .select('*')
@@ -147,7 +153,6 @@ function AtendimentoPage() {
         .single();
 
       if (config) {
-        // Find an active instance
         const { data: instances } = await supabase
           .from('whatsapp_instances')
           .select('*')
@@ -170,7 +175,6 @@ function AtendimentoPage() {
         }
       }
 
-      // 2. Save to Supabase
       const { data: msgData, error: msgError } = await supabase
         .from('messages')
         .insert({
@@ -184,7 +188,6 @@ function AtendimentoPage() {
 
       if (msgError) throw msgError;
 
-      // 3. Update Lead preview
       await supabase
         .from('leads')
         .update({
@@ -193,7 +196,14 @@ function AtendimentoPage() {
         })
         .eq('id', selectedLead.id);
 
-      setMessages(prev => [...prev, msgData]);
+      const formattedMsg: Message = {
+        id: msgData.id,
+        content: msgData.content,
+        type: msgData.type as 'sent' | 'received',
+        created_at: msgData.created_at
+      };
+
+      setMessages(prev => [...prev, formattedMsg]);
       setNewMessage("");
       fetchLeads();
     } catch (err: any) {
@@ -210,7 +220,6 @@ function AtendimentoPage() {
 
   return (
     <div className="flex h-screen bg-zinc-900 overflow-hidden">
-      {/* Sidebar List */}
       <div className="w-full md:w-[400px] border-r border-zinc-800 flex flex-col bg-zinc-900">
         <div className="p-6">
           <h1 className="text-2xl font-black text-white uppercase tracking-tighter mb-6">ATENDIMENTO</h1>
@@ -246,7 +255,7 @@ function AtendimentoPage() {
                 >
                   <Avatar className="h-12 w-12 border-2 border-zinc-800">
                     <AvatarFallback className="bg-primary text-black font-bold">
-                      {lead.company_name?.charAt(0).toUpperCase() || lead.name.charAt(0).toUpperCase()}
+                      {(lead.company_name || lead.name).charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 text-left">
@@ -263,7 +272,7 @@ function AtendimentoPage() {
                         {lead.last_message || 'Inicie uma conversa'}
                       </p>
                       <div className="flex items-center gap-2">
-                        {lead.unread_count > 0 && (
+                        {(lead.unread_count || 0) > 0 && (
                           <Badge className="bg-primary hover:bg-primary text-black font-black text-[10px] h-5 min-w-[20px] px-1 justify-center rounded-full">
                             {lead.unread_count}
                           </Badge>
@@ -281,11 +290,9 @@ function AtendimentoPage() {
         </ScrollArea>
       </div>
 
-      {/* Chat Window */}
       <div className="flex-1 flex flex-col bg-zinc-950/30">
         {selectedLead ? (
           <>
-            {/* Header */}
             <div className="p-4 border-b border-zinc-800 bg-zinc-900/50 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <Button variant="ghost" size="icon" className="md:hidden text-zinc-400" onClick={() => setSelectedLead(null)}>
@@ -313,7 +320,6 @@ function AtendimentoPage() {
               </div>
             </div>
 
-            {/* Messages Area */}
             <div 
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-6 space-y-4 bg-[url('https://w0.peakpx.com/wallpaper/508/606/wallpaper-whatsapp-dark-mode-background-patterns.jpg')] bg-repeat bg-center opacity-90"
@@ -332,7 +338,7 @@ function AtendimentoPage() {
                     <p className="text-sm leading-relaxed">{msg.content}</p>
                     <div className={`flex items-center justify-end gap-1 mt-1 ${msg.type === 'sent' ? 'text-black/60' : 'text-zinc-500'}`}>
                       <span className="text-[9px] font-bold">
-                        {format(new Date(msg.created_at), 'HH:mm')}
+                        {msg.created_at ? format(new Date(msg.created_at), 'HH:mm') : ''}
                       </span>
                       {msg.type === 'sent' && <CheckCheck className="h-3 w-3" />}
                     </div>
@@ -341,7 +347,6 @@ function AtendimentoPage() {
               ))}
             </div>
 
-            {/* Input Footer */}
             <div className="p-4 bg-zinc-900 border-t border-zinc-800">
               <div className="flex gap-4 max-w-5xl mx-auto">
                 <Input 
