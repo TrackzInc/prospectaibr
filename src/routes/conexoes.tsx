@@ -531,8 +531,21 @@ function ConexoesPage() {
                       <p className="text-[10px] font-bold text-primary tracking-widest uppercase">Buscando...</p>
                     </div>
                   ) : inst.qrcode ? (
-                    <div className="bg-white p-2 rounded-lg animate-in zoom-in duration-300">
-                      <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="bg-white p-2 rounded-lg animate-in zoom-in duration-300 relative">
+                        <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
+                        {pollingInstances.has(inst.instance_name) && (
+                          <div className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                          </div>
+                        )}
+                      </div>
+                      {pollingInstances.has(inst.instance_name) && (
+                        <p className="text-[9px] font-bold text-primary tracking-widest uppercase animate-pulse">
+                          Atualização automática ativa
+                        </p>
+                      )}
                     </div>
                   ) : inst.status === 'connected' ? (
                     <div className="flex flex-col items-center gap-3">
