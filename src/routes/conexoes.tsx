@@ -40,6 +40,7 @@ function ConexoesPage() {
   const [instances, setInstances] = useState<Instance[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingQr, setLoadingQr] = useState<string | null>(null);
+  const [pollingInstances, setPollingInstances] = useState<Set<string>>(new Set());
   const [newInstanceName, setNewInstanceName] = useState("");
   const [config, setConfig] = useState<EvolutionConfig | null>(null);
   const [showConfig, setShowConfig] = useState(false);
@@ -272,23 +273,30 @@ function ConexoesPage() {
     }
   };
 
-  const getQRCode = async (instanceName: string) => {
+  const getQRCode = async (instanceName: string, isAuto = false) => {
     if (!config) return;
+    
+    // Evitar duplicar polling se já estiver rodando e for uma chamada manual
+    if (!isAuto && pollingInstances.has(instanceName)) {
+      console.log(`Polling já ativo para ${instanceName}, ignorando chamada manual.`);
+      return;
+    }
+
     try {
-      setLoadingQr(instanceName);
+      if (!isAuto) setLoadingQr(instanceName);
+      
       const baseUrl = config.api_url.endsWith('/') ? config.api_url.slice(0, -1) : config.api_url;
       const url = `${baseUrl}/instance/connect/${instanceName}`;
       
-      console.log("Buscando QR Code em:", url);
+      console.log(`Buscando QR Code (${isAuto ? 'Auto' : 'Manual'}):`, url);
       
       const response = await fetch(url, {
         headers: { 'apikey': config.api_key }
       });
       
       const data = await response.json();
-      console.log("Resposta Evolution API (QR Code):", data);
+      console.log(`Resposta Evolution API (${instanceName}):`, data);
       
-      // Handle different Evolution API response formats for QR code
       const qrBase64 = data.base64 || data.qrcode?.base64 || data.code;
       const isConnected = data.instance?.state === 'open' || data.state === 'open' || data.status === 'open' || data.instance?.status === 'open';
 
@@ -296,19 +304,69 @@ function ConexoesPage() {
         setInstances(prev => prev.map(inst => 
           inst.instance_name === instanceName ? { ...inst, qrcode: qrBase64 } : inst
         ));
-        toast.success("QR Code gerado!");
+        
+        if (!isAuto) {
+          toast.success("QR Code gerado! Iniciando atualização automática...");
+        }
+
+        // Se gerou QR e ainda não estamos em polling, iniciar
+        setPollingInstances(prev => {
+          const next = new Set(prev);
+          next.add(instanceName);
+          return next;
+        });
+
+        // Agendar próxima verificação em 10 segundos
+        setTimeout(() => {
+          // Verificar se a instância ainda existe e não está conectada antes de continuar
+          setInstances(currentInstances => {
+            const inst = currentInstances.find(i => i.instance_name === instanceName);
+            if (inst && inst.status !== 'connected') {
+              getQRCode(instanceName, true);
+            } else {
+              // Parar polling
+              setPollingInstances(p => {
+                const next = new Set(p);
+                next.delete(instanceName);
+                return next;
+              });
+            }
+            return currentInstances;
+          });
+        }, 10000);
+
       } else if (isConnected) {
-        toast.success("Instância já conectada!");
+        toast.success(`Instância ${instanceName} conectada!`);
         updateStatus(instanceName, 'connected');
+        
+        // Parar polling
+        setPollingInstances(prev => {
+          const next = new Set(prev);
+          next.delete(instanceName);
+          return next;
+        });
+        
+        // Limpar QR code local
+        setInstances(prev => prev.map(inst => 
+          inst.instance_name === instanceName ? { ...inst, qrcode: undefined, status: 'connected' } : inst
+        ));
       } else {
-        console.warn("Dados do QR Code não encontrados na resposta:", data);
-        toast.error("QR Code não disponível. Tente novamente em alguns segundos.");
+        console.warn("Dados não encontrados, tentando novamente em 10s...", data);
+        if (!isAuto) toast.error("QR Code não disponível. Tentando novamente...");
+        
+        // Continuar tentando se for erro temporário
+        setTimeout(() => getQRCode(instanceName, true), 10000);
       }
     } catch (err: any) {
       console.error("Erro ao obter QR Code:", err);
-      toast.error("Erro ao obter QR Code: " + err.message);
+      if (!isAuto) toast.error("Erro ao obter QR Code: " + err.message);
+      
+      // Tentar novamente após erro se estiver em modo auto
+      if (isAuto || !isAuto) { // Sempre tentar recuperar se der erro de rede
+         setTimeout(() => getQRCode(instanceName, true), 15000);
+      }
     } finally {
-      setLoadingQr(null);
+      if (!isAuto) setLoadingQr(null);
     }
   };
 
@@ -473,8 +531,21 @@ function ConexoesPage() {
                       <p className="text-[10px] font-bold text-primary tracking-widest uppercase">Buscando...</p>
                     </div>
                   ) : inst.qrcode ? (
-                    <div className="bg-white p-2 rounded-lg animate-in zoom-in duration-300">
-                      <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="bg-white p-2 rounded-lg animate-in zoom-in duration-300 relative">
+                        <img src={inst.qrcode.startsWith('data:') ? inst.qrcode : `data:image/png;base64,${inst.qrcode}`} alt="QR Code" className="w-32 h-32" />
+                        {pollingInstances.has(inst.instance_name) && (
+                          <div className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                          </div>
+                        )}
+                      </div>
+                      {pollingInstances.has(inst.instance_name) && (
+                        <p className="text-[9px] font-bold text-primary tracking-widest uppercase animate-pulse">
+                          Atualização automática ativa
+                        </p>
+                      )}
                     </div>
                   ) : inst.status === 'connected' ? (
                     <div className="flex flex-col items-center gap-3">
