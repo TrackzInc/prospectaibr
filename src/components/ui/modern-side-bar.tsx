@@ -22,7 +22,8 @@ import {
   MessageSquare,
   Calendar,
   Tag,
-  PieChart
+  PieChart,
+  Bot
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -49,6 +50,7 @@ const navigationItems: NavigationItem[] = [
   { id: "agendamentos", name: "Agendamentos", icon: Calendar, href: "/agendamentos" },
   { id: "etiquetas", name: "Etiquetas", icon: Tag, href: "/etiquetas" },
   { id: "relatorios", name: "Relatórios", icon: PieChart, href: "/relatorios" },
+  { id: "sdr", name: "SDR Robô", icon: Bot, href: "/sdr" },
   { id: "history", name: "Histórico", icon: History, href: "/?tab=history" },
 ];
 
