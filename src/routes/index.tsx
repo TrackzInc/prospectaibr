@@ -450,7 +450,7 @@ function Index() {
         return;
       }
 
-      const { error } = await supabase.from('companies').upsert({
+      const { error: companyError } = await supabase.from('companies').upsert({
         user_id: user.id,
         name: company.name,
         phone: company.phone,
@@ -466,8 +466,30 @@ function Index() {
         onConflict: 'user_id,name,address'
       });
 
-      if (error) throw error;
-      toast.success(`${company.name} enviado ao funil!`);
+      if (companyError) throw companyError;
+
+      // Inserir também na tabela "contacts" do CRM
+      const { error: contactError } = await supabase.from('contacts' as any).insert({
+        user_id: user.id,
+        name: company.name,
+        phone: company.phone,
+        email: '',
+        origin: 'ProspectAI',
+        status: 'novo',
+        stage: 'novo_lead',
+        is_lead: true,
+        tag: segment,
+        interest: segment,
+        notes: `Lead gerado via ProspectAI - ${location}`,
+        potential_value: 0,
+        optin_email: false,
+        optin_whatsapp: false,
+        tags: [segment],
+      });
+
+      if (contactError) throw contactError;
+
+      toast.success(`${company.name} enviado ao funil e CRM!`);
       fetchAllCompanies(); // Refresh dashboard
     } catch (err: any) {
       toast.error("Erro ao enviar ao funil: " + err.message);
