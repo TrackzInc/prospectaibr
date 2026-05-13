@@ -185,6 +185,92 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          company_name: string | null
+          created_at: string | null
+          id: string
+          last_message: string | null
+          last_message_at: string | null
+          name: string
+          phone: string
+          segment: string | null
+          stage_id: string | null
+          status: string | null
+          unread_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          name: string
+          phone: string
+          segment?: string | null
+          stage_id?: string | null
+          status?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string | null
+          id?: string
+          last_message?: string | null
+          last_message_at?: string | null
+          name?: string
+          phone?: string
+          segment?: string | null
+          stage_id?: string | null
+          status?: string | null
+          unread_count?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          instance_id: string | null
+          lead_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          lead_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          instance_id?: string | null
+          lead_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       search_history: {
         Row: {
           created_at: string
