@@ -112,6 +112,7 @@ export type Database = {
           address: string | null
           city_state: string | null
           created_at: string
+          crm_synced: boolean | null
           id: string
           is_open: boolean | null
           name: string
@@ -128,6 +129,7 @@ export type Database = {
           address?: string | null
           city_state?: string | null
           created_at?: string
+          crm_synced?: boolean | null
           id?: string
           is_open?: boolean | null
           name: string
@@ -144,6 +146,7 @@ export type Database = {
           address?: string | null
           city_state?: string | null
           created_at?: string
+          crm_synced?: boolean | null
           id?: string
           is_open?: boolean | null
           name?: string
