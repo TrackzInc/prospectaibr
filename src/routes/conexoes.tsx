@@ -276,7 +276,7 @@ function ConexoesPage() {
   const getQRCode = async (instanceName: string, attempt = 0) => {
     if (!config) return;
 
-    const MAX_ATTEMPTS = 6; // 6 tentativas x 5s = 30s
+    const MAX_ATTEMPTS = 12; // 12 tentativas x 5s = 60s
     const INTERVAL_MS = 5000;
 
     // Marcar polling ativo
@@ -303,7 +303,9 @@ function ConexoesPage() {
       const data = await response.json();
       console.log(`[QR] Resposta:`, data);
 
-      const qrBase64 = data.base64 || data.qrcode?.base64;
+      // Prioriza data.base64 como solicitado pelo usuário
+      const qrBase64 = data.base64 || data.qrcode?.base64 || (typeof data.code === 'string' && data.code.startsWith('data:') ? data.code : null);
+      
       const isConnected =
         data.instance?.state === 'open' ||
         data.state === 'open' ||
@@ -346,7 +348,7 @@ function ConexoesPage() {
         setTimeout(() => getQRCode(instanceName, attempt + 1), INTERVAL_MS);
       } else {
         console.warn(`[QR] Timeout após ${MAX_ATTEMPTS} tentativas.`);
-        toast.error("QR Code não disponível após 30s. Tente novamente.");
+        toast.error("QR Code não disponível após 60s. Tente novamente.");
         setPollingInstances(prev => {
           const next = new Set(prev);
           next.delete(instanceName);
