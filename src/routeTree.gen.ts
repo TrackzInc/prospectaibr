@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as FunilRouteImport } from './routes/funil'
+import { Route as EtiquetasRouteImport } from './routes/etiquetas'
 import { Route as ConexoesRouteImport } from './routes/conexoes'
 import { Route as CampanhasRouteImport } from './routes/campanhas'
 import { Route as AtendimentoRouteImport } from './routes/atendimento'
@@ -25,6 +26,11 @@ const LoginRoute = LoginRouteImport.update({
 const FunilRoute = FunilRouteImport.update({
   id: '/funil',
   path: '/funil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EtiquetasRoute = EtiquetasRouteImport.update({
+  id: '/etiquetas',
+  path: '/etiquetas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConexoesRoute = ConexoesRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/atendimento': typeof AtendimentoRoute
   '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
+  '/etiquetas': typeof EtiquetasRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/atendimento': typeof AtendimentoRoute
   '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
+  '/etiquetas': typeof EtiquetasRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/atendimento': typeof AtendimentoRoute
   '/campanhas': typeof CampanhasRoute
   '/conexoes': typeof ConexoesRoute
+  '/etiquetas': typeof EtiquetasRoute
   '/funil': typeof FunilRoute
   '/login': typeof LoginRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/atendimento'
     | '/campanhas'
     | '/conexoes'
+    | '/etiquetas'
     | '/funil'
     | '/login'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/atendimento'
     | '/campanhas'
     | '/conexoes'
+    | '/etiquetas'
     | '/funil'
     | '/login'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/atendimento'
     | '/campanhas'
     | '/conexoes'
+    | '/etiquetas'
     | '/funil'
     | '/login'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   AtendimentoRoute: typeof AtendimentoRoute
   CampanhasRoute: typeof CampanhasRoute
   ConexoesRoute: typeof ConexoesRoute
+  EtiquetasRoute: typeof EtiquetasRoute
   FunilRoute: typeof FunilRoute
   LoginRoute: typeof LoginRoute
 }
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/funil'
       fullPath: '/funil'
       preLoaderRoute: typeof FunilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/etiquetas': {
+      id: '/etiquetas'
+      path: '/etiquetas'
+      fullPath: '/etiquetas'
+      preLoaderRoute: typeof EtiquetasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conexoes': {
@@ -181,9 +201,20 @@ const rootRouteChildren: RootRouteChildren = {
   AtendimentoRoute: AtendimentoRoute,
   CampanhasRoute: CampanhasRoute,
   ConexoesRoute: ConexoesRoute,
+  EtiquetasRoute: EtiquetasRoute,
   FunilRoute: FunilRoute,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
