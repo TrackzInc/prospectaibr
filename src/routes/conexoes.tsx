@@ -357,6 +357,13 @@ function ConexoesPage() {
               </div>
               <div className="md:col-span-2 flex justify-end gap-3 mt-4">
                 <Button variant="ghost" onClick={() => setShowConfig(false)} className="text-zinc-500">Cancelar</Button>
+                <Button 
+                  variant="outline" 
+                  onClick={testConnection} 
+                  className="border-primary text-primary hover:bg-primary/10"
+                >
+                  TESTAR CONEXÃO
+                </Button>
                 <Button onClick={saveConfig} className="bg-primary text-black font-bold">SALVAR CONFIGURAÇÃO</Button>
               </div>
             </div>
