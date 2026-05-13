@@ -361,7 +361,7 @@ function ConexoesPage() {
                   type="password"
                   placeholder="Sua API Key" 
                   value={tempKey}
-                  onChange={(e) => setTempKey(e.target.value)}
+                  onChange={(e) => { setTempKey(e.target.value); setConnectionTested(false); }}
                   className="bg-zinc-900 border-zinc-700 h-10"
                 />
               </div>
