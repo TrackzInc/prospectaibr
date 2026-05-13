@@ -188,11 +188,13 @@ function ConexoesPage() {
       console.log("Resposta Evolution API (Create):", evoData);
       
       if (!response.ok) {
+        console.error("ERRO API (Create):", evoData);
         // Handle specific error case where instance already exists but we want to connect it
-        if (evoData.status === 400 && evoData.message?.includes('já existe')) {
+        if ((evoData.status === 400 || evoData.code === 400) && (evoData.message?.includes('já existe') || evoData.message?.includes('already exists'))) {
           toast.info("A instância já existe na API. Tentando conectar...");
         } else {
-          throw new Error(evoData.message || JSON.stringify(evoData) || "Erro na Evolution API");
+          const apiError = evoData.message || evoData.error || JSON.stringify(evoData);
+          throw new Error(apiError);
         }
       }
 
