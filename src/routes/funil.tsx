@@ -101,7 +101,6 @@ function FunilPage() {
     try {
       setLoading(true);
       
-      // 1. Fetch leads
       const { data: leadsData, error: leadsError } = await supabase
         .from('companies')
         .select('*')
@@ -109,16 +108,14 @@ function FunilPage() {
 
       if (leadsError) throw leadsError;
 
-      // 2. Fetch all lead tags junction and tag details
       const { data: leadTagsData, error: leadTagsError } = await supabase
         .from('lead_tags')
         .select('lead_id, tags(*)');
 
       if (leadTagsError) throw leadTagsError;
 
-      // Group tags by lead_id
       const tagsByLead: Record<string, any[]> = {};
-      leadTagsData.forEach((lt: any) => {
+      (leadTagsData || []).forEach((lt: any) => {
         if (!tagsByLead[lt.lead_id]) tagsByLead[lt.lead_id] = [];
         if (lt.tags) tagsByLead[lt.lead_id].push(lt.tags);
       });
@@ -152,7 +149,7 @@ function FunilPage() {
       ));
     } catch (err: any) {
       toast.error("Erro ao atualizar estágio: " + err.message);
-      fetchLeads(); // Revert on error
+      fetchLeads(); 
     }
   };
 
@@ -170,7 +167,6 @@ function FunilPage() {
     const activeLead = leads.find(l => l.id === activeId);
     if (!activeLead) return;
 
-    // Check if dropping over a column or another card
     const overStage = STAGES.includes(overId) 
       ? overId 
       : leads.find(l => l.id === overId)?.pipeline_stage;
@@ -192,7 +188,6 @@ function FunilPage() {
     const activeLead = leads.find(l => l.id === leadId);
     if (!activeLead) return;
 
-    // Persist the change
     await updateLeadStage(leadId, activeLead.pipeline_stage);
   };
 
@@ -240,6 +235,7 @@ function FunilPage() {
                 title={stage} 
                 leads={leadsByStage[stage] || []} 
                 onMoveLead={updateLeadStage}
+                onRefresh={fetchLeads}
               />
             ))}
           </div>
@@ -263,11 +259,12 @@ function FunilPage() {
   );
 }
 
-function KanbanColumn({ id, title, leads, onMoveLead }: { 
+function KanbanColumn({ id, title, leads, onMoveLead, onRefresh }: { 
   id: string; 
   title: string; 
   leads: Lead[];
   onMoveLead: (id: string, nextStage: string) => void;
+  onRefresh: () => void;
 }) {
   const nextStage = STAGES[STAGES.indexOf(title) + 1];
 
@@ -294,6 +291,7 @@ function KanbanColumn({ id, title, leads, onMoveLead }: {
                 lead={lead} 
                 onNext={() => nextStage && onMoveLead(lead.id, nextStage)} 
                 showNext={!!nextStage}
+                onRefresh={onRefresh}
               />
             ))}
           </div>
@@ -303,11 +301,12 @@ function KanbanColumn({ id, title, leads, onMoveLead }: {
   );
 }
 
-function LeadCard({ lead, onNext, showNext, isOverlay }: { 
+function LeadCard({ lead, onNext, showNext, isOverlay, onRefresh }: { 
   lead: Lead; 
   onNext?: () => void;
   showNext?: boolean;
   isOverlay?: boolean;
+  onRefresh?: () => void;
 }) {
   const {
     attributes,
@@ -317,6 +316,43 @@ function LeadCard({ lead, onNext, showNext, isOverlay }: {
     transition,
     isDragging
   } = useSortable({ id: lead.id });
+
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+
+  useEffect(() => {
+    if (!isOverlay) {
+      fetchTags();
+    }
+  }, [isOverlay]);
+
+  const fetchTags = async () => {
+    const { data } = await supabase.from('tags').select('*').order('name');
+    if (data) setAvailableTags(data);
+  };
+
+  const toggleTag = async (tag: Tag, isSelected: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    if (isSelected) {
+      await supabase
+        .from('lead_tags')
+        .delete()
+        .eq('lead_id', lead.id)
+        .eq('tag_id', tag.id);
+      toast.success(`Etiqueta ${tag.name} removida`);
+    } else {
+      await supabase
+        .from('lead_tags')
+        .insert({
+          user_id: user.id,
+          lead_id: lead.id,
+          tag_id: tag.id
+        });
+      toast.success(`Etiqueta ${tag.name} aplicada`);
+    }
+    onRefresh?.();
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
