@@ -324,9 +324,11 @@ export function LoginPage() {
       <div className="relative hidden lg:flex flex-col justify-between bg-[#0f172a] p-12 text-zinc-50 overflow-hidden border-r border-zinc-800">
         <div className="relative z-20">
           <div className="flex items-center gap-2.5 text-xl font-bold">
-            <div className="size-10 rounded-xl bg-primary flex items-center justify-center border border-white/10 shadow-[0_0_20px_rgba(170,255,0,0.3)] text-black">
-              <TrendingUp className="size-6" />
-            </div>
+            <img 
+              src="https://velovable.notiffly.com.br/uploads/9dd6233d4c029a981d6f1cebac1c805a.png" 
+              alt="Prospect AI Logo" 
+              className="size-10 object-contain"
+            />
             <span>ProspectAI</span>
           </div>
         </div>
