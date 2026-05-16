@@ -1,35 +1,29 @@
-# Plano de Integração e Sincronização com CRM Externo
+# Plano: Sincronização de Leads do Histórico com o CRM
 
-O objetivo é aprimorar a integração com o projeto CRM externo, garantindo que a sincronização de leads (garimpados e enviados ao funil) ocorra corretamente e que o status da conexão seja visível no Dashboard.
+O usuário deseja enviar os clientes listados na página de Histórico para o CRM externo. Atualmente, a sincronização com o CRM externo ocorre automaticamente apenas durante novas buscas, e os botões de "Vincular" no histórico sincronizam apenas com o banco de dados local.
 
-## Mudanças propostas
+## Alterações Propostas
 
-### 1. Dashboard (Dashboard/Busca)
-- **Arquivo**: `src/routes/index.tsx`
-- **Ação**: Adicionar um botão de status "CRM" no cabeçalho. Se desconectado, mostrar "Conectar CRM". Se conectado, mostrar "CRM Conectado" com o e-mail do usuário.
-- **Sincronização Automática**: Garantir que `saveResultsToDatabaseAuto` e `sendToPipeline` utilizem o `crmSupabase` para enviar leads ao CRM externo quando a conexão estiver ativa.
+### 1. Refatoração da Função de Sincronização
+- Ajustar a função `syncToExternalCRM` em `src/routes/index.tsx` para aceitar um parâmetro opcional de `segment` (nicho/interesse), garantindo que ao sincronizar do histórico, o nicho correto seja enviado ao CRM.
 
-### 2. Funil de Vendas (Kanban)
-- **Arquivo**: `src/routes/funil.tsx`
-- **Ação**: Refatorar a função `syncWithCRM` para utilizar o cliente `crmSupabase`.
-- **Mapeamento de Status**: Sincronizar o `pipeline_stage` do ProspectAI com o campo `stage` na tabela `contacts` do CRM externo.
-- **Identificação**: Garantir que `is_lead: true` seja enviado para todos os contatos sincronizados.
+### 2. Atualização da Aba de Busca (Search)
+- O botão "VINCULAR AO MEU CRM" na aba de busca hoje sincroniza apenas com a tabela `contacts` local. Vou atualizar para que ele também chame `syncToExternalCRM` para todos os leads filtrados, garantindo que o CRM externo também receba os dados.
 
-### 3. Configurações e Testes
-- **Arquivo**: `src/routes/configuracoes.tsx`
-- **Ação**: Adicionar um botão "Testar Sincronização" que envia um lead de teste para o CRM externo para validar a conexão.
+### 3. Melhorias na Aba de Histórico (History)
+- **Sincronização Individual**: Atualizar o botão "VINCULAR CRM" de cada lead no histórico para também enviar ao CRM externo.
+- **Sincronização em Lote**: Adicionar um novo botão "VINCULAR TODOS AO MEU CRM" nos detalhes de uma busca histórica. Isso permitirá enviar todos os leads daquela pesquisa específica para o CRM local e externo de uma só vez.
 
-### 4. Cliente de Integração
-- **Arquivo**: `src/integrations/crm/client.ts`
-- **Ação**: Garantir que o helper `isCRMConnected` e o cliente estejam exportando as funções necessárias para o Dashboard.
+## Detalhes Técnicos
 
-## Detalhes Técnicos de Mapeamento
-- **Origem**: ProspectAI
-- **Tabela CRM**: `contacts`
-- **Campos**:
-  - `name` -> `name`
-  - `phone` -> `phone`
-  - `segment` -> `interest` / `tags`
-  - `is_lead` -> `true`
-  - `pipeline_stage` -> `stage` (Mapear "Novo Lead" para "novo_lead", etc.)
+### Arquivos afetados:
+- `src/routes/index.tsx`
 
+### Lógica de Sincronização:
+- Ao clicar em "Vincular Todos" no Histórico:
+    1. Iterar sobre `historyLeads`.
+    2. Fazer o upsert na tabela `contacts` (CRM local).
+    3. Chamar `syncToExternalCRM(historyLeads, selectedHistory.segment)`.
+
+### UI:
+- Adicionar o botão de sincronização em lote próximo ao cabeçalho dos detalhes do histórico para facilitar o acesso.
