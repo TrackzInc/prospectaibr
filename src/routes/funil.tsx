@@ -212,33 +212,19 @@ function FunilPage() {
           optin_email: false,
           optin_whatsapp: false,
           tags: lead.segment ? [lead.segment] : [],
+          external_source: 'ProspectAI',
+          external_id: lead.id
         };
 
-        // Verificar duplicidade no CRM externo
-        const { data: existingContacts, error: checkError } = await crmSupabase
+        // Inserir ou atualizar no CRM externo usando upsert com base no external_id
+        const { error: contactError } = await crmSupabase
           .from('contacts')
-          .select('id')
-          .eq('user_id', user.id)
-          .eq('phone', lead.phone)
-          .limit(1);
-
-        if (checkError) {
-          console.error(`Erro ao verificar duplicidade no CRM para ${lead.name}:`, checkError);
-        }
-
-        if (existingContacts && existingContacts.length > 0) {
-          await supabase
-            .from('companies')
-            .update({ crm_synced: true })
-            .eq('id', lead.id);
-          continue;
-        }
-
-        // Inserir no CRM externo
-        const { error: contactError } = await crmSupabase.from('contacts').insert(leadData);
+          .upsert(leadData, { 
+            onConflict: 'user_id,external_source,external_id' 
+          });
 
         if (contactError) {
-          console.error(`Erro ao inserir lead ${lead.name} no CRM:`, contactError);
+          console.error(`Erro ao sincronizar lead ${lead.name} no CRM:`, contactError);
           continue;
         }
 
