@@ -540,9 +540,17 @@ function Index() {
         };
       });
 
-      const { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
+      let { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
         onConflict: 'user_id,external_source,external_id'
       });
+
+      // Fallback to 'leads' table if 'contacts' doesn't exist
+      if (error && error.code === '42P01') {
+        const { error: leadsError } = await crmSupabase.from('leads').upsert(contactsToSync, {
+          onConflict: 'user_id,external_source,external_id'
+        });
+        error = leadsError;
+      }
 
       if (error) {
         console.error("Erro ao sincronizar com CRM externo:", error);
