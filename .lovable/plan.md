@@ -1,44 +1,27 @@
-# Plano: Busca em Múltiplas Cidades Simultaneamente
+# Plano de Identificação de Leads no Funil
 
-Este plano descreve as alterações necessárias para permitir a busca de leads em até 10 cidades simultaneamente na página de busca, consolidando os resultados e melhorando a interface do usuário.
+Identificar visualmente na tabela de busca quais leads já foram adicionados ao funil (tabela `contacts` do CRM), permitindo filtrar esses leads e visualizar estatísticas de prospecção.
 
-## Alterações na Interface (Página de Busca)
+## Alterações Propostas
 
-1.  **Campo de Cidades**:
-    - Substituir o input `Cidade/Estado` por um componente de entrada de tags.
-    - O usuário digita o nome da cidade e pressiona `Enter` para adicionar uma tag.
-    - Limite máximo de 10 cidades.
-    - Exibir contador: `X/10 cidades selecionadas`.
-2.  **Cidades Frequentes**:
-    - Adicionar um botão "Cidades frequentes" ao lado do campo de cidades.
-    - Dropdown com sugestões: São Paulo, Rio de Janeiro, Recife, Fortaleza, Salvador, Belo Horizonte, Curitiba, Manaus, Belém, Goiânia.
-    - Ao selecionar, a cidade é adicionada à lista de tags (respeitando o limite).
-3.  **Progresso da Busca**:
-    - Exibir uma mensagem de status durante a busca: `Buscando X/Y cidades...`.
+### Lógica de Identificação
+- Ao carregar os resultados da busca (ou do histórico), verificar quais telefones já existem na tabela `contacts`.
+- Adicionar uma propriedade `isAlreadyInFunnel` ao tipo `Company`.
+- Criar um estado ou função que cruza os leads da busca com os contatos existentes no Supabase.
 
-## Alterações na Lógica de Busca
+### Interface da Tabela
+- Adicionar uma Badge "Já no funil" (cor `zinc-500`) na coluna de status ou nome para leads identificados.
+- Desabilitar o botão "Funil" (enviar ao pipeline) para esses leads.
+- Atualizar o tooltip ou title do botão para explicar que o lead já está prospectado.
 
-1.  **Processamento Paralelo**:
-    - Utilizar `Promise.all` para disparar as requisições de busca para cada cidade selecionada simultaneamente.
-    - As chamadas serão feitas para a Edge Function `google-places-proxy`.
-2.  **Consolidação e Deduplicação**:
-    - Reunir todos os resultados em um único array.
-    - Remover duplicatas baseando-se no número de telefone (`phone`).
-    - Adicionar a propriedade `city` a cada objeto de empresa para identificar sua origem.
-3.  **Persistência**:
-    - Atualizar as funções de salvamento automático e manual para considerar a cidade específica de cada lead ao inserir na coluna `city_state` da tabela `companies`.
+### Filtros e Cabeçalho
+- Adicionar um Toggle nos filtros: "Ocultar leads já no funil".
+- No topo da tabela de resultados, adicionar um contador: "X novos | Y já prospectados".
 
-## Alterações na Tabela de Resultados
+### Detalhes Técnicos
+- **Consulta**: Utilizar o `supabase.from('contacts').select('phone')` para obter a lista de telefones já cadastrados e fazer a comparação em memória (considerando que a lista de busca é pequena, até 10 cidades).
+- **Remoção de duplicatas**: Garantir que a lógica de "Remover duplicatas pelo telefone" (já existente) continue funcionando corretamente.
+- **Estilo**: Manter o padrão de cores `zinc` e `primary` (#aaff00) do projeto.
 
-1.  **Nova Coluna**:
-    - Adicionar a coluna `Cidade` na tabela de resultados para facilitar a identificação visual.
-2.  **Métricas**:
-    - Atualizar os cards de métricas (Total, Com telefone, etc.) após a conclusão de todas as buscas.
-    - Exibir quantos leads foram encontrados em cada cidade no resumo de resultados.
-
-## Detalhes Técnicos
-
-- **Arquivo**: `src/routes/index.tsx`
-- **Estado**: Adicionar `locations: string[]` e `searchProgress: { current: number, total: number }`.
-- **Componentes**: Criar um componente interno de `TagInput` ou usar um padrão similar ao que já existe no projeto.
-- **API**: Nenhuma alteração necessária na Edge Function, apenas na forma como ela é chamada.
+## Arquivos Afetados
+- `src/routes/index.tsx`: Principal arquivo da página de Busca/Dashboard onde a lógica de busca e a tabela residem.
