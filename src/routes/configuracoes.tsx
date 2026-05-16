@@ -316,25 +316,37 @@ function ConfiguracoesPage() {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     {crmConnected ? (
-                      <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <CheckCircle2 className="h-6 w-6 text-primary" />
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CheckCircle2 className="h-6 w-6 text-primary" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-bold text-zinc-100">CRM Conectado</p>
+                              <p className="text-xs text-zinc-500">{crmUser?.email}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-bold text-zinc-100">CRM Conectado</p>
-                            <p className="text-xs text-zinc-500">{crmUser?.email}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={handleCrmLogout}
+                            className="text-zinc-500 hover:text-red-400 hover:bg-red-400/10 gap-2"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Desconectar
+                          </Button>
+                        </div>
+                        
+                        <div className="bg-zinc-900/50 p-4 rounded-lg border border-zinc-800 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-zinc-300 uppercase tracking-tight">Status da Sincronização</p>
+                              <p className="text-[10px] text-zinc-500 uppercase">Leads sincronizados com sucesso</p>
+                            </div>
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 text-[10px]">OPERACIONAL</Badge>
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={handleCrmLogout}
-                          className="text-zinc-500 hover:text-red-400 hover:bg-red-400/10 gap-2"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          Desconectar
-                        </Button>
                       </div>
                     ) : (
                       <div className="space-y-4">

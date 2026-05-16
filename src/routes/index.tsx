@@ -532,9 +532,9 @@ function Index() {
           notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}`,
           interest: customSegment || c.segment || segment,
           is_lead: true,
-          stage: "novo_lead", // Use slug format "novo_lead" instead of "Novo Lead" to match common CRM patterns
+          stage: "novo_lead",
           origin: "ProspectAI",
-          status: "ativo",
+          status: "novo",
           external_source: 'ProspectAI',
           external_id: extId
         };
@@ -1433,6 +1433,8 @@ function Index() {
                         website: lead.website,
                         origin: 'ProspectAI_Export',
                         status: 'novo',
+                        stage: 'novo_lead',
+                        is_lead: true,
                         tag: segment || 'Exportado',
                         notes: `Exportado via ProspectAI em ${new Date().toLocaleDateString()}`
                       }, { onConflict: 'user_id,phone' });
@@ -1634,6 +1636,8 @@ function Index() {
                                    website: r.website,
                                    origin: 'ProspectAI_Single',
                                    status: 'novo',
+                                   stage: 'novo_lead',
+                                   is_lead: true,
                                    tag: segment || 'Lead Individual',
                                    notes: `Vínculo individual via ProspectAI em ${new Date().toLocaleDateString()}`
                                  }, { onConflict: 'user_id,phone' });
@@ -1787,6 +1791,8 @@ function Index() {
                                   website: lead.website,
                                   origin: 'ProspectAI_History_Batch',
                                   status: 'novo',
+                                  stage: 'novo_lead',
+                                  is_lead: true,
                                   tag: selectedHistory.segment,
                                   notes: `Exportado do histórico em lote em ${new Date().toLocaleDateString()}`
                                 }, { onConflict: 'user_id,phone' });
@@ -1880,9 +1886,13 @@ function Index() {
                                           if (error) throw error;
 
                                           // Also sync to external CRM
-                                          await syncToExternalCRM([lead], selectedHistory.segment);
+                                          const externalSync = await syncToExternalCRM([lead], selectedHistory.segment);
                                           
-                                          toast.success(`${lead.name} vinculado ao CRM local e externo!`);
+                                          if (externalSync?.success) {
+                                            toast.success(`${lead.name} vinculado ao CRM local e externo!`);
+                                          } else {
+                                            toast.success(`${lead.name} vinculado ao CRM local!`);
+                                          }
                                         } catch (err: any) {
                                           toast.error("Erro: " + err.message);
                                         } finally {
