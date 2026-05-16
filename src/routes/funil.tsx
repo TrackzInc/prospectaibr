@@ -34,7 +34,8 @@ import {
   Filter,
   RefreshCw,
   Tag as TagIcon,
-  CloudSync
+  CloudSync,
+  Database
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { crmSupabase, isCRMConnected } from "@/integrations/crm/client";
 
 export const Route = createFileRoute("/funil")({
   component: FunilPage,
@@ -158,8 +160,17 @@ function FunilPage() {
   const syncWithCRM = async () => {
     try {
       setSyncing(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const connected = await isCRMConnected();
+      if (!connected) {
+        toast.error("CRM não conectado. Vá em Configurações para conectar.");
+        return;
+      }
+
+      const { data: { user } } = await crmSupabase.auth.getUser();
+      if (!user) {
+        toast.error("Sessão do CRM expirada. Conecte novamente.");
+        return;
+      }
 
       // Buscar leads não sincronizados
       const { data: unsyncedLeads, error: fetchError } = await supabase
@@ -176,6 +187,13 @@ function FunilPage() {
       }
 
       let syncedCount = 0;
+      const stageMapping: Record<string, string> = {
+        "Novo Lead": "novo_lead",
+        "Contato Iniciado": "contato_iniciado",
+        "Respondeu": "respondeu",
+        "Em Negociação": "em_negociacao",
+        "Fechado": "fechado"
+      };
 
       for (const lead of unsyncedLeads) {
         const leadData = {
@@ -184,8 +202,8 @@ function FunilPage() {
           phone: lead.phone,
           email: '',
           origin: 'ProspectAI',
-          status: 'novo',
-          stage: 'novo_lead',
+          status: 'Ativo',
+          stage: stageMapping[lead.pipeline_stage] || 'novo_lead',
           is_lead: true,
           tag: lead.segment,
           interest: lead.segment,
@@ -196,24 +214,19 @@ function FunilPage() {
           tags: lead.segment ? [lead.segment] : [],
         };
 
-        console.log('Tentando sincronizar lead:', lead.name, leadData);
-
-        // Verificar se já existe um contato com mesmo user_id, name e phone
-        const { data: existingContacts, error: checkError } = await supabase
-          .from('contacts' as any)
+        // Verificar duplicidade no CRM externo
+        const { data: existingContacts, error: checkError } = await crmSupabase
+          .from('contacts')
           .select('id')
           .eq('user_id', user.id)
-          .eq('name', lead.name)
           .eq('phone', lead.phone)
           .limit(1);
 
         if (checkError) {
-          console.error(`Erro ao verificar duplicidade para ${lead.name}:`, checkError);
+          console.error(`Erro ao verificar duplicidade no CRM para ${lead.name}:`, checkError);
         }
 
         if (existingContacts && existingContacts.length > 0) {
-          console.log(`Lead ${lead.name} já existe no CRM, marcando apenas como sincronizado localmente.`);
-          // Apenas atualizamos localmente para não tentar sincronizar novamente
           await supabase
             .from('companies')
             .update({ crm_synced: true })
@@ -221,32 +234,27 @@ function FunilPage() {
           continue;
         }
 
-        // Inserir no CRM (contacts)
-        const { data, error: contactError } = await supabase.from('contacts' as any).insert(leadData).select();
-
-        console.log('Resultado do insert:', { data, error: contactError });
+        // Inserir no CRM externo
+        const { error: contactError } = await crmSupabase.from('contacts').insert(leadData);
 
         if (contactError) {
           console.error(`Erro ao inserir lead ${lead.name} no CRM:`, contactError);
-          toast.error(`Erro ao sincronizar ${lead.name}: ${contactError.message || JSON.stringify(contactError)}`);
-          continue; // Pula para o próximo se este falhar
+          continue;
         }
 
         // Marcar como sincronizado localmente
-        const { error: updateError } = await supabase
+        await supabase
           .from('companies')
           .update({ crm_synced: true })
           .eq('id', lead.id);
         
-        if (updateError) {
-          console.error(`Erro ao atualizar flag crm_synced para ${lead.name}:`, updateError);
-        } else {
-          syncedCount++;
-        }
+        syncedCount++;
       }
 
       if (syncedCount > 0) {
         toast.success(`${syncedCount} leads sincronizados com o CRM com sucesso!`);
+      } else {
+        toast.info("Nenhum lead novo para sincronizar.");
       }
       fetchLeads();
     } catch (err: any) {
