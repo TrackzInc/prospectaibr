@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, KeyboardEvent } from "react";
 import {
   Search as SearchIcon,
   Download,
@@ -22,7 +22,9 @@ import {
   Target,
   LayoutDashboard,
   Plus,
-  Columns
+  Columns,
+  X,
+  ChevronDown
 } from "lucide-react";
 import {
   BarChart,
@@ -65,6 +67,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/")({
   head: () => ({
