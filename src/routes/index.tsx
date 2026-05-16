@@ -512,7 +512,7 @@ function Index() {
     }
   };
 
-  const syncToExternalCRM = async (companies: any[]) => {
+  const syncToExternalCRM = async (companies: any[], customSegment?: string) => {
     const connected = await isCRMConnected();
     if (!connected) return;
 
@@ -526,7 +526,7 @@ function Index() {
         phone: c.phone,
         email: c.email || null,
         notes: `Empresa: ${c.name}\nEndereço: ${c.address}\nWebsite: ${c.website}`,
-        interest: c.segment || segment,
+        interest: customSegment || c.segment || segment,
         is_lead: true,
         stage: "Novo Lead", // Default stage for CRM
         origin: "ProspectAI",
@@ -541,11 +541,14 @@ function Index() {
 
       if (error) {
         console.error("Erro ao sincronizar com CRM externo:", error);
+        return { success: false, error };
       } else {
         console.log("Sincronização com CRM externo concluída.");
+        return { success: true };
       }
     } catch (err) {
       console.error("Erro inesperado na sincronização CRM:", err);
+      return { success: false, error: err };
     }
   };
 
@@ -1416,6 +1419,7 @@ function Index() {
                     if (!user) throw new Error("Usuário não logado");
 
                     let count = 0;
+                    // Sync with local CRM (contacts table)
                     for (const lead of filteredResults) {
                       const { error } = await supabase.from('contacts' as any).upsert({
                         user_id: user.id,
@@ -1430,7 +1434,15 @@ function Index() {
                       
                       if (!error) count++;
                     }
-                    toast.success(`${count} leads vinculados ao seu CRM!`);
+
+                    // Sync with external CRM
+                    const externalSync = await syncToExternalCRM(filteredResults);
+                    
+                    if (externalSync?.success) {
+                      toast.success(`${count} leads vinculados ao CRM local e externo!`);
+                    } else {
+                      toast.success(`${count} leads vinculados ao seu CRM local! (Erro ao sincronizar externo)`);
+                    }
                   } catch (err: any) {
                     toast.error("Erro na exportação: " + err.message);
                   } finally {
@@ -1712,9 +1724,57 @@ function Index() {
                           {historyLeads.length} leads encontrados no banco de dados para esta busca.
                         </p>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => setSelectedHistory(null)}>
-                        Fechar
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="h-8 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-bold text-[10px] gap-2"
+                          disabled={saving || historyLeads.length === 0}
+                          onClick={async () => {
+                            setSaving(true);
+                            try {
+                              const { data: { user } } = await supabase.auth.getUser();
+                              if (!user) throw new Error("Usuário não logado");
+
+                              let count = 0;
+                              // Sync with local CRM
+                              for (const lead of historyLeads) {
+                                const { error } = await supabase.from('contacts' as any).upsert({
+                                  user_id: user.id,
+                                  name: lead.name,
+                                  phone: lead.phone,
+                                  website: lead.website,
+                                  origin: 'ProspectAI_History_Batch',
+                                  status: 'novo',
+                                  tag: selectedHistory.segment,
+                                  notes: `Exportado do histórico em lote em ${new Date().toLocaleDateString()}`
+                                }, { onConflict: 'user_id,phone' });
+                                
+                                if (!error) count++;
+                              }
+
+                              // Sync with external CRM
+                              const externalSync = await syncToExternalCRM(historyLeads, selectedHistory.segment);
+                              
+                              if (externalSync?.success) {
+                                toast.success(`${count} leads do histórico vinculados ao CRM local e externo!`);
+                              } else {
+                                toast.success(`${count} leads do histórico vinculados ao CRM local!`);
+                              }
+                            } catch (err: any) {
+                              toast.error("Erro: " + err.message);
+                            } finally {
+                              setSaving(false);
+                            }
+                          }}
+                        >
+                          <CloudSync className="h-4 w-4" />
+                          VINCULAR TODOS AO MEU CRM
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedHistory(null)}>
+                          Fechar
+                        </Button>
+                      </div>
                     </div>
 
                     {loadingHistoryLeads ? (
@@ -1777,7 +1837,11 @@ function Index() {
                                           }, { onConflict: 'user_id,phone' });
 
                                           if (error) throw error;
-                                          toast.success(`${lead.name} vinculado ao CRM!`);
+
+                                          // Also sync to external CRM
+                                          await syncToExternalCRM([lead], selectedHistory.segment);
+                                          
+                                          toast.success(`${lead.name} vinculado ao CRM local e externo!`);
                                         } catch (err: any) {
                                           toast.error("Erro: " + err.message);
                                         } finally {
