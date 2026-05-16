@@ -552,9 +552,14 @@ function Index() {
         city_state: r.city || locations[0]
       }));
 
-      await supabase.from('companies').upsert(companiesToSave, {
+      const { error } = await supabase.from('companies').upsert(companiesToSave, {
         onConflict: 'user_id,name,address'
       });
+
+      if (error) throw error;
+      
+      // Also sync to external CRM if connected
+      await syncToExternalCRM(companies);
     } catch (err) {
       console.error("Erro ao salvar automaticamente:", err);
     }
