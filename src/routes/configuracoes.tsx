@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { User, Lock, Mail, Bell, Shield, Settings as SettingsIcon } from "lucide-react";
+import { User, Lock, Mail, Bell, Shield, Settings as SettingsIcon, Database, Link as LinkIcon } from "lucide-react";
 
 export const Route = createFileRoute("/configuracoes")({
   component: ConfiguracoesPage,
@@ -103,6 +103,10 @@ function ConfiguracoesPage() {
               <TabsTrigger value="preferencias" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary font-bold uppercase tracking-tight text-[10px]">
                 <SettingsIcon className="h-3.5 w-3.5" />
                 Sistema
+              </TabsTrigger>
+              <TabsTrigger value="integracoes" className="gap-2 data-[state=active]:bg-zinc-700 data-[state=active]:text-primary font-bold uppercase tracking-tight text-[10px]">
+                <Database className="h-3.5 w-3.5" />
+                Integrações
               </TabsTrigger>
             </TabsList>
 
@@ -247,6 +251,54 @@ function ConfiguracoesPage() {
                     </div>
                   </div>
                 </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="integracoes">
+              <Card className="bg-zinc-800/50 border-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-zinc-50 flex items-center gap-2">
+                    <LinkIcon className="h-5 w-5 text-primary" />
+                    Vínculo com CRM Externo
+                  </CardTitle>
+                  <CardDescription className="text-zinc-400">
+                    Conecte seu CRM via Supabase ou Webhooks para sincronização automática.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                    <h4 className="text-sm font-bold text-zinc-200 mb-2">Conexão via Supabase Direct</h4>
+                    <p className="text-xs text-zinc-500 mb-4">
+                      Para vincular seu CRM diretamente via Git/Supabase, use os dados da tabela <code className="text-primary bg-primary/5 px-1 rounded">contacts</code> do banco de dados deste projeto. 
+                      Os dados exportados via botão "Vincular ao CRM" são salvos lá em tempo real.
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500">
+                        <span>Status da Tabela</span>
+                        <span className="text-primary font-bold">Ativa</span>
+                      </div>
+                      <div className="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500">
+                        <span>Endpoint sugerido</span>
+                        <span className="text-zinc-300">/rest/v1/contacts</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800 opacity-50">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-sm font-bold text-zinc-200">Webhook (Próxima Versão)</h4>
+                      <Badge variant="outline" className="text-[8px] border-zinc-700 text-zinc-500">EM BREVE</Badge>
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      Dispare eventos automaticamente para URLs externas sempre que um lead for capturado.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter className="border-t border-zinc-800 mt-6 pt-6">
+                  <Button variant="outline" className="w-full border-zinc-700 text-zinc-400 hover:text-zinc-50 font-bold uppercase tracking-widest text-[10px]">
+                    Ver Documentação de API
+                  </Button>
+                </CardFooter>
               </Card>
             </TabsContent>
           </Tabs>
