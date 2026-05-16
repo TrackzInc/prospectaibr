@@ -1,27 +1,18 @@
-# Plano de Identificação de Leads no Funil
+# Exportação para CRM Externo
 
-Identificar visualmente na tabela de busca quais leads já foram adicionados ao funil (tabela `contacts` do CRM), permitindo filtrar esses leads e visualizar estatísticas de prospecção.
+O usuário deseja exportar os leads capturados para seu próprio CRM via Supabase/Git. 
 
-## Alterações Propostas
+## Mudanças propostas
 
-### Lógica de Identificação
-- Ao carregar os resultados da busca (ou do histórico), verificar quais telefones já existem na tabela `contacts`.
-- Adicionar uma propriedade `isAlreadyInFunnel` ao tipo `Company`.
-- Criar um estado ou função que cruza os leads da busca com os contatos existentes no Supabase.
+### Frontend (Busca e Histórico)
+- Adicionar um botão "Exportar para CRM" nas abas de **Busca** e **Histórico**.
+- Integrar com a tabela `contacts` (que já funciona como um CRM interno) e garantir que a exportação possa ser facilmente estendida para webhooks ou integrações diretas.
+- Adicionar uma configuração em "Sistema" (Configurações) para definir o destino da exportação (atualmente focaremos em preparar a estrutura para que o usuário vincule seu CRM).
 
-### Interface da Tabela
-- Adicionar uma Badge "Já no funil" (cor `zinc-500`) na coluna de status ou nome para leads identificados.
-- Desabilitar o botão "Funil" (enviar ao pipeline) para esses leads.
-- Atualizar o tooltip ou title do botão para explicar que o lead já está prospectado.
+### Banco de Dados
+- Utilizar a tabela `contacts` existente como ponte.
+- O usuário mencionou "vincular via git e supabase", o que sugere que ele quer acessar os dados diretamente do banco de dados dele.
 
-### Filtros e Cabeçalho
-- Adicionar um Toggle nos filtros: "Ocultar leads já no funil".
-- No topo da tabela de resultados, adicionar um contador: "X novos | Y já prospectados".
-
-### Detalhes Técnicos
-- **Consulta**: Utilizar o `supabase.from('contacts').select('phone')` para obter a lista de telefones já cadastrados e fazer a comparação em memória (considerando que a lista de busca é pequena, até 10 cidades).
-- **Remoção de duplicatas**: Garantir que a lógica de "Remover duplicatas pelo telefone" (já existente) continue funcionando corretamente.
-- **Estilo**: Manter o padrão de cores `zinc` e `primary` (#aaff00) do projeto.
-
-## Arquivos Afetados
-- `src/routes/index.tsx`: Principal arquivo da página de Busca/Dashboard onde a lógica de busca e a tabela residem.
+## Detalhes técnicos
+- Implementar a função `sendToExternalCRM` em `src/routes/index.tsx`.
+- Adicionar interface visual consistente com o app (neon green/zinc).
