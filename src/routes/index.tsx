@@ -471,7 +471,7 @@ function Index() {
         reviews: company.reviews,
         is_open: company.open,
         segment: segment,
-        city_state: location,
+        city_state: company.city || locations[0],
         pipeline_stage: 'Novo Lead'
       }, {
         onConflict: 'user_id,name,address'
