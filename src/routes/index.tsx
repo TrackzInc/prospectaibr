@@ -928,19 +928,65 @@ function Index() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location" className="text-xs font-semibold text-zinc-400">Cidade / Estado</Label>
-                  <Input
-                    id="location"
-                    placeholder="ex: São Paulo, SP"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="bg-zinc-900 border-zinc-700 focus-visible:ring-primary h-10"
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="location" className="text-xs font-semibold text-zinc-400">Cidades ({locations.length}/10)</Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 text-[10px] font-bold uppercase tracking-widest text-primary gap-1">
+                          Cidades frequentes
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-zinc-900 border-zinc-700 w-48">
+                        {["São Paulo", "Rio de Janeiro", "Recife", "Fortaleza", "Salvador", "Belo Horizonte", "Curitiba", "Manaus", "Belém", "Goiânia"].map(city => (
+                          <DropdownMenuItem 
+                            key={city} 
+                            className="text-xs text-zinc-300 focus:text-primary focus:bg-zinc-800 cursor-pointer"
+                            onClick={() => {
+                              if (locations.length < 10 && !locations.includes(city)) {
+                                setLocations([...locations, city]);
+                              }
+                            }}
+                          >
+                            {city}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap gap-2 p-2 min-h-[40px] bg-zinc-900 border border-zinc-700 rounded-md">
+                    {locations.map(loc => (
+                      <Badge key={loc} variant="secondary" className="gap-1 bg-zinc-800 text-zinc-300 border-zinc-700">
+                        {loc}
+                        <button type="button" onClick={() => setLocations(locations.filter(l => l !== loc))}>
+                          <X className="h-3 w-3 hover:text-red-400" />
+                        </button>
+                      </Badge>
+                    ))}
+                    {locations.length < 10 && (
+                      <input
+                        placeholder={locations.length === 0 ? "Digite e Enter" : ""}
+                        value={locationInput}
+                        onChange={(e) => setLocationInput(e.target.value)}
+                        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = locationInput.trim();
+                            if (val && locations.length < 10 && !locations.includes(val)) {
+                              setLocations([...locations, val]);
+                              setLocationInput("");
+                            }
+                          }
+                        }}
+                        className="bg-transparent border-none outline-none text-sm text-zinc-300 placeholder:text-zinc-600 flex-1 min-w-[100px]"
+                      />
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-end">
                   <Button type="submit" className="w-full gap-2 md:w-auto h-10 font-bold px-8 shadow-[0_0_15px_rgba(170,255,0,0.2)]" disabled={loading}>
                     <SearchIcon className="h-4 w-4" />
-                    {loading ? "BUSCANDO..." : "BUSCAR"}
+                    {loading ? `BUSCANDO ${searchProgress.current}/${searchProgress.total}...` : "BUSCAR"}
                   </Button>
                 </div>
               </form>
