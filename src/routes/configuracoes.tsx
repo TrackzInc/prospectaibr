@@ -487,9 +487,14 @@ function ConfiguracoesPage() {
                                 }
 
                                 if (insertError) {
-                                  if (insertError.code === '42P01') throw new Error("Tabela 'contacts' não encontrada no CRM externo.");
-                                  if (insertError.code === '42501') throw new Error("Erro de permissão (RLS) ao inserir no CRM. Verifique as políticas do banco de dados.");
-                                  throw insertError;
+                                  console.error("Erro detalhado do CRM:", insertError);
+                                  let errorMessage = insertError.message;
+                                  if (insertError.code === '42P01') {
+                                    errorMessage = "Tabela 'contacts' ou 'leads' não encontrada no CRM externo. Verifique o esquema do banco de dados.";
+                                  } else if (insertError.code === '42501') {
+                                    errorMessage = "Erro de permissão (RLS). Certifique-se de que seu usuário no CRM tem permissão para inserir contatos.";
+                                  }
+                                  throw new Error(errorMessage + ` (Código: ${insertError.code})`);
                                 }
 
                                 setTestStatus({ status: 'success', message: 'Conexão validada! O lead de teste foi criado com sucesso no CRM.' });
