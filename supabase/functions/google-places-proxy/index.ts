@@ -23,7 +23,8 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     )
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
@@ -34,10 +35,29 @@ serve(async (req) => {
       })
     }
 
-    const { action, apiKey, params } = await req.json()
+    const { action, params } = await req.json()
 
+    // Look up the SerpApi key from the DB for this user (RLS-scoped)
+    const { data: cfg, error: cfgError } = await supabase
+      .from('serpapi_config')
+      .select('api_key')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (cfgError) {
+      console.error('Error loading serpapi_config:', cfgError)
+      return new Response(JSON.stringify({ error: 'Failed to load API key configuration' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const apiKey = cfg?.api_key
     if (!apiKey) {
-      throw new Error('SerpApi Key is required')
+      return new Response(JSON.stringify({ error: 'SerpApi Key not configured. Please save it in your settings.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     let url = ''
