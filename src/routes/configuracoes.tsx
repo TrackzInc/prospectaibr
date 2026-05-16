@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { User, Lock, Mail, Bell, Shield, Settings as SettingsIcon, Database, Link as LinkIcon } from "lucide-react";
+import { User, Lock, Mail, Bell, Shield, Settings as SettingsIcon, Database, Link as LinkIcon, LogOut, CheckCircle2 } from "lucide-react";
+import { crmSupabase, isCRMConnected } from "@/integrations/crm/client";
 
 export const Route = createFileRoute("/configuracoes")({
   component: ConfiguracoesPage,
@@ -20,6 +21,51 @@ function ConfiguracoesPage() {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [crmConnected, setCrmConnected] = useState(false);
+  const [crmUser, setCrmUser] = useState<any>(null);
+  const [crmEmail, setCrmEmail] = useState("");
+  const [crmPassword, setCrmPassword] = useState("");
+  const [showCrmLogin, setShowCrmLogin] = useState(false);
+
+  useEffect(() => {
+    checkCrmStatus();
+  }, []);
+
+  const checkCrmStatus = async () => {
+    const connected = await isCRMConnected();
+    setCrmConnected(connected);
+    if (connected) {
+      const { data: { user } } = await crmSupabase.auth.getUser();
+      setCrmUser(user);
+    }
+  };
+
+  const handleCrmLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { data, error } = await crmSupabase.auth.signInWithPassword({
+        email: crmEmail,
+        password: crmPassword,
+      });
+      if (error) throw error;
+      toast.success("Conectado ao CRM com sucesso!");
+      setCrmConnected(true);
+      setCrmUser(data.user);
+      setShowCrmLogin(false);
+    } catch (error: any) {
+      toast.error("Erro ao conectar CRM: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCrmLogout = async () => {
+    await crmSupabase.auth.signOut();
+    setCrmConnected(false);
+    setCrmUser(null);
+    toast.info("CRM desconectado");
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -256,51 +302,134 @@ function ConfiguracoesPage() {
             </TabsContent>
 
             <TabsContent value="integracoes">
-              <Card className="bg-zinc-800/50 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="text-zinc-50 flex items-center gap-2">
-                    <LinkIcon className="h-5 w-5 text-primary" />
-                    Vínculo com CRM Externo
-                  </CardTitle>
-                  <CardDescription className="text-zinc-400">
-                    Conecte seu CRM via Supabase ou Webhooks para sincronização automática.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
-                    <h4 className="text-sm font-bold text-zinc-200 mb-2">Conexão via Supabase Direct</h4>
-                    <p className="text-xs text-zinc-500 mb-4">
-                      Para vincular seu CRM diretamente via Git/Supabase, use os dados da tabela <code className="text-primary bg-primary/5 px-1 rounded">contacts</code> do banco de dados deste projeto. 
-                      Os dados exportados via botão "Vincular ao CRM" são salvos lá em tempo real.
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500">
-                        <span>Status da Tabela</span>
-                        <span className="text-primary font-bold">Ativa</span>
+              <div className="grid gap-6">
+                <Card className="bg-zinc-800/50 border-zinc-800 border-l-4 border-l-primary">
+                  <CardHeader>
+                    <CardTitle className="text-zinc-50 flex items-center gap-2">
+                      <LinkIcon className="h-5 w-5 text-primary" />
+                      Conectar CRM ProspectAI
+                    </CardTitle>
+                    <CardDescription className="text-zinc-400">
+                      Sincronize seus leads automaticamente com o funil de vendas do seu CRM.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {crmConnected ? (
+                      <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <CheckCircle2 className="h-6 w-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-zinc-100">CRM Conectado</p>
+                            <p className="text-xs text-zinc-500">{crmUser?.email}</p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={handleCrmLogout}
+                          className="text-zinc-500 hover:text-red-400 hover:bg-red-400/10 gap-2"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Desconectar
+                        </Button>
                       </div>
-                      <div className="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500">
-                        <span>Endpoint sugerido</span>
-                        <span className="text-zinc-300">/rest/v1/contacts</span>
+                    ) : (
+                      <div className="space-y-4">
+                        {!showCrmLogin ? (
+                          <div className="p-6 bg-zinc-900/50 rounded-lg border border-zinc-800 text-center space-y-4">
+                            <Database className="h-12 w-12 text-zinc-700 mx-auto" />
+                            <div className="space-y-1">
+                              <p className="text-sm font-bold text-zinc-300">Integração Nativa com CRM</p>
+                              <p className="text-xs text-zinc-500 max-w-sm mx-auto">
+                                Conecte sua conta do CRM para enviar leads diretamente para o funil de vendas com status e tags mapeadas.
+                              </p>
+                            </div>
+                            <Button 
+                              onClick={() => setShowCrmLogin(true)}
+                              className="bg-primary text-primary-foreground hover:bg-primary/90 font-bold uppercase tracking-tight"
+                            >
+                              Conectar meu CRM
+                            </Button>
+                          </div>
+                        ) : (
+                          <form onSubmit={handleCrmLogin} className="space-y-4 p-4 border border-zinc-800 rounded-lg bg-zinc-900/30">
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-bold uppercase text-zinc-500">E-mail do CRM</Label>
+                              <Input 
+                                type="email" 
+                                value={crmEmail}
+                                onChange={(e) => setCrmEmail(e.target.value)}
+                                className="bg-zinc-900 border-zinc-700 text-zinc-100"
+                                placeholder="seu@email.com"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-[10px] font-bold uppercase text-zinc-500">Senha do CRM</Label>
+                              <Input 
+                                type="password" 
+                                value={crmPassword}
+                                onChange={(e) => setCrmPassword(e.target.value)}
+                                className="bg-zinc-900 border-zinc-700 text-zinc-100"
+                                required
+                              />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                              <Button 
+                                type="submit" 
+                                disabled={loading}
+                                className="flex-1 bg-primary text-primary-foreground font-bold"
+                              >
+                                {loading ? "Conectando..." : "Confirmar Conexão"}
+                              </Button>
+                              <Button 
+                                type="button"
+                                variant="outline"
+                                onClick={() => setShowCrmLogin(false)}
+                                className="border-zinc-700 text-zinc-400"
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </form>
+                        )}
                       </div>
-                    </div>
-                  </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-                  <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800 opacity-50">
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-sm font-bold text-zinc-200">Webhook (Próxima Versão)</h4>
-                      <Badge variant="outline" className="text-[8px] border-zinc-700 text-zinc-500">EM BREVE</Badge>
+                <Card className="bg-zinc-800/50 border-zinc-800">
+                  <CardHeader>
+                    <CardTitle className="text-zinc-50 flex items-center gap-2">
+                      <Database className="h-5 w-5 text-primary" />
+                      Vínculo Manual (Tabela Local)
+                    </CardTitle>
+                    <CardDescription className="text-zinc-400">
+                      Os dados também são salvos na tabela local para acesso via Git ou Supabase direto.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="p-4 bg-zinc-900/50 rounded-lg border border-zinc-800">
+                      <h4 className="text-sm font-bold text-zinc-200 mb-2">Conexão via Supabase Direct</h4>
+                      <p className="text-xs text-zinc-500 mb-4">
+                        Para vincular seu CRM diretamente via Git/Supabase, use os dados da tabela <code className="text-primary bg-primary/5 px-1 rounded">contacts</code> do banco de dados deste projeto. 
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500">
+                          <span>Status da Tabela</span>
+                          <span className="text-primary font-bold">Ativa</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] uppercase tracking-widest text-zinc-500">
+                          <span>Endpoint sugerido</span>
+                          <span className="text-zinc-300">/rest/v1/contacts</span>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-xs text-zinc-500">
-                      Dispare eventos automaticamente para URLs externas sempre que um lead for capturado.
-                    </p>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t border-zinc-800 mt-6 pt-6">
-                  <Button variant="outline" className="w-full border-zinc-700 text-zinc-400 hover:text-zinc-50 font-bold uppercase tracking-widest text-[10px]">
-                    Ver Documentação de API
-                  </Button>
-                </CardFooter>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
         </div>

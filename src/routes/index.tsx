@@ -70,6 +70,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { crmSupabase, isCRMConnected } from "@/integrations/crm/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -498,6 +499,41 @@ function Index() {
     }
   };
 
+  const syncToExternalCRM = async (companies: any[]) => {
+    const connected = await isCRMConnected();
+    if (!connected) return;
+
+    try {
+      const { data: { user } } = await crmSupabase.auth.getUser();
+      if (!user) return;
+
+      const contactsToSync = companies.map(c => ({
+        user_id: user.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email || null,
+        notes: `Empresa: ${c.name}\nEndereço: ${c.address}\nWebsite: ${c.website}`,
+        interest: c.segment || segment,
+        is_lead: true,
+        stage: "Novo Lead", // Default stage for CRM
+        origin: "ProspectAI",
+        status: "Ativo"
+      }));
+
+      const { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
+        onConflict: 'user_id,phone' // Assuming phone is unique in CRM contacts
+      });
+
+      if (error) {
+        console.error("Erro ao sincronizar com CRM externo:", error);
+      } else {
+        console.log("Sincronização com CRM externo concluída.");
+      }
+    } catch (err) {
+      console.error("Erro inesperado na sincronização CRM:", err);
+    }
+  };
+
   const saveResultsToDatabaseAuto = async (companies: Company[]) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -516,9 +552,14 @@ function Index() {
         city_state: r.city || locations[0]
       }));
 
-      await supabase.from('companies').upsert(companiesToSave, {
+      const { error } = await supabase.from('companies').upsert(companiesToSave, {
         onConflict: 'user_id,name,address'
       });
+
+      if (error) throw error;
+      
+      // Also sync to external CRM if connected
+      await syncToExternalCRM(companies);
     } catch (err) {
       console.error("Erro ao salvar automaticamente:", err);
     }
