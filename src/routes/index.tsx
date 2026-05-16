@@ -1886,9 +1886,13 @@ function Index() {
                                           if (error) throw error;
 
                                           // Also sync to external CRM
-                                          await syncToExternalCRM([lead], selectedHistory.segment);
+                                          const externalSync = await syncToExternalCRM([lead], selectedHistory.segment);
                                           
-                                          toast.success(`${lead.name} vinculado ao CRM local e externo!`);
+                                          if (externalSync?.success) {
+                                            toast.success(`${lead.name} vinculado ao CRM local e externo!`);
+                                          } else {
+                                            toast.success(`${lead.name} vinculado ao CRM local!`);
+                                          }
                                         } catch (err: any) {
                                           toast.error("Erro: " + err.message);
                                         } finally {
