@@ -478,7 +478,7 @@ function ConfiguracoesPage() {
                                 });
 
                                 // Fallback: if 'contacts' fails, try 'leads' (some CRM templates use 'leads')
-                                if (insertError && (insertError.code === '42P01' || insertError.status === 404)) {
+                                if (insertError && insertError.code === '42P01') {
                                   setTestStatus({ status: 'loading', message: "Tabela 'contacts' não encontrada, tentando tabela 'leads'..." });
                                   const { error: leadsError } = await crmSupabase.from('leads').upsert(testPayload, {
                                     onConflict: 'user_id,external_source,external_id'
