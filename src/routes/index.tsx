@@ -197,6 +197,7 @@ function Index() {
   const [hideExistingInFunnel, setHideExistingInFunnel] = useState(false);
   const [minScore, setMinScore] = useState(0);
   const [onlyHighScores, setOnlyHighScores] = useState(false);
+  const [onlyNoWebsite, setOnlyNoWebsite] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -336,17 +337,18 @@ function Index() {
       const ratingMatch = r.rating >= parseFloat(minRating);
       const phoneMatch = onlyWithPhone ? !!r.phone : true;
       const websiteMatch = onlyWithWebsite ? !!r.website : true;
+      const noWebsiteMatch = onlyNoWebsite ? !r.website : true;
       const scoreMatch = (r.score || 0) >= minScore;
       const highAndVeryHighMatch = onlyHighScores ? (r.score || 0) >= 70 : true;
       
       const companyFromAll = allCompanies.find(c => c.name === r.name && c.address === r.address);
       const tagMatch = selectedTagFilter === "all" || (companyFromAll?.tags?.some((t: any) => t.id === selectedTagFilter));
 
-      return ratingMatch && phoneMatch && websiteMatch && tagMatch && scoreMatch && highAndVeryHighMatch;
+      return ratingMatch && phoneMatch && websiteMatch && noWebsiteMatch && tagMatch && scoreMatch && highAndVeryHighMatch;
     });
 
     return [...filtered].sort((a, b) => (b.score || 0) - (a.score || 0));
-  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter, funnelPhones, hideExistingInFunnel, minScore, onlyHighScores]);
+  }, [results, minRating, onlyWithPhone, onlyWithWebsite, onlyNoWebsite, allCompanies, selectedTagFilter, funnelPhones, hideExistingInFunnel, minScore, onlyHighScores]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -591,6 +593,72 @@ function Index() {
     }
   };
 
+  const sendMultipleToPipeline = async (companies: Company[]) => {
+    if (companies.length === 0) return;
+    setSaving(true);
+    let successCount = 0;
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado.");
+        return;
+      }
+
+      for (const company of companies) {
+        try {
+          // Check if already in funnel to avoid duplicates
+          if (company.phone && funnelPhones.has(company.phone)) continue;
+
+          await supabase.from('companies').upsert({
+            user_id: user.id,
+            name: company.name,
+            phone: company.phone,
+            website: company.website,
+            address: company.address,
+            rating: company.rating,
+            reviews: company.reviews,
+            is_open: company.open,
+            segment: segment,
+            city_state: company.city || locations[0],
+            pipeline_stage: 'Novo Lead'
+          }, {
+            onConflict: 'user_id,name,address'
+          });
+
+          await supabase.from('contacts' as any).insert({
+            user_id: user.id,
+            name: company.name,
+            phone: company.phone,
+            email: '',
+            origin: 'ProspectAI',
+            status: 'novo',
+            stage: 'novo_lead',
+            is_lead: true,
+            tag: segment,
+            interest: segment,
+            notes: `Lead gerado via ProspectAI - Lote sem site - ${company.city || locations[0]}`,
+            potential_value: 0,
+            optin_email: false,
+            optin_whatsapp: false,
+            tags: [segment],
+          });
+          successCount++;
+        } catch (e) {
+          console.error(`Erro ao enviar ${company.name}:`, e);
+        }
+      }
+
+      toast.success(`${successCount} leads sem site enviados ao funil!`);
+      fetchFunnelPhones();
+      fetchAllCompanies();
+    } catch (err: any) {
+      toast.error("Erro ao enviar leads: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const exportCSV = (rows: Company[]) => {
     const header = ["Nome", "Telefone", "Site", "Endereço", "Avaliação", "Avaliações", "Status"];
     const body = rows.map((r) => [
@@ -629,13 +697,15 @@ function Index() {
       avgRating: 0,
       newLeads: 0,
       alreadyInFunnel: 0,
-      avgScore: 0
+      avgScore: 0,
+      noWebsite: 0
     };
     
     return {
       total: filteredResults.length,
       withPhone: filteredResults.filter((r) => r.phone).length,
       withSite: filteredResults.filter((r) => r.website).length,
+      noWebsite: filteredResults.filter((r) => !r.website).length,
       avgRating: filteredResults.length > 0 
         ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
         : 0,
@@ -660,6 +730,11 @@ function Index() {
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8);
+
+    // No Website Opportunities (last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const recentNoWebsite = allCompanies.filter(c => !c.website && new Date(c.created_at) >= sevenDaysAgo).length;
 
     // Funnel Stages
     const funnelStages = ["Novo Lead", "Contato Iniciado", "Respondeu", "Em Negociação", "Fechado"];
@@ -722,7 +797,8 @@ function Index() {
       cityData,
       historyData: last7Days,
       funnelData,
-      advanceRate
+      advanceRate,
+      recentNoWebsite
     };
   }, [allCompanies]);
 
@@ -790,11 +866,12 @@ function Index() {
               </div>
             ) : dashboardData ? (
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   <MetricCard icon={Users} label="Total de Leads" value={dashboardData.total.toString()} />
                   <MetricCard icon={Target} label="No Funil" value={allCompanies.filter(c => c.pipeline_stage).length.toString()} />
                   <MetricCard icon={TrendingUp} label="Taxa de Avanço" value={`${dashboardData.advanceRate}%`} />
                   <MetricCard icon={MapPin} label="Cidades" value={dashboardData.cityData.length.toString()} />
+                  <MetricCard icon={Globe} label="Oportunidades" value={dashboardData.recentNoWebsite.toString()} />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1129,6 +1206,20 @@ function Index() {
                     />
                     <Label htmlFor="high-score-filter" className="text-sm text-zinc-400 cursor-pointer">Apenas Excelente e Muito Bom</Label>
                   </div>
+                  <div className="flex items-center space-x-3 pt-2 p-2 bg-primary/5 rounded-lg border border-primary/10">
+                    <Checkbox 
+                      id="no-website-filter" 
+                      checked={onlyNoWebsite}
+                      onCheckedChange={(checked) => setOnlyNoWebsite(checked as boolean)}
+                      className="border-primary/30 data-[state=checked]:bg-primary data-[state=checked]:text-black"
+                    />
+                    <Label htmlFor="no-website-filter" className="text-sm text-primary font-bold cursor-pointer flex items-center gap-2">
+                      🎯 Apenas sem site
+                      <Badge variant="outline" className="bg-primary/10 border-primary/20 text-[10px] h-4 px-1">
+                        {metrics.noWebsite}
+                      </Badge>
+                    </Label>
+                  </div>
               </div>
             </CardContent>
           </Card>
@@ -1160,8 +1251,8 @@ function Index() {
                   />
                   <MetricCard
                     icon={Globe}
-                    label="Com site"
-                    value={metrics.withSite.toString()}
+                    label="Sem Site / Com Site"
+                    value={`${metrics.noWebsite} / ${metrics.withSite}`}
                   />
                   <MetricCard
                     icon={Star}
@@ -1203,6 +1294,16 @@ function Index() {
               )}
             </div>
             <div className="flex gap-2">
+              {onlyNoWebsite && filteredResults && filteredResults.length > 0 && (
+                <Button
+                  className="gap-2 bg-primary text-black hover:bg-primary/90 font-bold text-xs"
+                  onClick={() => sendMultipleToPipeline(filteredResults)}
+                  disabled={saving}
+                >
+                  <Target className="h-4 w-4" />
+                  {saving ? "ENVIANDO..." : "ENVIAR TODOS SEM SITE AO FUNIL"}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="gap-2 border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50 font-bold text-xs"
@@ -1292,7 +1393,9 @@ function Index() {
                               <ExternalLink className="h-3 w-3" />
                             </a>
                           ) : (
-                            <span className="text-xs text-zinc-400 italic">Sem site</span>
+                            <Badge variant="outline" className="w-fit bg-primary/15 text-primary border-primary/30 text-[9px] font-black tracking-tighter h-4">
+                              SEM SITE
+                            </Badge>
                           )}
                         </div>
                       </TableCell>
