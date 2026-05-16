@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { User, Lock, Mail, Bell, Shield, Settings as SettingsIcon, Database, Link as LinkIcon, LogOut, CheckCircle2 } from "lucide-react";
+import { User, Lock, Mail, Bell, Shield, Settings as SettingsIcon, Database, Link as LinkIcon, LogOut, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { crmSupabase, isCRMConnected } from "@/integrations/crm/client";
 
 export const Route = createFileRoute("/configuracoes")({
@@ -26,6 +26,7 @@ function ConfiguracoesPage() {
   const [crmEmail, setCrmEmail] = useState("");
   const [crmPassword, setCrmPassword] = useState("");
   const [showCrmLogin, setShowCrmLogin] = useState(false);
+  const [testStatus, setTestStatus] = useState<{ status: 'idle' | 'loading' | 'success' | 'error', message?: string }>({ status: 'idle' });
 
   useEffect(() => {
     checkCrmStatus();
@@ -399,48 +400,87 @@ function ConfiguracoesPage() {
                     )}
 
                     {crmConnected && (
-                      <Card className="bg-primary/5 border-primary/20 mt-4">
+                      <Card className="bg-zinc-900/50 border-zinc-800 mt-4 overflow-hidden">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm font-bold text-primary">Testar Sincronização</CardTitle>
+                          <CardTitle className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                            <Database className="h-4 w-4 text-primary" />
+                            Testar Sincronização
+                          </CardTitle>
                           <CardDescription className="text-xs text-zinc-500">
-                            Envie um contato de teste para validar a conexão com o seu CRM externo.
+                            Valide a conexão enviando um contato de teste para o CRM externo.
                           </CardDescription>
                         </CardHeader>
-                        <CardFooter>
+                        <CardContent className="pb-4">
+                          {testStatus.status !== 'idle' && (
+                            <div className={`p-3 rounded-md mb-4 flex items-start gap-3 text-xs border ${
+                              testStatus.status === 'loading' ? 'bg-zinc-800/50 border-zinc-700 text-zinc-400' :
+                              testStatus.status === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                              'bg-red-500/10 border-red-500/20 text-red-400'
+                            }`}>
+                              {testStatus.status === 'loading' ? (
+                                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                              ) : testStatus.status === 'success' ? (
+                                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                              )}
+                              <div className="space-y-1">
+                                <p className="font-bold uppercase tracking-tight">
+                                  {testStatus.status === 'loading' ? 'Verificando...' : 
+                                   testStatus.status === 'success' ? 'Sucesso' : 'Falha na Sincronização'}
+                                </p>
+                                <p className="opacity-80">{testStatus.message}</p>
+                              </div>
+                            </div>
+                          )}
                           <Button 
                             variant="outline" 
                             size="sm"
-                            disabled={loading}
+                            disabled={testStatus.status === 'loading'}
                             onClick={async () => {
-                              setLoading(true);
+                              setTestStatus({ status: 'loading', message: 'Iniciando teste de conexão...' });
                               try {
-                                const { data: { user } } = await crmSupabase.auth.getUser();
-                                if (!user) throw new Error("Usuário não autenticado no CRM");
+                                // 1. Verificar Autenticação
+                                setTestStatus({ status: 'loading', message: 'Verificando credenciais no CRM...' });
+                                const { data: { user: cUser }, error: authError } = await crmSupabase.auth.getUser();
+                                if (authError || !cUser) throw new Error("Não foi possível autenticar no CRM. Verifique se as credenciais estão corretas.");
                                 
-                                const { error } = await crmSupabase.from('contacts').insert({
-                                  user_id: user.id,
-                                  name: "Teste ProspectAI",
+                                // 2. Tentar Inserir Lead
+                                setTestStatus({ status: 'loading', message: 'Enviando lead de teste para a tabela contacts...' });
+                                const { error: insertError } = await crmSupabase.from('contacts').insert({
+                                  user_id: cUser.id,
+                                  name: "TESTE DE SINCRONIZAÇÃO - PROSPECTAI",
                                   phone: "00000000000",
                                   origin: "ProspectAI",
                                   is_lead: true,
                                   stage: "novo_lead",
-                                  notes: "Contato de teste para validar integração."
+                                  notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}. Esta é uma mensagem automatizada para validar a integração.`
                                 });
 
-                                if (error) throw error;
-                                toast.success("Lead de teste enviado com sucesso!");
+                                if (insertError) {
+                                  if (insertError.code === '42P01') throw new Error("Tabela 'contacts' não encontrada no CRM externo.");
+                                  if (insertError.code === '42501') throw new Error("Erro de permissão (RLS) ao inserir no CRM. Verifique as políticas do banco de dados.");
+                                  throw insertError;
+                                }
+
+                                setTestStatus({ status: 'success', message: 'Conexão validada! O lead de teste foi criado com sucesso no CRM.' });
+                                toast.success("Integração funcionando perfeitamente!");
                               } catch (error: any) {
-                                toast.error("Erro no teste: " + error.message);
-                              } finally {
-                                setLoading(false);
+                                console.error("Erro no teste de sincronização:", error);
+                                setTestStatus({ status: 'error', message: error.message || "Erro desconhecido ao tentar sincronizar." });
+                                toast.error("Falha no teste de integração.");
                               }
                             }}
-                            className="border-primary/30 text-primary hover:bg-primary/10 gap-2 font-bold uppercase text-[10px]"
+                            className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-2 font-bold uppercase text-[10px] tracking-widest"
                           >
-                            <Database className="h-3.5 w-3.5" />
-                            Enviar Lead de Teste
+                            {testStatus.status === 'loading' ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Database className="h-3.5 w-3.5" />
+                            )}
+                            Testar Sincronização Agora
                           </Button>
-                        </CardFooter>
+                        </CardContent>
                       </Card>
                     )}
                   </CardContent>
