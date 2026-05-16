@@ -285,24 +285,6 @@ function Index() {
     }
   };
 
-  const saveSearchToHistory = async (count: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase.from('search_history').insert({
-        user_id: user.id,
-        segment: segment,
-        location: location,
-        leads_count: count
-      });
-
-      if (error) throw error;
-      fetchHistory(); // Refresh history
-    } catch (err) {
-      console.error("Erro ao salvar busca no histórico:", err);
-    }
-  };
 
   // Filters
   const [minRating, setMinRating] = useState("0");
