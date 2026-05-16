@@ -26,7 +26,8 @@ import {
   X,
   ChevronDown,
   Brain,
-  CloudSync
+  CloudSync,
+  Database
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -203,13 +204,25 @@ function Index() {
   const [minRating, setMinRating] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("filter_min_rating") : "0") || "0");
   const [onlyWithPhone, setOnlyWithPhone] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_only_phone") === "true" : false);
   const [onlyWithWebsite, setOnlyWithWebsite] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_only_website") === "true" : false);
+  const [crmConnected, setCrmConnected] = useState(false);
+  const [crmUser, setCrmUser] = useState<any>(null);
 
   useEffect(() => {
     fetchHistory();
     fetchAllCompanies();
     fetchTags();
     fetchFunnelPhones();
+    checkCrmStatus();
   }, []);
+
+  const checkCrmStatus = async () => {
+    const connected = await isCRMConnected();
+    setCrmConnected(connected);
+    if (connected) {
+      const { data: { user } } = await crmSupabase.auth.getUser();
+      setCrmUser(user);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -559,7 +572,10 @@ function Index() {
       if (error) throw error;
       
       // Also sync to external CRM if connected
-      await syncToExternalCRM(companies);
+      const connected = await isCRMConnected();
+      if (connected) {
+        await syncToExternalCRM(companies);
+      }
     } catch (err) {
       console.error("Erro ao salvar automaticamente:", err);
     }
@@ -873,9 +889,27 @@ function Index() {
           </div>
         </header>
 
-        {/* API Key Banner for all screens */}
+        {/* API Key Banner & CRM Status */}
         <div className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur-md">
-          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-end md:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-8">
+            <div className="flex items-center gap-3">
+              {crmConnected ? (
+                <Badge variant="outline" className="bg-primary/10 border-primary/20 text-primary gap-1.5 py-1 px-3">
+                  <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  CRM CONECTADO: {crmUser?.email?.split('@')[0].toUpperCase()}
+                </Badge>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate({ to: '/configuracoes' as any })}
+                  className="h-8 border-zinc-700 bg-zinc-800 text-zinc-400 hover:text-zinc-50 gap-2 font-bold text-[10px] uppercase tracking-widest"
+                >
+                  <Database className="h-3.5 w-3.5" />
+                  Conectar CRM
+                </Button>
+              )}
+            </div>
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Label htmlFor="api-key" className="sr-only">
                 API Key
@@ -888,7 +922,7 @@ function Index() {
                 onChange={(e) => setApiKey(e.target.value)}
                 className="sm:w-64 h-8 text-sm bg-zinc-900/50 border-zinc-700"
               />
-              <Button onClick={handleSaveKey} size="sm" className="gap-2 h-8">
+              <Button onClick={handleSaveKey} size="sm" className="gap-2 h-8 font-bold text-[10px] uppercase tracking-widest">
                 <Save className="h-3.5 w-3.5" />
                 Salvar Key
               </Button>
