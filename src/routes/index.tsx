@@ -1229,7 +1229,7 @@ function Index() {
                     <Label htmlFor="no-website-filter" className="text-sm text-primary font-bold cursor-pointer flex items-center gap-2">
                       🎯 Apenas sem site
                       <Badge variant="outline" className="bg-primary/10 border-primary/20 text-[10px] h-4 px-1">
-                        {metrics.noWebsite}
+                        {onlyNoWebsite ? filteredResults?.length : results?.filter(r => !r.website).length}
                       </Badge>
                     </Label>
                   </div>
