@@ -530,11 +530,13 @@ function Index() {
         is_lead: true,
         stage: "Novo Lead", // Default stage for CRM
         origin: "ProspectAI",
-        status: "Ativo"
+        status: "Ativo",
+        external_source: 'ProspectAI',
+        external_id: c.id
       }));
 
       const { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
-        onConflict: 'user_id,phone' // Assuming phone is unique in CRM contacts
+        onConflict: 'user_id,external_source,external_id'
       });
 
       if (error) {
