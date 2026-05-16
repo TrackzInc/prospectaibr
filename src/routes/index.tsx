@@ -325,8 +325,8 @@ function Index() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!segment.trim() || !location.trim()) {
-      toast.error("Informe segmento e cidade/estado");
+    if (!segment.trim() || locations.length === 0) {
+      toast.error("Informe segmento e pelo menos uma cidade");
       return;
     }
     if (!apiKey.trim()) {
@@ -336,40 +336,68 @@ function Index() {
 
     setLoading(true);
     setResults(null);
+    setSearchProgress({ current: 0, total: locations.length });
 
     try {
-      const { data, error } = await supabase.functions.invoke('google-places-proxy', {
-        body: { 
-          action: 'search', 
-          apiKey, 
-          params: { q: segment, location: location } 
+      const searchPromises = locations.map(async (locationItem) => {
+        try {
+          const { data, error } = await supabase.functions.invoke('google-places-proxy', {
+            body: { 
+              action: 'search', 
+              apiKey, 
+              params: { q: segment, location: locationItem } 
+            }
+          });
+
+          if (error) throw error;
+          if (data.error) throw new Error(data.error);
+
+          const localResults = data.local_results || [];
+          const detailedResults: Company[] = localResults.map((res: any) => ({
+            id: res.place_id || Math.random().toString(36).substr(2, 9),
+            name: res.title,
+            phone: res.phone || null,
+            website: res.website || null,
+            address: res.address,
+            rating: res.rating || 0,
+            reviews: res.reviews || 0,
+            open: res.operating_hours?.status === "Open" || res.operating_hours?.status === "Aberto",
+            city: locationItem
+          }));
+
+          setSearchProgress(prev => ({ ...prev, current: prev.current + 1 }));
+          return detailedResults;
+        } catch (err) {
+          console.error(`Erro ao buscar em ${locationItem}:`, err);
+          setSearchProgress(prev => ({ ...prev, current: prev.current + 1 }));
+          return [];
         }
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      const allResultsArrays = await Promise.all(searchPromises);
+      const combinedResults = allResultsArrays.flat();
+      
+      // Deduplicate by phone
+      const uniqueResults = combinedResults.reduce((acc: Company[], current) => {
+        if (!current.phone) {
+          acc.push(current);
+          return acc;
+        }
+        const x = acc.find(item => item.phone === current.phone);
+        if (!x) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
 
-      const localResults = data.local_results || [];
-      const detailedResults: Company[] = localResults.map((res: any) => ({
-        id: res.place_id || Math.random().toString(36).substr(2, 9),
-        name: res.title,
-        phone: res.phone || null,
-        website: res.website || null,
-        address: res.address,
-        rating: res.rating || 0,
-        reviews: res.reviews || 0,
-        open: res.operating_hours?.status === "Open" || res.operating_hours?.status === "Aberto",
-      }));
-
-      setResults(detailedResults);
-      if (detailedResults.length === 0) {
+      setResults(uniqueResults);
+      if (uniqueResults.length === 0) {
         toast.info("Nenhum resultado encontrado.");
       } else {
-        toast.success(`${detailedResults.length} empresas encontradas!`);
-        saveSearchToHistory(detailedResults.length);
-        // Automatically save results to the database as requested
-        saveResultsToDatabaseAuto(detailedResults);
-        fetchAllCompanies(); // Update dashboard data
+        toast.success(`${uniqueResults.length} empresas encontradas!`);
+        saveSearchToHistory(uniqueResults.length, locations[0]);
+        saveResultsToDatabaseAuto(uniqueResults);
+        fetchAllCompanies();
       }
     } catch (err: any) {
       toast.error(err.message || "Erro inesperado na busca.");
@@ -400,7 +428,7 @@ function Index() {
         reviews: r.reviews,
         is_open: r.open,
         segment: segment,
-        city_state: location
+        city_state: r.city || locations[0]
       }));
 
       const { error } = await supabase.from('companies').upsert(companiesToSave, {
@@ -409,7 +437,7 @@ function Index() {
 
       if (error) throw error;
       toast.success("Resultados salvos no banco de dados!");
-      fetchAllCompanies(); // Update dashboard data
+      fetchAllCompanies();
     } catch (err: any) {
       toast.error("Erro ao salvar resultados: " + err.message);
       console.error(err);
@@ -433,7 +461,7 @@ function Index() {
         reviews: r.reviews,
         is_open: r.open,
         segment: segment,
-        city_state: location
+        city_state: r.city || locations[0]
       }));
 
       await supabase.from('companies').upsert(companiesToSave, {
@@ -441,6 +469,25 @@ function Index() {
       });
     } catch (err) {
       console.error("Erro ao salvar automaticamente:", err);
+    }
+  };
+
+  const saveSearchToHistory = async (count: number, locationName?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from('search_history').insert({
+        user_id: user.id,
+        segment: segment,
+        location: locationName || locations[0],
+        leads_count: count
+      });
+
+      if (error) throw error;
+      fetchHistory();
+    } catch (err) {
+      console.error("Erro ao salvar busca no histórico:", err);
     }
   };
 
