@@ -173,8 +173,10 @@ function Index() {
 
   const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("serp_api_key") : "") || "");
   const [segment, setSegment] = useState("");
-  const [location, setLocation] = useState("");
+  const [locations, setLocations] = useState<string[]>([]);
+  const [locationInput, setLocationInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchProgress, setSearchProgress] = useState({ current: 0, total: 0 });
   const [results, setResults] = useState<Company[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<SearchHistory[]>([]);
