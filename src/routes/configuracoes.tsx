@@ -457,39 +457,59 @@ function ConfiguracoesPage() {
                                 const { data: { user: cUser }, error: authError } = await crmSupabase.auth.getUser();
                                 if (authError || !cUser) throw new Error("Não foi possível autenticar no CRM. Verifique se as credenciais estão corretas.");
                                 
-                                // 2. Tentar Inserir Lead
-                                setTestStatus({ status: 'loading', message: 'Enviando lead de teste para a tabela contacts...' });
+                                // 2. Verificar existência da tabela
+                                setTestStatus({ status: 'loading', message: 'Verificando acesso às tabelas do CRM...' });
                                 
-                                // Step 2a: Try inserting into 'contacts' table
-                                const testPayload = {
-                                  user_id: cUser.id,
-                                  name: "TESTE DE SINCRONIZAÇÃO - PROSPECTAI",
-                                  phone: "00000000000",
-                                  origin: "ProspectAI",
-                                  is_lead: true,
-                                  stage: "novo_lead",
-                                  external_source: 'ProspectAI',
-                                  external_id: 'test_sync_' + Date.now(),
-                                  notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}.`
-                                };
-
-                                let { error: insertError } = await crmSupabase.from('contacts').upsert(testPayload, {
-                                  onConflict: 'user_id,external_source,external_id'
-                                });
-
-                                // Fallback: if 'contacts' fails, try 'leads' (some CRM templates use 'leads')
-                                if (insertError && insertError.code === '42P01') {
-                                  setTestStatus({ status: 'loading', message: "Tabela 'contacts' não encontrada, tentando tabela 'leads'..." });
-                                  const { error: leadsError } = await crmSupabase.from('leads').upsert(testPayload, {
-                                    onConflict: 'user_id,external_source,external_id'
-                                  });
-                                  insertError = leadsError;
+                                let targetTable = 'contacts';
+                                let { error: tableError } = await crmSupabase.from('contacts').select('id').limit(1);
+                                
+                                if (tableError && tableError.code === '42P01') {
+                                  // Tentar prospectai_leads como segunda opção
+                                  const { error: fallbackError } = await crmSupabase.from('prospectai_leads').select('id').limit(1);
+                                  if (!fallbackError || fallbackError.code !== '42P01') {
+                                    targetTable = 'prospectai_leads';
+                                    tableError = null;
+                                  }
                                 }
 
+                                if (tableError && tableError.code === '42P01') {
+                                  throw new Error("Nenhuma tabela de destino encontrada no CRM. Verifique se o projeto do CRM está configurado corretamente.");
+                                }
+
+                                // 3. Tentar Inserir Lead
+                                setTestStatus({ status: 'loading', message: `Enviando lead para a tabela ${targetTable}...` });
+                                
+                                let testPayload: any;
+                                if (targetTable === 'contacts') {
+                                  testPayload = {
+                                    user_id: cUser.id,
+                                    name: "TESTE PROSPECTAI - " + new Date().toLocaleTimeString(),
+                                    phone: "00000000000",
+                                    origin: "ProspectAI",
+                                    is_lead: true,
+                                    stage: "novo_lead",
+                                    status: "novo",
+                                    notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}.`
+                                  };
+                                } else {
+                                  testPayload = {
+                                    name: "TESTE PROSPECTAI - " + new Date().toLocaleTimeString(),
+                                    company_name: "Empresa de Teste",
+                                    phone: "00000000000",
+                                    email: "teste@exemplo.com",
+                                    segment: "Teste"
+                                  };
+                                }
+
+                                const { error: insertError } = await crmSupabase.from(targetTable).insert(testPayload);
+
                                 if (insertError) {
-                                  if (insertError.code === '42P01') throw new Error("Tabela 'contacts' não encontrada no CRM externo.");
-                                  if (insertError.code === '42501') throw new Error("Erro de permissão (RLS) ao inserir no CRM. Verifique as políticas do banco de dados.");
-                                  throw insertError;
+                                  console.error("Erro detalhado do CRM:", insertError);
+                                  let errorMessage = insertError.message;
+                                  if (insertError.code === '42501') {
+                                    errorMessage = "Erro de permissão (RLS). Certifique-se de que seu usuário no CRM tem permissão para inserir nesta tabela.";
+                                  }
+                                  throw new Error(errorMessage + ` (Código: ${insertError.code})`);
                                 }
 
                                 setTestStatus({ status: 'success', message: 'Conexão validada! O lead de teste foi criado com sucesso no CRM.' });
