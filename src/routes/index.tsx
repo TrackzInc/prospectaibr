@@ -1619,12 +1619,48 @@ function Index() {
                             variant="ghost"
                             size="sm"
                              className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
-                             disabled={!!r.website || (!!r.phone && funnelPhones.has(r.phone))}
-                             onClick={() => sendToPipeline(r)}
-                             title={r.website ? "Somente leads sem site podem ser enviados" : (r.phone && funnelPhones.has(r.phone) ? "Este lead já está no funil" : "")}
+                             disabled={saving || (!!r.phone && funnelPhones.has(r.phone))}
+                             onClick={async () => {
+                               setSaving(true);
+                               try {
+                                 const { data: { user } } = await supabase.auth.getUser();
+                                 if (!user) throw new Error("Usuário não logado");
+
+                                 // Sync with local CRM
+                                 const { error: localError } = await supabase.from('contacts' as any).upsert({
+                                   user_id: user.id,
+                                   name: r.name,
+                                   phone: r.phone,
+                                   website: r.website,
+                                   origin: 'ProspectAI_Single',
+                                   status: 'novo',
+                                   tag: segment || 'Lead Individual',
+                                   notes: `Vínculo individual via ProspectAI em ${new Date().toLocaleDateString()}`
+                                 }, { onConflict: 'user_id,phone' });
+
+                                 if (localError) throw localError;
+
+                                 // Sync with external CRM
+                                 const externalSync = await syncToExternalCRM([r]);
+                                 
+                                 if (externalSync?.success) {
+                                   toast.success(`${r.name} vinculado ao CRM local e externo!`);
+                                 } else {
+                                   toast.success(`${r.name} vinculado ao CRM local!`);
+                                 }
+                                 
+                                 fetchFunnelPhones();
+                                 fetchAllCompanies();
+                               } catch (err: any) {
+                                 toast.error("Erro ao vincular: " + err.message);
+                               } finally {
+                                 setSaving(false);
+                               }
+                             }}
+                             title={r.phone && funnelPhones.has(r.phone) ? "Este lead já está no funil" : ""}
                            >
-                            <Plus className="h-3.5 w-3.5" />
-                            Funil
+                            <CloudSync className="h-3.5 w-3.5" />
+                            CRM
                           </Button>
                           <Button
                             variant="ghost"
