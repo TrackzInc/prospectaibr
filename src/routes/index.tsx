@@ -25,7 +25,8 @@ import {
   Columns,
   X,
   ChevronDown,
-  Brain
+  Brain,
+  CloudSync
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -1328,6 +1329,43 @@ function Index() {
               </Button>
               <Button
                 variant="outline"
+                className="gap-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary font-bold text-xs shadow-[0_0_10px_rgba(170,255,0,0.1)]"
+                disabled={!filteredResults || filteredResults.length === 0 || saving}
+                onClick={async () => {
+                  if (!filteredResults) return;
+                  setSaving(true);
+                  try {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (!user) throw new Error("Usuário não logado");
+
+                    let count = 0;
+                    for (const lead of filteredResults) {
+                      const { error } = await supabase.from('contacts' as any).upsert({
+                        user_id: user.id,
+                        name: lead.name,
+                        phone: lead.phone,
+                        website: lead.website,
+                        origin: 'ProspectAI_Export',
+                        status: 'novo',
+                        tag: segment || 'Exportado',
+                        notes: `Exportado via ProspectAI em ${new Date().toLocaleDateString()}`
+                      }, { onConflict: 'user_id,phone' });
+                      
+                      if (!error) count++;
+                    }
+                    toast.success(`${count} leads vinculados ao seu CRM!`);
+                  } catch (err: any) {
+                    toast.error("Erro na exportação: " + err.message);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+              >
+                <CloudSync className="h-4 w-4" />
+                <span className="hidden sm:inline">{saving ? "VINCULANDO..." : "VINCULAR AO MEU CRM"}</span>
+              </Button>
+              <Button
+                variant="outline"
                 className="gap-2 border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50 font-bold text-xs"
                 disabled={!filteredResults || filteredResults.length === 0}
                 onClick={() => filteredResults && exportCSV(filteredResults)}
@@ -1638,6 +1676,41 @@ function Index() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 font-bold text-[10px] gap-1.5"
+                                      disabled={saving}
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        setSaving(true);
+                                        try {
+                                          const { data: { user } } = await supabase.auth.getUser();
+                                          if (!user) return;
+
+                                          const { error } = await supabase.from('contacts' as any).upsert({
+                                            user_id: user.id,
+                                            name: lead.name,
+                                            phone: lead.phone,
+                                            website: lead.website,
+                                            origin: 'ProspectAI_History',
+                                            status: 'novo',
+                                            tag: selectedHistory.segment,
+                                            notes: `Exportado do histórico em ${new Date().toLocaleDateString()}`
+                                          }, { onConflict: 'user_id,phone' });
+
+                                          if (error) throw error;
+                                          toast.success(`${lead.name} vinculado ao CRM!`);
+                                        } catch (err: any) {
+                                          toast.error("Erro: " + err.message);
+                                        } finally {
+                                          setSaving(false);
+                                        }
+                                      }}
+                                    >
+                                      <CloudSync className="h-3 w-3" />
+                                      VINCULAR CRM
+                                    </Button>
                                     {lead.phone && (
                                       <Button
                                         variant="ghost"
