@@ -1151,6 +1151,7 @@ function Index() {
                   {filteredResults.map((r) => (
                     <TableRow key={r.id} className="border-zinc-700/50 hover:bg-zinc-700/30 transition-colors group">
                       <TableCell className="font-medium">{r.name}</TableCell>
+                      <TableCell className="text-xs text-zinc-400 capitalize">{r.city}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5">
                           {r.phone ? (
