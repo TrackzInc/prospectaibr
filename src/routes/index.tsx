@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, KeyboardEvent } from "react";
 import {
   Search as SearchIcon,
   Download,
@@ -22,7 +22,9 @@ import {
   Target,
   LayoutDashboard,
   Plus,
-  Columns
+  Columns,
+  X,
+  ChevronDown
 } from "lucide-react";
 import {
   BarChart,
@@ -65,6 +67,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -91,6 +99,7 @@ type Company = {
   open: boolean;
   pipeline_stage?: string | null;
   tags?: Tag[];
+  city?: string;
 };
 
 type Tag = {
@@ -164,8 +173,10 @@ function Index() {
 
   const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("serp_api_key") : "") || "");
   const [segment, setSegment] = useState("");
-  const [location, setLocation] = useState("");
+  const [locations, setLocations] = useState<string[]>([]);
+  const [locationInput, setLocationInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchProgress, setSearchProgress] = useState({ current: 0, total: 0 });
   const [results, setResults] = useState<Company[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [history, setHistory] = useState<SearchHistory[]>([]);
@@ -274,24 +285,6 @@ function Index() {
     }
   };
 
-  const saveSearchToHistory = async (count: number) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase.from('search_history').insert({
-        user_id: user.id,
-        segment: segment,
-        location: location,
-        leads_count: count
-      });
-
-      if (error) throw error;
-      fetchHistory(); // Refresh history
-    } catch (err) {
-      console.error("Erro ao salvar busca no histórico:", err);
-    }
-  };
 
   // Filters
   const [minRating, setMinRating] = useState("0");
@@ -314,8 +307,8 @@ function Index() {
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!segment.trim() || !location.trim()) {
-      toast.error("Informe segmento e cidade/estado");
+    if (!segment.trim() || locations.length === 0) {
+      toast.error("Informe segmento e pelo menos uma cidade");
       return;
     }
     if (!apiKey.trim()) {
@@ -325,40 +318,68 @@ function Index() {
 
     setLoading(true);
     setResults(null);
+    setSearchProgress({ current: 0, total: locations.length });
 
     try {
-      const { data, error } = await supabase.functions.invoke('google-places-proxy', {
-        body: { 
-          action: 'search', 
-          apiKey, 
-          params: { q: segment, location: location } 
+      const searchPromises = locations.map(async (locationItem) => {
+        try {
+          const { data, error } = await supabase.functions.invoke('google-places-proxy', {
+            body: { 
+              action: 'search', 
+              apiKey, 
+              params: { q: segment, location: locationItem } 
+            }
+          });
+
+          if (error) throw error;
+          if (data.error) throw new Error(data.error);
+
+          const localResults = data.local_results || [];
+          const detailedResults: Company[] = localResults.map((res: any) => ({
+            id: res.place_id || Math.random().toString(36).substr(2, 9),
+            name: res.title,
+            phone: res.phone || null,
+            website: res.website || null,
+            address: res.address,
+            rating: res.rating || 0,
+            reviews: res.reviews || 0,
+            open: res.operating_hours?.status === "Open" || res.operating_hours?.status === "Aberto",
+            city: locationItem
+          }));
+
+          setSearchProgress(prev => ({ ...prev, current: prev.current + 1 }));
+          return detailedResults;
+        } catch (err) {
+          console.error(`Erro ao buscar em ${locationItem}:`, err);
+          setSearchProgress(prev => ({ ...prev, current: prev.current + 1 }));
+          return [];
         }
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      const allResultsArrays = await Promise.all(searchPromises);
+      const combinedResults = allResultsArrays.flat();
+      
+      // Deduplicate by phone
+      const uniqueResults = combinedResults.reduce((acc: Company[], current) => {
+        if (!current.phone) {
+          acc.push(current);
+          return acc;
+        }
+        const x = acc.find(item => item.phone === current.phone);
+        if (!x) {
+          acc.push(current);
+        }
+        return acc;
+      }, []);
 
-      const localResults = data.local_results || [];
-      const detailedResults: Company[] = localResults.map((res: any) => ({
-        id: res.place_id || Math.random().toString(36).substr(2, 9),
-        name: res.title,
-        phone: res.phone || null,
-        website: res.website || null,
-        address: res.address,
-        rating: res.rating || 0,
-        reviews: res.reviews || 0,
-        open: res.operating_hours?.status === "Open" || res.operating_hours?.status === "Aberto",
-      }));
-
-      setResults(detailedResults);
-      if (detailedResults.length === 0) {
+      setResults(uniqueResults);
+      if (uniqueResults.length === 0) {
         toast.info("Nenhum resultado encontrado.");
       } else {
-        toast.success(`${detailedResults.length} empresas encontradas!`);
-        saveSearchToHistory(detailedResults.length);
-        // Automatically save results to the database as requested
-        saveResultsToDatabaseAuto(detailedResults);
-        fetchAllCompanies(); // Update dashboard data
+        toast.success(`${uniqueResults.length} empresas encontradas!`);
+        saveSearchToHistory(uniqueResults.length, locations[0]);
+        saveResultsToDatabaseAuto(uniqueResults);
+        fetchAllCompanies();
       }
     } catch (err: any) {
       toast.error(err.message || "Erro inesperado na busca.");
@@ -389,7 +410,7 @@ function Index() {
         reviews: r.reviews,
         is_open: r.open,
         segment: segment,
-        city_state: location
+        city_state: r.city || locations[0]
       }));
 
       const { error } = await supabase.from('companies').upsert(companiesToSave, {
@@ -398,7 +419,7 @@ function Index() {
 
       if (error) throw error;
       toast.success("Resultados salvos no banco de dados!");
-      fetchAllCompanies(); // Update dashboard data
+      fetchAllCompanies();
     } catch (err: any) {
       toast.error("Erro ao salvar resultados: " + err.message);
       console.error(err);
@@ -422,7 +443,7 @@ function Index() {
         reviews: r.reviews,
         is_open: r.open,
         segment: segment,
-        city_state: location
+        city_state: r.city || locations[0]
       }));
 
       await supabase.from('companies').upsert(companiesToSave, {
@@ -430,6 +451,25 @@ function Index() {
       });
     } catch (err) {
       console.error("Erro ao salvar automaticamente:", err);
+    }
+  };
+
+  const saveSearchToHistory = async (count: number, locationName?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase.from('search_history').insert({
+        user_id: user.id,
+        segment: segment,
+        location: locationName || locations[0],
+        leads_count: count
+      });
+
+      if (error) throw error;
+      fetchHistory();
+    } catch (err) {
+      console.error("Erro ao salvar busca no histórico:", err);
     }
   };
 
@@ -460,7 +500,7 @@ function Index() {
         reviews: company.reviews,
         is_open: company.open,
         segment: segment,
-        city_state: location,
+        city_state: company.city || locations[0],
         pipeline_stage: 'Novo Lead'
       }, {
         onConflict: 'user_id,name,address'
@@ -480,7 +520,7 @@ function Index() {
         is_lead: true,
         tag: segment,
         interest: segment,
-        notes: `Lead gerado via ProspectAI - ${location}`,
+        notes: `Lead gerado via ProspectAI - ${company.city || locations[0]}`,
         potential_value: 0,
         optin_email: false,
         optin_whatsapp: false,
@@ -888,19 +928,65 @@ function Index() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location" className="text-xs font-semibold text-zinc-400">Cidade / Estado</Label>
-                  <Input
-                    id="location"
-                    placeholder="ex: São Paulo, SP"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="bg-zinc-900 border-zinc-700 focus-visible:ring-primary h-10"
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="location" className="text-xs font-semibold text-zinc-400">Cidades ({locations.length}/10)</Label>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-6 text-[10px] font-bold uppercase tracking-widest text-primary gap-1">
+                          Cidades frequentes
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="bg-zinc-900 border-zinc-700 w-48">
+                        {["São Paulo", "Rio de Janeiro", "Recife", "Fortaleza", "Salvador", "Belo Horizonte", "Curitiba", "Manaus", "Belém", "Goiânia"].map(city => (
+                          <DropdownMenuItem 
+                            key={city} 
+                            className="text-xs text-zinc-300 focus:text-primary focus:bg-zinc-800 cursor-pointer"
+                            onClick={() => {
+                              if (locations.length < 10 && !locations.includes(city)) {
+                                setLocations([...locations, city]);
+                              }
+                            }}
+                          >
+                            {city}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap gap-2 p-2 min-h-[40px] bg-zinc-900 border border-zinc-700 rounded-md">
+                    {locations.map(loc => (
+                      <Badge key={loc} variant="secondary" className="gap-1 bg-zinc-800 text-zinc-300 border-zinc-700">
+                        {loc}
+                        <button type="button" onClick={() => setLocations(locations.filter(l => l !== loc))}>
+                          <X className="h-3 w-3 hover:text-red-400" />
+                        </button>
+                      </Badge>
+                    ))}
+                    {locations.length < 10 && (
+                      <input
+                        placeholder={locations.length === 0 ? "Digite e Enter" : ""}
+                        value={locationInput}
+                        onChange={(e) => setLocationInput(e.target.value)}
+                        onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = locationInput.trim();
+                            if (val && locations.length < 10 && !locations.includes(val)) {
+                              setLocations([...locations, val]);
+                              setLocationInput("");
+                            }
+                          }
+                        }}
+                        className="bg-transparent border-none outline-none text-sm text-zinc-300 placeholder:text-zinc-600 flex-1 min-w-[100px]"
+                      />
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-end">
                   <Button type="submit" className="w-full gap-2 md:w-auto h-10 font-bold px-8 shadow-[0_0_15px_rgba(170,255,0,0.2)]" disabled={loading}>
                     <SearchIcon className="h-4 w-4" />
-                    {loading ? "BUSCANDO..." : "BUSCAR"}
+                    {loading ? `BUSCANDO ${searchProgress.current}/${searchProgress.total}...` : "BUSCAR"}
                   </Button>
                 </div>
               </form>
@@ -1053,6 +1139,7 @@ function Index() {
                 <TableHeader>
                   <TableRow className="border-zinc-700 hover:bg-transparent">
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Nome</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Cidade</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Contato & Links</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Endereço</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Avaliação</TableHead>
@@ -1064,6 +1151,7 @@ function Index() {
                   {filteredResults.map((r) => (
                     <TableRow key={r.id} className="border-zinc-700/50 hover:bg-zinc-700/30 transition-colors group">
                       <TableCell className="font-medium">{r.name}</TableCell>
+                      <TableCell className="text-xs text-zinc-400 capitalize">{r.city}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5">
                           {r.phone ? (
