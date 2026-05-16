@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-cron-secret',
 };
 
 serve(async (req) => {
@@ -12,6 +12,16 @@ serve(async (req) => {
   }
 
   try {
+    // Require shared cron secret - this endpoint is server-to-server only
+    const cronSecret = Deno.env.get('CRON_SECRET');
+    const provided = req.headers.get('x-cron-secret');
+    if (!cronSecret || provided !== cronSecret) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -19,7 +29,6 @@ serve(async (req) => {
 
     const now = new Date().toISOString();
 
-    // 1. Get pending schedules that are active
     const { data: pendingSchedules, error: fetchError } = await supabaseClient
       .from('schedules')
       .select(`
@@ -39,11 +48,6 @@ serve(async (req) => {
 
       console.log(`Processing schedule: ${schedule.name} for campaign: ${campaign.name}`);
 
-      // 2. Logic to start the campaign or send messages
-      // This part depends on how your campaigns are triggered. 
-      // Typically, you'd call the Evolution API here for each lead in the campaign.
-      
-      // For now, let's mark it as run and update next_run_at if recurrence exists
       let nextRun = null;
       if (schedule.recurrence === 'daily') {
         const d = new Date(schedule.next_run_at);
