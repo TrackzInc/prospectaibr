@@ -12,15 +12,37 @@ serve(async (req) => {
   }
 
   try {
+    // Require authentication - reject unauthenticated callers
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // This function would be triggered by a webhook from Evolution API
-    // When a lead responds
     const body = await req.json();
-    const { lead_id, message, user_id } = body;
+    const { lead_id, message } = body;
+    // Use authenticated user id, NEVER trust user_id from request body
+    const user_id = user.id;
 
     // 1. Get Robot Config
     const { data: config } = await supabaseClient
@@ -40,7 +62,6 @@ serve(async (req) => {
     Responda de forma natural, curta e direta via WhatsApp.`;
 
     const claudeResponse = "Olá! Vi seu interesse e gostaria de agendar uma conversa rápida. Qual o melhor horário para você?"; 
-    // In a real implementation: fetch('https://api.anthropic.com/v1/messages', ...)
 
     // 3. Save Log
     await supabaseClient
@@ -52,9 +73,6 @@ serve(async (req) => {
         sent_response: claudeResponse,
         status: 'automatic'
       });
-
-    // 4. Send via Evolution API
-    // Similar to sendMessage logic in frontend
 
     return new Response(
       JSON.stringify({ response: claudeResponse }),
