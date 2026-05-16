@@ -100,6 +100,7 @@ type Company = {
   pipeline_stage?: string | null;
   tags?: Tag[];
   city?: string;
+  isAlreadyInFunnel?: boolean;
 };
 
 type Tag = {
@@ -188,12 +189,23 @@ function Index() {
   const [loadingHistoryLeads, setLoadingHistoryLeads] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>("all");
+  const [funnelPhones, setFunnelPhones] = useState<Set<string>>(new Set());
+  const [hideExistingInFunnel, setHideExistingInFunnel] = useState(false);
 
   useEffect(() => {
     fetchHistory();
     fetchAllCompanies();
     fetchTags();
+    fetchFunnelPhones();
   }, []);
+
+  const fetchFunnelPhones = async () => {
+    const { data } = await supabase.from('contacts' as any).select('phone');
+    if (data) {
+      const phones = new Set(data.map((c: any) => c.phone).filter(Boolean));
+      setFunnelPhones(phones);
+    }
+  };
 
   const fetchTags = async () => {
     const { data } = await supabase.from('tags').select('*').order('name');
@@ -294,6 +306,9 @@ function Index() {
   const filteredResults = useMemo(() => {
     if (!results) return null;
     return results.filter((r) => {
+      const isExisting = r.phone ? funnelPhones.has(r.phone) : false;
+      if (hideExistingInFunnel && isExisting) return false;
+
       const ratingMatch = r.rating >= parseFloat(minRating);
       const phoneMatch = onlyWithPhone ? !!r.phone : true;
       const websiteMatch = onlyWithWebsite ? !!r.website : true;
@@ -303,7 +318,7 @@ function Index() {
 
       return ratingMatch && phoneMatch && websiteMatch && tagMatch;
     });
-  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter]);
+  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter, funnelPhones, hideExistingInFunnel]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -372,14 +387,20 @@ function Index() {
         return acc;
       }, []);
 
-      setResults(uniqueResults);
-      if (uniqueResults.length === 0) {
+      const finalResults = uniqueResults.map(r => ({
+        ...r,
+        isAlreadyInFunnel: r.phone ? funnelPhones.has(r.phone) : false
+      }));
+
+      setResults(finalResults);
+      if (finalResults.length === 0) {
         toast.info("Nenhum resultado encontrado.");
       } else {
-        toast.success(`${uniqueResults.length} empresas encontradas!`);
-        saveSearchToHistory(uniqueResults.length, locations[0]);
-        saveResultsToDatabaseAuto(uniqueResults);
+        toast.success(`${finalResults.length} empresas encontradas!`);
+        saveSearchToHistory(finalResults.length, locations[0]);
+        saveResultsToDatabaseAuto(finalResults);
         fetchAllCompanies();
+        fetchFunnelPhones();
       }
     } catch (err: any) {
       toast.error(err.message || "Erro inesperado na busca.");
@@ -530,6 +551,7 @@ function Index() {
       if (contactError) throw contactError;
 
       toast.success(`${company.name} enviado ao funil e CRM!`);
+      fetchFunnelPhones();
       fetchAllCompanies(); // Refresh dashboard
     } catch (err: any) {
       toast.error("Erro ao enviar ao funil: " + err.message);
@@ -572,6 +594,8 @@ function Index() {
       withPhone: 0,
       withSite: 0,
       avgRating: 0,
+      newLeads: 0,
+      alreadyInFunnel: 0
     };
     
     return {
@@ -581,8 +605,10 @@ function Index() {
       avgRating: filteredResults.length > 0 
         ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
         : 0,
+      newLeads: filteredResults.filter(r => !funnelPhones.has(r.phone || "")).length,
+      alreadyInFunnel: filteredResults.filter(r => r.phone && funnelPhones.has(r.phone)).length
     };
-  }, [filteredResults]);
+  }, [filteredResults, funnelPhones]);
 
   const dashboardData = useMemo(() => {
     if (allCompanies.length === 0) return null;
@@ -1035,7 +1061,16 @@ function Index() {
                     />
                     <Label htmlFor="website-filter" className="text-sm text-zinc-400 cursor-pointer">Apenas com site</Label>
                   </div>
-                </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      id="funnel-filter" 
+                      checked={hideExistingInFunnel}
+                      onCheckedChange={(checked) => setHideExistingInFunnel(checked as boolean)}
+                      className="border-zinc-700 data-[state=checked]:bg-primary data-[state=checked]:text-black"
+                    />
+                    <Label htmlFor="funnel-filter" className="text-sm text-zinc-400 cursor-pointer">Ocultar leads já no funil</Label>
+                  </div>
               </div>
             </CardContent>
           </Card>
@@ -1093,6 +1128,16 @@ function Index() {
                     ? "Buscando na API..."
                     : "Configure a API Key e faça uma busca"}
               </p>
+              {filteredResults && filteredResults.length > 0 && (
+                <div className="mt-2 flex items-center gap-3">
+                  <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 text-[10px] font-bold">
+                    {metrics.newLeads} NOVOS
+                  </Badge>
+                  <Badge variant="outline" className="bg-zinc-500/10 text-zinc-500 border-zinc-700 text-[10px] font-bold">
+                    {metrics.alreadyInFunnel} JÁ PROSPECTADOS
+                  </Badge>
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Button
@@ -1150,7 +1195,16 @@ function Index() {
                 <TableBody>
                   {filteredResults.map((r) => (
                     <TableRow key={r.id} className="border-zinc-700/50 hover:bg-zinc-700/30 transition-colors group">
-                      <TableCell className="font-medium">{r.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex flex-col gap-1">
+                          {r.name}
+                          {r.phone && funnelPhones.has(r.phone) && (
+                            <Badge variant="outline" className="w-fit bg-zinc-500/10 text-zinc-500 border-zinc-700 text-[9px] font-bold px-1.5 py-0 h-4">
+                              Já no funil
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-xs text-zinc-400 capitalize">{r.city}</TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5">
@@ -1238,11 +1292,11 @@ function Index() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
-                            disabled={!!r.website}
-                            onClick={() => sendToPipeline(r)}
-                            title={r.website ? "Somente leads sem site podem ser enviados" : ""}
-                          >
+                             className="gap-1.5 text-primary hover:text-primary hover:bg-primary/10 disabled:opacity-30"
+                             disabled={!!r.website || (!!r.phone && funnelPhones.has(r.phone))}
+                             onClick={() => sendToPipeline(r)}
+                             title={r.website ? "Somente leads sem site podem ser enviados" : (r.phone && funnelPhones.has(r.phone) ? "Este lead já está no funil" : "")}
+                           >
                             <Plus className="h-3.5 w-3.5" />
                             Funil
                           </Button>
