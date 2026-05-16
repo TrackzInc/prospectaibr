@@ -532,9 +532,9 @@ function Index() {
           notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}`,
           interest: customSegment || c.segment || segment,
           is_lead: true,
-          stage: "novo_lead", // Use slug format "novo_lead" instead of "Novo Lead" to match common CRM patterns
+          stage: "novo_lead",
           origin: "ProspectAI",
-          status: "ativo",
+          status: "novo",
           external_source: 'ProspectAI',
           external_id: extId
         };
