@@ -1,18 +1,32 @@
-# Exportação para CRM Externo
+# Plano de Integração com Projeto CRM
 
-O usuário deseja exportar os leads capturados para seu próprio CRM via Supabase/Git. 
+O objetivo é permitir que o usuário conecte este projeto ao seu projeto de CRM externo (Remix of Cashflow Connect) e sincronize automaticamente os leads capturados.
 
 ## Mudanças propostas
 
-### Frontend (Busca e Histórico)
-- Adicionar um botão "Exportar para CRM" nas abas de **Busca** e **Histórico**.
-- Integrar com a tabela `contacts` (que já funciona como um CRM interno) e garantir que a exportação possa ser facilmente estendida para webhooks ou integrações diretas.
-- Adicionar uma configuração em "Sistema" (Configurações) para definir o destino da exportação (atualmente focaremos em preparar a estrutura para que o usuário vincule seu CRM).
+### Integração Supabase
+- Criar um novo cliente Supabase em `src/integrations/crm/client.ts` apontando para o backend do projeto CRM.
+- Usar a URL do Supabase do projeto CRM: `https://xqavudmwsnuzzcgetzkb.supabase.co` (obtida das ferramentas de sistema para o projeto CRM).
 
-### Banco de Dados
-- Utilizar a tabela `contacts` existente como ponte.
-- O usuário mencionou "vincular via git e supabase", o que sugere que ele quer acessar os dados diretamente do banco de dados dele.
+### Configurações
+- Adicionar uma seção "Conectar CRM" na aba de Integrações em `src/routes/configuracoes.tsx`.
+- Implementar o fluxo de autenticação para o CRM externo (armazenando a sessão separadamente se necessário, seguindo o padrão do SaaS Hub).
+- Salvar o estado da conexão no `localStorage` ou banco de dados local.
+
+### Sincronização de Dados
+- Criar um hook ou utilitário `syncLeadToCRM` que:
+    - Recebe os dados de uma empresa/lead.
+    - Insere ou atualiza na tabela `contacts` do CRM externo.
+    - Define `is_lead: true` e mapeia o status para o `stage` do CRM.
+- Integrar este utilitário nos fluxos de:
+    - "Vincular ao meu CRM" (que já existe no código, mas agora será automatizado via API).
+    - Captura automática de novos leads (se configurado).
+
+### Interface (UI)
+- Botão "Conectar CRM" com feedback de status (Conectado/Desconectado).
+- Opção para "Sincronização Automática" nas configurações.
 
 ## Detalhes técnicos
-- Implementar a função `sendToExternalCRM` em `src/routes/index.tsx`.
-- Adicionar interface visual consistente com o app (neon green/zinc).
+- Tabela alvo no CRM: `contacts`.
+- Campos mapeados: `name`, `phone`, `email`, `website` -> `notes`, `segment` -> `interest`.
+- Autenticação: O usuário usará suas credenciais do CRM no modal de conexão.
