@@ -321,10 +321,7 @@ function Index() {
   };
 
 
-  // Filters
-  const [minRating, setMinRating] = useState("0");
-  const [onlyWithPhone, setOnlyWithPhone] = useState(false);
-  const [onlyWithWebsite, setOnlyWithWebsite] = useState(false);
+  // Filters calculations and helpers
 
   const calculateScore = (company: Partial<Company>) => {
     let score = 0;
