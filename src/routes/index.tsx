@@ -520,7 +520,7 @@ function Index() {
         is_lead: true,
         tag: segment,
         interest: segment,
-        notes: `Lead gerado via ProspectAI - ${location}`,
+        notes: `Lead gerado via ProspectAI - ${company.city || locations[0]}`,
         potential_value: 0,
         optin_email: false,
         optin_whatsapp: false,
