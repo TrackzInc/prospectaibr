@@ -1433,6 +1433,8 @@ function Index() {
                         website: lead.website,
                         origin: 'ProspectAI_Export',
                         status: 'novo',
+                        stage: 'novo_lead',
+                        is_lead: true,
                         tag: segment || 'Exportado',
                         notes: `Exportado via ProspectAI em ${new Date().toLocaleDateString()}`
                       }, { onConflict: 'user_id,phone' });
@@ -1634,6 +1636,8 @@ function Index() {
                                    website: r.website,
                                    origin: 'ProspectAI_Single',
                                    status: 'novo',
+                                   stage: 'novo_lead',
+                                   is_lead: true,
                                    tag: segment || 'Lead Individual',
                                    notes: `Vínculo individual via ProspectAI em ${new Date().toLocaleDateString()}`
                                  }, { onConflict: 'user_id,phone' });
@@ -1787,6 +1791,8 @@ function Index() {
                                   website: lead.website,
                                   origin: 'ProspectAI_History_Batch',
                                   status: 'novo',
+                                  stage: 'novo_lead',
+                                  is_lead: true,
                                   tag: selectedHistory.segment,
                                   notes: `Exportado do histórico em lote em ${new Date().toLocaleDateString()}`
                                 }, { onConflict: 'user_id,phone' });
