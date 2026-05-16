@@ -520,20 +520,25 @@ function Index() {
       const { data: { user } } = await crmSupabase.auth.getUser();
       if (!user) return;
 
-      const contactsToSync = companies.map(c => ({
-        user_id: user.id,
-        name: c.name,
-        phone: c.phone,
-        email: c.email || null,
-        notes: `Empresa: ${c.name}\nEndereço: ${c.address}\nWebsite: ${c.website}`,
-        interest: customSegment || c.segment || segment,
-        is_lead: true,
-        stage: "Novo Lead", // Default stage for CRM
-        origin: "ProspectAI",
-        status: "Ativo",
-        external_source: 'ProspectAI',
-        external_id: c.id
-      }));
+      const contactsToSync = companies.map(c => {
+        // Ensure we have a valid external_id (use lead.id if available, or generate from unique fields)
+        const extId = c.id || (c.name + (c.phone || '')).replace(/[^a-z0-9]/gi, '_');
+        
+        return {
+          user_id: user.id,
+          name: c.name,
+          phone: c.phone,
+          email: c.email || null,
+          notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}`,
+          interest: customSegment || c.segment || segment,
+          is_lead: true,
+          stage: "novo_lead", // Use slug format "novo_lead" instead of "Novo Lead" to match common CRM patterns
+          origin: "ProspectAI",
+          status: "ativo",
+          external_source: 'ProspectAI',
+          external_id: extId
+        };
+      });
 
       const { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
         onConflict: 'user_id,external_source,external_id'

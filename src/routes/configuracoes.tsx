@@ -447,14 +447,18 @@ function ConfiguracoesPage() {
                                 
                                 // 2. Tentar Inserir Lead
                                 setTestStatus({ status: 'loading', message: 'Enviando lead de teste para a tabela contacts...' });
-                                const { error: insertError } = await crmSupabase.from('contacts').insert({
+                                const { error: insertError } = await crmSupabase.from('contacts').upsert({
                                   user_id: cUser.id,
                                   name: "TESTE DE SINCRONIZAÇÃO - PROSPECTAI",
                                   phone: "00000000000",
                                   origin: "ProspectAI",
                                   is_lead: true,
                                   stage: "novo_lead",
+                                  external_source: 'ProspectAI',
+                                  external_id: 'test_sync_' + Date.now(),
                                   notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}. Esta é uma mensagem automatizada para validar a integração.`
+                                }, {
+                                  onConflict: 'user_id,external_source,external_id'
                                 });
 
                                 if (insertError) {
