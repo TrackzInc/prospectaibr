@@ -26,7 +26,8 @@ import {
   X,
   ChevronDown,
   Brain,
-  CloudSync
+  CloudSync,
+  Database
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
