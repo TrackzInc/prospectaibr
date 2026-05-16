@@ -1,32 +1,35 @@
-# Plano de Integração com Projeto CRM
+# Plano de Integração e Sincronização com CRM Externo
 
-O objetivo é permitir que o usuário conecte este projeto ao seu projeto de CRM externo (Remix of Cashflow Connect) e sincronize automaticamente os leads capturados.
+O objetivo é aprimorar a integração com o projeto CRM externo, garantindo que a sincronização de leads (garimpados e enviados ao funil) ocorra corretamente e que o status da conexão seja visível no Dashboard.
 
 ## Mudanças propostas
 
-### Integração Supabase
-- Criar um novo cliente Supabase em `src/integrations/crm/client.ts` apontando para o backend do projeto CRM.
-- Usar a URL do Supabase do projeto CRM: `https://xqavudmwsnuzzcgetzkb.supabase.co` (obtida das ferramentas de sistema para o projeto CRM).
+### 1. Dashboard (Dashboard/Busca)
+- **Arquivo**: `src/routes/index.tsx`
+- **Ação**: Adicionar um botão de status "CRM" no cabeçalho. Se desconectado, mostrar "Conectar CRM". Se conectado, mostrar "CRM Conectado" com o e-mail do usuário.
+- **Sincronização Automática**: Garantir que `saveResultsToDatabaseAuto` e `sendToPipeline` utilizem o `crmSupabase` para enviar leads ao CRM externo quando a conexão estiver ativa.
 
-### Configurações
-- Adicionar uma seção "Conectar CRM" na aba de Integrações em `src/routes/configuracoes.tsx`.
-- Implementar o fluxo de autenticação para o CRM externo (armazenando a sessão separadamente se necessário, seguindo o padrão do SaaS Hub).
-- Salvar o estado da conexão no `localStorage` ou banco de dados local.
+### 2. Funil de Vendas (Kanban)
+- **Arquivo**: `src/routes/funil.tsx`
+- **Ação**: Refatorar a função `syncWithCRM` para utilizar o cliente `crmSupabase`.
+- **Mapeamento de Status**: Sincronizar o `pipeline_stage` do ProspectAI com o campo `stage` na tabela `contacts` do CRM externo.
+- **Identificação**: Garantir que `is_lead: true` seja enviado para todos os contatos sincronizados.
 
-### Sincronização de Dados
-- Criar um hook ou utilitário `syncLeadToCRM` que:
-    - Recebe os dados de uma empresa/lead.
-    - Insere ou atualiza na tabela `contacts` do CRM externo.
-    - Define `is_lead: true` e mapeia o status para o `stage` do CRM.
-- Integrar este utilitário nos fluxos de:
-    - "Vincular ao meu CRM" (que já existe no código, mas agora será automatizado via API).
-    - Captura automática de novos leads (se configurado).
+### 3. Configurações e Testes
+- **Arquivo**: `src/routes/configuracoes.tsx`
+- **Ação**: Adicionar um botão "Testar Sincronização" que envia um lead de teste para o CRM externo para validar a conexão.
 
-### Interface (UI)
-- Botão "Conectar CRM" com feedback de status (Conectado/Desconectado).
-- Opção para "Sincronização Automática" nas configurações.
+### 4. Cliente de Integração
+- **Arquivo**: `src/integrations/crm/client.ts`
+- **Ação**: Garantir que o helper `isCRMConnected` e o cliente estejam exportando as funções necessárias para o Dashboard.
 
-## Detalhes técnicos
-- Tabela alvo no CRM: `contacts`.
-- Campos mapeados: `name`, `phone`, `email`, `website` -> `notes`, `segment` -> `interest`.
-- Autenticação: O usuário usará suas credenciais do CRM no modal de conexão.
+## Detalhes Técnicos de Mapeamento
+- **Origem**: ProspectAI
+- **Tabela CRM**: `contacts`
+- **Campos**:
+  - `name` -> `name`
+  - `phone` -> `phone`
+  - `segment` -> `interest` / `tags`
+  - `is_lead` -> `true`
+  - `pipeline_stage` -> `stage` (Mapear "Novo Lead" para "novo_lead", etc.)
+
