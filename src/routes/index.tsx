@@ -99,6 +99,7 @@ type Company = {
   open: boolean;
   pipeline_stage?: string | null;
   tags?: Tag[];
+  city?: string;
 };
 
 type Tag = {
