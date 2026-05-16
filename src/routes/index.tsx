@@ -1139,6 +1139,7 @@ function Index() {
                 <TableHeader>
                   <TableRow className="border-zinc-700 hover:bg-transparent">
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Nome</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Cidade</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Contato & Links</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Endereço</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Avaliação</TableHead>
