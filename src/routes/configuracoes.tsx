@@ -459,7 +459,9 @@ function ConfiguracoesPage() {
                                 
                                 // 2. Tentar Inserir Lead
                                 setTestStatus({ status: 'loading', message: 'Enviando lead de teste para a tabela contacts...' });
-                                const { error: insertError } = await crmSupabase.from('contacts').upsert({
+                                
+                                // Step 2a: Try inserting into 'contacts' table
+                                const testPayload = {
                                   user_id: cUser.id,
                                   name: "TESTE DE SINCRONIZAÇÃO - PROSPECTAI",
                                   phone: "00000000000",
@@ -468,10 +470,21 @@ function ConfiguracoesPage() {
                                   stage: "novo_lead",
                                   external_source: 'ProspectAI',
                                   external_id: 'test_sync_' + Date.now(),
-                                  notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}. Esta é uma mensagem automatizada para validar a integração.`
-                                }, {
+                                  notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}.`
+                                };
+
+                                let { error: insertError } = await crmSupabase.from('contacts').upsert(testPayload, {
                                   onConflict: 'user_id,external_source,external_id'
                                 });
+
+                                // Fallback: if 'contacts' fails, try 'leads' (some CRM templates use 'leads')
+                                if (insertError && (insertError.code === '42P01' || insertError.status === 404)) {
+                                  setTestStatus({ status: 'loading', message: "Tabela 'contacts' não encontrada, tentando tabela 'leads'..." });
+                                  const { error: leadsError } = await crmSupabase.from('leads').upsert(testPayload, {
+                                    onConflict: 'user_id,external_source,external_id'
+                                  });
+                                  insertError = leadsError;
+                                }
 
                                 if (insertError) {
                                   if (insertError.code === '42P01') throw new Error("Tabela 'contacts' não encontrada no CRM externo.");
