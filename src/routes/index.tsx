@@ -520,44 +520,47 @@ function Index() {
       const { data: { user } } = await crmSupabase.auth.getUser();
       if (!user) return;
 
-      const contactsToSync = companies.map(c => {
-        // Ensure we have a valid external_id (use lead.id if available, or generate from unique fields)
-        const extId = c.id || (c.name + (c.phone || '')).replace(/[^a-z0-9]/gi, '_');
-        
-        return {
-          user_id: user.id,
-          name: c.name,
-          phone: c.phone,
-          email: c.email || null,
-          notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}`,
-          interest: customSegment || c.segment || segment,
-          is_lead: true,
-          stage: "novo_lead",
-          origin: "ProspectAI",
-          status: "novo",
-          external_source: 'ProspectAI',
-          external_id: extId
-        };
-      });
+      const contactsToSync = companies.map(c => ({
+        user_id: user.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email || null,
+        notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}`,
+        interest: customSegment || c.segment || segment,
+        is_lead: true,
+        stage: "novo_lead",
+        origin: "ProspectAI",
+        status: "novo",
+        external_source: 'ProspectAI',
+        external_id: c.id || (c.name + (c.phone || '')).replace(/[^a-z0-9]/gi, '_')
+      }));
 
-      let { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
-        onConflict: 'user_id,external_source,external_id'
-      });
+      // Inicia com tentativa na tabela contacts
+      let { error } = await crmSupabase.from('contacts').insert(contactsToSync);
 
-      // Fallback to 'leads' table if 'contacts' doesn't exist
+      // Se a tabela contacts não existir, tenta prospectai_leads como fallback
       if (error && error.code === '42P01') {
-        const { error: leadsError } = await crmSupabase.from('leads').upsert(contactsToSync, {
-          onConflict: 'user_id,external_source,external_id'
-        });
-        error = leadsError;
+        const { error: fallbackError } = await crmSupabase.from('prospectai_leads').insert(contactsToSync.map(c => ({
+          name: c.name,
+          company_name: c.name,
+          phone: c.phone,
+          email: c.email,
+          segment: c.interest
+        })));
+        error = fallbackError;
       }
 
       if (error) {
         console.error("Erro ao sincronizar com CRM externo:", error);
         return { success: false, error };
       } else {
-        console.log("Sincronização com CRM externo concluída.");
         return { success: true };
+      }
+    } catch (err) {
+      console.error("Erro inesperado na sincronização CRM:", err);
+      return { success: false, error: err };
+    }
+  };
       }
     } catch (err) {
       console.error("Erro inesperado na sincronização CRM:", err);
