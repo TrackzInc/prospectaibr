@@ -572,7 +572,10 @@ function Index() {
       if (error) throw error;
       
       // Also sync to external CRM if connected
-      await syncToExternalCRM(companies);
+      const connected = await isCRMConnected();
+      if (connected) {
+        await syncToExternalCRM(companies);
+      }
     } catch (err) {
       console.error("Erro ao salvar automaticamente:", err);
     }

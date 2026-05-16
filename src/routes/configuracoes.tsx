@@ -397,6 +397,52 @@ function ConfiguracoesPage() {
                         )}
                       </div>
                     )}
+
+                    {crmConnected && (
+                      <Card className="bg-primary/5 border-primary/20 mt-4">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm font-bold text-primary">Testar Sincronização</CardTitle>
+                          <CardDescription className="text-xs text-zinc-500">
+                            Envie um contato de teste para validar a conexão com o seu CRM externo.
+                          </CardDescription>
+                        </CardHeader>
+                        <CardFooter>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            disabled={loading}
+                            onClick={async () => {
+                              setLoading(true);
+                              try {
+                                const { data: { user } } = await crmSupabase.auth.getUser();
+                                if (!user) throw new Error("Usuário não autenticado no CRM");
+                                
+                                const { error } = await crmSupabase.from('contacts').insert({
+                                  user_id: user.id,
+                                  name: "Teste ProspectAI",
+                                  phone: "00000000000",
+                                  origin: "ProspectAI",
+                                  is_lead: true,
+                                  stage: "novo_lead",
+                                  notes: "Contato de teste para validar integração."
+                                });
+
+                                if (error) throw error;
+                                toast.success("Lead de teste enviado com sucesso!");
+                              } catch (error: any) {
+                                toast.error("Erro no teste: " + error.message);
+                              } finally {
+                                setLoading(false);
+                              }
+                            }}
+                            className="border-primary/30 text-primary hover:bg-primary/10 gap-2 font-bold uppercase text-[10px]"
+                          >
+                            <Database className="h-3.5 w-3.5" />
+                            Enviar Lead de Teste
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    )}
                   </CardContent>
                 </Card>
 
