@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 
 // External CRM Project (Remix of Cashflow Connect)
 // Project ID: 8e3214a3-ce1d-4e44-a43c-e570321daa47
-const SUPABASE_URL = "https://xqavudmwsnuzzcgetzkb.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "SUPABASE_PUBLISHABLE_KEY"; // To be replaced or configured by user if needed, but using the one from the project info
+const SUPABASE_URL = "https://vtdnthphxnrwdbslntlw.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0ZG50aHBoeG5yd2Ric2xudGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4OTA4NDIsImV4cCI6MjA5NDQ2Njg0Mn0.NRZ5TWcXMWfVHr69g2idlsOCE-2BxF7ENs6hmGTA2Gg";
 
 export const crmSupabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
