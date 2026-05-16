@@ -70,6 +70,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { crmSupabase, isCRMConnected } from "@/integrations/crm/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -495,6 +496,41 @@ function Index() {
       console.error(err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const syncToExternalCRM = async (companies: any[]) => {
+    const connected = await isCRMConnected();
+    if (!connected) return;
+
+    try {
+      const { data: { user } } = await crmSupabase.auth.getUser();
+      if (!user) return;
+
+      const contactsToSync = companies.map(c => ({
+        user_id: user.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email || null,
+        notes: `Empresa: ${c.name}\nEndereço: ${c.address}\nWebsite: ${c.website}`,
+        interest: c.segment || segment,
+        is_lead: true,
+        stage: "Novo Lead", // Default stage for CRM
+        origin: "ProspectAI",
+        status: "Ativo"
+      }));
+
+      const { error } = await crmSupabase.from('contacts').upsert(contactsToSync, {
+        onConflict: 'user_id,phone' // Assuming phone is unique in CRM contacts
+      });
+
+      if (error) {
+        console.error("Erro ao sincronizar com CRM externo:", error);
+      } else {
+        console.log("Sincronização com CRM externo concluída.");
+      }
+    } catch (err) {
+      console.error("Erro inesperado na sincronização CRM:", err);
     }
   };
 
