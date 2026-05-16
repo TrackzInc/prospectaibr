@@ -1676,6 +1676,41 @@ function Index() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                   <div className="flex items-center justify-end gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 border-primary/20 bg-primary/5 text-primary hover:bg-primary/10 font-bold text-[10px] gap-1.5"
+                                      disabled={saving}
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        setSaving(true);
+                                        try {
+                                          const { data: { user } } = await supabase.auth.getUser();
+                                          if (!user) return;
+
+                                          const { error } = await supabase.from('contacts' as any).upsert({
+                                            user_id: user.id,
+                                            name: lead.name,
+                                            phone: lead.phone,
+                                            website: lead.website,
+                                            origin: 'ProspectAI_History',
+                                            status: 'novo',
+                                            tag: selectedHistory.segment,
+                                            notes: `Exportado do histórico em ${new Date().toLocaleDateString()}`
+                                          }, { onConflict: 'user_id,phone' });
+
+                                          if (error) throw error;
+                                          toast.success(`${lead.name} vinculado ao CRM!`);
+                                        } catch (err: any) {
+                                          toast.error("Erro: " + err.message);
+                                        } finally {
+                                          setSaving(false);
+                                        }
+                                      }}
+                                    >
+                                      <CloudSync className="h-3 w-3" />
+                                      VINCULAR CRM
+                                    </Button>
                                     {lead.phone && (
                                       <Button
                                         variant="ghost"
