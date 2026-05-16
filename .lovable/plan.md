@@ -1,32 +1,44 @@
-Implement automatic polling to refresh the QR code and check the connection status of a WhatsApp instance until it is connected.
+# Plano: Busca em Múltiplas Cidades Simultaneamente
 
-### Technical Details
-- **New State**: Add an `activePolls` state (Set of instance names) to track which instances are currently being polled.
-- **Polling Logic**:
-    - Modify `getQRCode` to support an optional `isAuto` parameter.
-    - When an instance is not connected, the function will schedule itself to run again after a delay (e.g., 10 seconds).
-    - Polling stops if:
-        1. The instance status becomes 'connected'.
-        2. The instance is deleted (check if it still exists in the local state).
-        3. A maximum number of attempts is reached (optional, for safety).
-- **UI Feedback**:
-    - Show a small indicator (like a pulse or a "Polling..." text) when an instance is in automatic refresh mode.
-    - Ensure manual "Refresh" doesn't create duplicate polls.
+Este plano descreve as alterações necessárias para permitir a busca de leads em até 10 cidades simultaneamente na página de busca, consolidando os resultados e melhorando a interface do usuário.
 
-### Implementation Steps
-1.  **State and Helpers**:
-    - Add `const [pollingInstances, setPollingInstances] = useState<Set<string>>(new Set());`
-2.  **`getQRCode` modification**:
-    - Add logic to check status and re-call itself using `setTimeout`.
-    - Update the local `pollingInstances` set to reflect the active state.
-3.  **Component Lifecycle**:
-    - Add a `useEffect` cleanup to clear any pending timeouts if the component unmounts.
-4.  **UI Updates**:
-    - Add a visual hint that automatic polling is active.
+## Alterações na Interface (Página de Busca)
 
-### Verification Plan
-- Create a new instance.
-- Observe the QR code appearing.
-- Wait for a few seconds to see if it refreshes automatically (check console logs).
-- Connect the phone and verify that polling stops once the status is "connected".
-- Delete an instance during polling and verify no further requests are made for it.
+1.  **Campo de Cidades**:
+    - Substituir o input `Cidade/Estado` por um componente de entrada de tags.
+    - O usuário digita o nome da cidade e pressiona `Enter` para adicionar uma tag.
+    - Limite máximo de 10 cidades.
+    - Exibir contador: `X/10 cidades selecionadas`.
+2.  **Cidades Frequentes**:
+    - Adicionar um botão "Cidades frequentes" ao lado do campo de cidades.
+    - Dropdown com sugestões: São Paulo, Rio de Janeiro, Recife, Fortaleza, Salvador, Belo Horizonte, Curitiba, Manaus, Belém, Goiânia.
+    - Ao selecionar, a cidade é adicionada à lista de tags (respeitando o limite).
+3.  **Progresso da Busca**:
+    - Exibir uma mensagem de status durante a busca: `Buscando X/Y cidades...`.
+
+## Alterações na Lógica de Busca
+
+1.  **Processamento Paralelo**:
+    - Utilizar `Promise.all` para disparar as requisições de busca para cada cidade selecionada simultaneamente.
+    - As chamadas serão feitas para a Edge Function `google-places-proxy`.
+2.  **Consolidação e Deduplicação**:
+    - Reunir todos os resultados em um único array.
+    - Remover duplicatas baseando-se no número de telefone (`phone`).
+    - Adicionar a propriedade `city` a cada objeto de empresa para identificar sua origem.
+3.  **Persistência**:
+    - Atualizar as funções de salvamento automático e manual para considerar a cidade específica de cada lead ao inserir na coluna `city_state` da tabela `companies`.
+
+## Alterações na Tabela de Resultados
+
+1.  **Nova Coluna**:
+    - Adicionar a coluna `Cidade` na tabela de resultados para facilitar a identificação visual.
+2.  **Métricas**:
+    - Atualizar os cards de métricas (Total, Com telefone, etc.) após a conclusão de todas as buscas.
+    - Exibir quantos leads foram encontrados em cada cidade no resumo de resultados.
+
+## Detalhes Técnicos
+
+- **Arquivo**: `src/routes/index.tsx`
+- **Estado**: Adicionar `locations: string[]` e `searchProgress: { current: number, total: number }`.
+- **Componentes**: Criar um componente interno de `TagInput` ou usar um padrão similar ao que já existe no projeto.
+- **API**: Nenhuma alteração necessária na Edge Function, apenas na forma como ela é chamada.
