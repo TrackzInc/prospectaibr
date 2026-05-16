@@ -24,8 +24,10 @@ import {
   Plus,
   Columns,
   X,
-  ChevronDown
+  ChevronDown,
+  Brain
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import {
   BarChart,
   Bar,
@@ -97,10 +99,12 @@ type Company = {
   rating: number;
   reviews: number;
   open: boolean;
+  thumbnail?: string | null;
   pipeline_stage?: string | null;
   tags?: Tag[];
   city?: string;
   isAlreadyInFunnel?: boolean;
+  score?: number;
 };
 
 type Tag = {
@@ -191,6 +195,8 @@ function Index() {
   const [selectedTagFilter, setSelectedTagFilter] = useState<string>("all");
   const [funnelPhones, setFunnelPhones] = useState<Set<string>>(new Set());
   const [hideExistingInFunnel, setHideExistingInFunnel] = useState(false);
+  const [minScore, setMinScore] = useState(0);
+  const [onlyHighScores, setOnlyHighScores] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -303,22 +309,44 @@ function Index() {
   const [onlyWithPhone, setOnlyWithPhone] = useState(false);
   const [onlyWithWebsite, setOnlyWithWebsite] = useState(false);
 
+  const calculateScore = (company: Partial<Company>) => {
+    let score = 0;
+    if (company.phone) score += 25;
+    if (company.website) score += 20;
+    if ((company.rating || 0) >= 4.5) score += 20;
+    if ((company.reviews || 0) >= 50) score += 15;
+    if (company.open) score += 10;
+    if (company.thumbnail) score += 10;
+    return score;
+  };
+
+  const getScoreBadge = (score: number) => {
+    if (score >= 90) return { label: "EXCELENTE", color: "bg-[#aaff00]/15 text-[#aaff00] border-[#aaff00]/30" };
+    if (score >= 70) return { label: "MUITO BOM", color: "bg-success/15 text-success border-success/30" };
+    if (score >= 50) return { label: "BOM", color: "bg-warning/15 text-warning border-warning/30" };
+    return { label: "MÉDIO", color: "bg-zinc-500/15 text-zinc-500 border-zinc-700" };
+  };
+
   const filteredResults = useMemo(() => {
     if (!results) return null;
-    return results.filter((r) => {
+    let filtered = results.filter((r) => {
       const isExisting = r.phone ? funnelPhones.has(r.phone) : false;
       if (hideExistingInFunnel && isExisting) return false;
 
       const ratingMatch = r.rating >= parseFloat(minRating);
       const phoneMatch = onlyWithPhone ? !!r.phone : true;
       const websiteMatch = onlyWithWebsite ? !!r.website : true;
+      const scoreMatch = (r.score || 0) >= minScore;
+      const highAndVeryHighMatch = onlyHighScores ? (r.score || 0) >= 70 : true;
       
       const companyFromAll = allCompanies.find(c => c.name === r.name && c.address === r.address);
       const tagMatch = selectedTagFilter === "all" || (companyFromAll?.tags?.some((t: any) => t.id === selectedTagFilter));
 
-      return ratingMatch && phoneMatch && websiteMatch && tagMatch;
+      return ratingMatch && phoneMatch && websiteMatch && tagMatch && scoreMatch && highAndVeryHighMatch;
     });
-  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter, funnelPhones, hideExistingInFunnel]);
+
+    return [...filtered].sort((a, b) => (b.score || 0) - (a.score || 0));
+  }, [results, minRating, onlyWithPhone, onlyWithWebsite, allCompanies, selectedTagFilter, funnelPhones, hideExistingInFunnel, minScore, onlyHighScores]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -359,6 +387,7 @@ function Index() {
             rating: res.rating || 0,
             reviews: res.reviews || 0,
             open: res.operating_hours?.status === "Open" || res.operating_hours?.status === "Aberto",
+            thumbnail: res.thumbnail || null,
             city: locationItem
           }));
 
@@ -387,10 +416,14 @@ function Index() {
         return acc;
       }, []);
 
-      const finalResults = uniqueResults.map(r => ({
-        ...r,
-        isAlreadyInFunnel: r.phone ? funnelPhones.has(r.phone) : false
-      }));
+      const finalResults = uniqueResults.map(r => {
+        const score = calculateScore(r);
+        return {
+          ...r,
+          score,
+          isAlreadyInFunnel: r.phone ? funnelPhones.has(r.phone) : false
+        };
+      });
 
       setResults(finalResults);
       if (finalResults.length === 0) {
@@ -595,7 +628,8 @@ function Index() {
       withSite: 0,
       avgRating: 0,
       newLeads: 0,
-      alreadyInFunnel: 0
+      alreadyInFunnel: 0,
+      avgScore: 0
     };
     
     return {
@@ -606,7 +640,10 @@ function Index() {
         ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
         : 0,
       newLeads: filteredResults.filter(r => !funnelPhones.has(r.phone || "")).length,
-      alreadyInFunnel: filteredResults.filter(r => r.phone && funnelPhones.has(r.phone)).length
+      alreadyInFunnel: filteredResults.filter(r => r.phone && funnelPhones.has(r.phone)).length,
+      avgScore: filteredResults.length > 0
+        ? filteredResults.reduce((s, r) => s + (r.score || 0), 0) / filteredResults.length
+        : 0
     };
   }, [filteredResults, funnelPhones]);
 
@@ -1071,15 +1108,36 @@ function Index() {
                     />
                     <Label htmlFor="funnel-filter" className="text-sm text-zinc-400 cursor-pointer">Ocultar leads já no funil</Label>
                   </div>
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-zinc-400">Score mínimo: {minScore}</Label>
+                    </div>
+                    <Slider 
+                      value={[minScore]} 
+                      onValueChange={(vals) => setMinScore(vals[0])} 
+                      max={100} 
+                      step={5}
+                      className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-3 pt-1">
+                    <Checkbox 
+                      id="high-score-filter" 
+                      checked={onlyHighScores}
+                      onCheckedChange={(checked) => setOnlyHighScores(checked as boolean)}
+                      className="border-zinc-700 data-[state=checked]:bg-primary data-[state=checked]:text-black"
+                    />
+                    <Label htmlFor="high-score-filter" className="text-sm text-zinc-400 cursor-pointer">Apenas Excelente e Muito Bom</Label>
+                  </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Metrics */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           {loading && !results
-            ? Array.from({ length: 4 }).map((_, i) => (
+            ? Array.from({ length: 5 }).map((_, i) => (
                 <Card key={i} className="border-zinc-700">
                   <CardContent className="p-5">
                     <Skeleton className="h-11 w-11 rounded-lg" />
@@ -1109,6 +1167,11 @@ function Index() {
                     icon={Star}
                     label="Avaliação média"
                     value={metrics.avgRating.toFixed(1)}
+                  />
+                  <MetricCard
+                    icon={Brain}
+                    label="Score médio"
+                    value={metrics.avgScore.toFixed(0)}
                   />
                 </>
               )}
@@ -1189,6 +1252,7 @@ function Index() {
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Endereço</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Avaliação</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Status</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Score</TableHead>
                     <TableHead className="text-right text-[10px] font-bold uppercase tracking-widest text-zinc-500">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1262,6 +1326,17 @@ function Index() {
                           />
                           {r.open ? "Aberto" : "Fechado"}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-lg font-bold text-zinc-50 leading-none">{(r.score || 0)}</span>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-[8px] font-black px-1 py-0 h-3.5 w-fit border-none ${getScoreBadge(r.score || 0).color}`}
+                          >
+                            {getScoreBadge(r.score || 0).label}
+                          </Badge>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
