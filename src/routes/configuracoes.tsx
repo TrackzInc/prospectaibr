@@ -457,41 +457,33 @@ function ConfiguracoesPage() {
                                 const { data: { user: cUser }, error: authError } = await crmSupabase.auth.getUser();
                                 if (authError || !cUser) throw new Error("Não foi possível autenticar no CRM. Verifique se as credenciais estão corretas.");
                                 
-                                // 2. Tentar Inserir Lead
-                                setTestStatus({ status: 'loading', message: 'Enviando lead de teste para a tabela contacts...' });
+                                // 2. Verificar existência da tabela
+                                setTestStatus({ status: 'loading', message: 'Verificando acesso à tabela contacts...' });
+                                const { error: tableError } = await crmSupabase.from('contacts').select('id').limit(1);
+                                if (tableError && tableError.code === '42P01') {
+                                  throw new Error("A tabela 'contacts' não foi encontrada no CRM. Verifique se o projeto do CRM está configurado corretamente.");
+                                }
+
+                                // 3. Tentar Inserir Lead
+                                setTestStatus({ status: 'loading', message: 'Enviando lead de teste...' });
                                 
-                                // Step 2a: Try inserting into 'contacts' table
                                 const testPayload = {
                                   user_id: cUser.id,
-                                  name: "TESTE DE SINCRONIZAÇÃO - PROSPECTAI",
+                                  name: "TESTE PROSPECTAI - " + new Date().toLocaleTimeString(),
                                   phone: "00000000000",
                                   origin: "ProspectAI",
                                   is_lead: true,
                                   stage: "novo_lead",
-                                  external_source: 'ProspectAI',
-                                  external_id: 'test_sync_' + Date.now(),
+                                  status: "novo",
                                   notes: `Teste realizado em ${new Date().toLocaleString('pt-BR')}.`
                                 };
 
-                                let { error: insertError } = await crmSupabase.from('contacts').upsert(testPayload, {
-                                  onConflict: 'user_id,external_source,external_id'
-                                });
-
-                                // Fallback: if 'contacts' fails, try 'leads' (some CRM templates use 'leads')
-                                if (insertError && insertError.code === '42P01') {
-                                  setTestStatus({ status: 'loading', message: "Tabela 'contacts' não encontrada, tentando tabela 'leads'..." });
-                                  const { error: leadsError } = await crmSupabase.from('leads').upsert(testPayload, {
-                                    onConflict: 'user_id,external_source,external_id'
-                                  });
-                                  insertError = leadsError;
-                                }
+                                const { error: insertError } = await crmSupabase.from('contacts').insert(testPayload);
 
                                 if (insertError) {
                                   console.error("Erro detalhado do CRM:", insertError);
                                   let errorMessage = insertError.message;
-                                  if (insertError.code === '42P01') {
-                                    errorMessage = "Tabela 'contacts' ou 'leads' não encontrada no CRM externo. Verifique o esquema do banco de dados.";
-                                  } else if (insertError.code === '42501') {
+                                  if (insertError.code === '42501') {
                                     errorMessage = "Erro de permissão (RLS). Certifique-se de que seu usuário no CRM tem permissão para inserir contatos.";
                                   }
                                   throw new Error(errorMessage + ` (Código: ${insertError.code})`);
