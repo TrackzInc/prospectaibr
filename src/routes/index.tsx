@@ -697,13 +697,15 @@ function Index() {
       avgRating: 0,
       newLeads: 0,
       alreadyInFunnel: 0,
-      avgScore: 0
+      avgScore: 0,
+      noWebsite: 0
     };
     
     return {
       total: filteredResults.length,
       withPhone: filteredResults.filter((r) => r.phone).length,
       withSite: filteredResults.filter((r) => r.website).length,
+      noWebsite: filteredResults.filter((r) => !r.website).length,
       avgRating: filteredResults.length > 0 
         ? filteredResults.reduce((s, r) => s + r.rating, 0) / filteredResults.length
         : 0,
