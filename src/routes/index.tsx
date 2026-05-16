@@ -561,12 +561,6 @@ function Index() {
       return { success: false, error: err };
     }
   };
-      }
-    } catch (err) {
-      console.error("Erro inesperado na sincronização CRM:", err);
-      return { success: false, error: err };
-    }
-  };
 
   const saveResultsToDatabaseAuto = async (companies: Company[]) => {
     const { data: { user } } = await supabase.auth.getUser();
