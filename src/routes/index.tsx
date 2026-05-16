@@ -179,7 +179,8 @@ function Index() {
   const searchParams = useSearch({ from: "/" }) as any;
   const currentTab = searchParams.tab || "dashboard";
 
-  const [apiKey, setApiKey] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("serp_api_key") : "") || "");
+  const [apiKey, setApiKey] = useState("");
+  const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
   const [segment, setSegment] = useState("");
   const [locations, setLocations] = useState<string[]>([]);
   const [locationInput, setLocationInput] = useState("");
@@ -213,7 +214,26 @@ function Index() {
     fetchTags();
     fetchFunnelPhones();
     checkCrmStatus();
+    loadSerpApiKey();
   }, []);
+
+  const loadSerpApiKey = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('serpapi_config' as any)
+        .select('api_key')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data && (data as any).api_key) {
+        setApiKey((data as any).api_key);
+        setApiKeyConfigured(true);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar SerpApi Key:", err);
+    }
+  };
 
   const checkCrmStatus = async () => {
     const connected = await isCRMConnected();
@@ -384,8 +404,8 @@ function Index() {
       toast.error("Informe segmento e pelo menos uma cidade");
       return;
     }
-    if (!apiKey.trim()) {
-      toast.error("Configure sua SerpApi Key no topo");
+    if (!apiKeyConfigured) {
+      toast.error("Configure e salve sua SerpApi Key no topo");
       return;
     }
 
@@ -397,10 +417,9 @@ function Index() {
       const searchPromises = locations.map(async (locationItem) => {
         try {
           const { data, error } = await supabase.functions.invoke('google-places-proxy', {
-            body: { 
-              action: 'search', 
-              apiKey, 
-              params: { q: segment, location: locationItem } 
+            body: {
+              action: 'search',
+              params: { q: segment, location: locationItem }
             }
           });
 
@@ -615,13 +634,29 @@ function Index() {
     }
   };
 
-  const handleSaveKey = () => {
+  const handleSaveKey = async () => {
     if (!apiKey.trim()) {
       toast.error("Cole sua API Key antes de salvar");
       return;
     }
-    localStorage.setItem("serp_api_key", apiKey);
-    toast.success("API Key salva no navegador");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado para salvar a API Key");
+        return;
+      }
+      const { error } = await supabase
+        .from('serpapi_config' as any)
+        .upsert({ user_id: user.id, api_key: apiKey.trim() }, { onConflict: 'user_id' });
+      if (error) throw error;
+      // Clean up any legacy local copy
+      try { localStorage.removeItem("serp_api_key"); } catch {}
+      setApiKeyConfigured(true);
+      toast.success("API Key salva com segurança");
+    } catch (err: any) {
+      console.error("Erro ao salvar API Key:", err);
+      toast.error("Erro ao salvar API Key: " + (err.message || "desconhecido"));
+    }
   };
 
   const sendToPipeline = async (company: Company) => {
