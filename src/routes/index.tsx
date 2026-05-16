@@ -192,12 +192,15 @@ function Index() {
   const [historyLeads, setHistoryLeads] = useState<Company[]>([]);
   const [loadingHistoryLeads, setLoadingHistoryLeads] = useState(false);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [selectedTagFilter, setSelectedTagFilter] = useState<string>("all");
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>(() => (typeof window !== 'undefined' ? localStorage.getItem("filter_tag") : "all") || "all");
   const [funnelPhones, setFunnelPhones] = useState<Set<string>>(new Set());
-  const [hideExistingInFunnel, setHideExistingInFunnel] = useState(false);
-  const [minScore, setMinScore] = useState(0);
-  const [onlyHighScores, setOnlyHighScores] = useState(false);
-  const [onlyNoWebsite, setOnlyNoWebsite] = useState(false);
+  const [hideExistingInFunnel, setHideExistingInFunnel] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_hide_funnel") === "true" : false);
+  const [minScore, setMinScore] = useState(() => typeof window !== 'undefined' ? Number(localStorage.getItem("filter_min_score")) || 0 : 0);
+  const [onlyHighScores, setOnlyHighScores] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_high_scores") === "true" : false);
+  const [onlyNoWebsite, setOnlyNoWebsite] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_no_website") === "true" : false);
+  const [minRating, setMinRating] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem("filter_min_rating") : "0") || "0");
+  const [onlyWithPhone, setOnlyWithPhone] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_only_phone") === "true" : false);
+  const [onlyWithWebsite, setOnlyWithWebsite] = useState(() => typeof window !== 'undefined' ? localStorage.getItem("filter_only_website") === "true" : false);
 
   useEffect(() => {
     fetchHistory();
@@ -205,6 +208,19 @@ function Index() {
     fetchTags();
     fetchFunnelPhones();
   }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("filter_tag", selectedTagFilter);
+      localStorage.setItem("filter_hide_funnel", hideExistingInFunnel.toString());
+      localStorage.setItem("filter_min_score", minScore.toString());
+      localStorage.setItem("filter_high_scores", onlyHighScores.toString());
+      localStorage.setItem("filter_no_website", onlyNoWebsite.toString());
+      localStorage.setItem("filter_min_rating", minRating);
+      localStorage.setItem("filter_only_phone", onlyWithPhone.toString());
+      localStorage.setItem("filter_only_website", onlyWithWebsite.toString());
+    }
+  }, [selectedTagFilter, hideExistingInFunnel, minScore, onlyHighScores, onlyNoWebsite, minRating, onlyWithPhone, onlyWithWebsite]);
 
   const fetchFunnelPhones = async () => {
     const { data } = await supabase.from('contacts' as any).select('phone');
@@ -305,10 +321,7 @@ function Index() {
   };
 
 
-  // Filters
-  const [minRating, setMinRating] = useState("0");
-  const [onlyWithPhone, setOnlyWithPhone] = useState(false);
-  const [onlyWithWebsite, setOnlyWithWebsite] = useState(false);
+  // Filters calculations and helpers
 
   const calculateScore = (company: Partial<Company>) => {
     let score = 0;
@@ -1144,7 +1157,7 @@ function Index() {
               <div className="space-y-5">
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold text-zinc-400">Avaliação mínima</Label>
-                  <Select value={minRating} onValueChange={setMinRating}>
+                  <Select value={minRating} onValueChange={(val) => setMinRating(val)}>
                     <SelectTrigger className="bg-zinc-900 border-zinc-700 h-10">
                       <SelectValue placeholder="Selecione" />
                     </SelectTrigger>
@@ -1216,7 +1229,7 @@ function Index() {
                     <Label htmlFor="no-website-filter" className="text-sm text-primary font-bold cursor-pointer flex items-center gap-2">
                       🎯 Apenas sem site
                       <Badge variant="outline" className="bg-primary/10 border-primary/20 text-[10px] h-4 px-1">
-                        {metrics.noWebsite}
+                        {onlyNoWebsite ? filteredResults?.length : results?.filter(r => !r.website).length}
                       </Badge>
                     </Label>
                   </div>
@@ -1349,7 +1362,8 @@ function Index() {
                   <TableRow className="border-zinc-700 hover:bg-transparent">
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Nome</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Cidade</TableHead>
-                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Contato & Links</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Website</TableHead>
+                    <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Contato</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Endereço</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Avaliação</TableHead>
                     <TableHead className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Status</TableHead>
@@ -1372,30 +1386,32 @@ function Index() {
                       </TableCell>
                       <TableCell className="text-xs text-zinc-400 capitalize">{r.city}</TableCell>
                       <TableCell>
+                        {r.website ? (
+                          <a
+                            href={r.website.startsWith('http') ? r.website : `https://${r.website}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                          >
+                            <Globe className="h-4 w-4" />
+                            <span className="text-xs font-medium uppercase tracking-tighter">Website</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        ) : (
+                          <Badge variant="outline" className="bg-primary/15 text-primary border-primary/30 text-[9px] font-black tracking-tighter h-4">
+                            SEM SITE
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex flex-col gap-1.5">
                           {r.phone ? (
-                            <span className="inline-flex items-center gap-1.5 text-sm">
+                            <span className="inline-flex items-center gap-1.5 text-sm text-zinc-300">
                               <Phone className="h-3.5 w-3.5 text-zinc-400" />
                               {r.phone}
                             </span>
                           ) : (
                             <span className="text-xs text-zinc-400 italic">Sem telefone</span>
-                          )}
-                          {r.website ? (
-                            <a
-                              href={r.website.startsWith('http') ? r.website : `https://${r.website}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-                            >
-                              <Globe className="h-3.5 w-3.5" />
-                              Website
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          ) : (
-                            <Badge variant="outline" className="w-fit bg-primary/15 text-primary border-primary/30 text-[9px] font-black tracking-tighter h-4">
-                              SEM SITE
-                            </Badge>
                           )}
                         </div>
                       </TableCell>
