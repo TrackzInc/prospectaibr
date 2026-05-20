@@ -1,29 +1,52 @@
-# Plano: Sincronização de Leads do Histórico com o CRM
+# Plano: Adicionar Página de Territórios
 
-O usuário deseja enviar os clientes listados na página de Histórico para o CRM externo. Atualmente, a sincronização com o CRM externo ocorre automaticamente apenas durante novas buscas, e os botões de "Vincular" no histórico sincronizam apenas com o banco de dados local.
+Adicionar uma nova página "Territórios" para permitir a seleção estratégica de cidades brasileiras com base em dados demográficos do IBGE, integrando-a ao fluxo de busca de leads.
 
-## Alterações Propostas
+## Alterações de Interface
 
-### 1. Refatoração da Função de Sincronização
-- Ajustar a função `syncToExternalCRM` em `src/routes/index.tsx` para aceitar um parâmetro opcional de `segment` (nicho/interesse), garantindo que ao sincronizar do histórico, o nicho correto seja enviado ao CRM.
+### 1. Menu Lateral (`src/components/ui/modern-side-bar.tsx`)
+- Adicionar o item "Territórios" entre "Busca" e "Funil".
+- Usar o ícone `Globe` do lucide-react.
+- Link para `/territorios`.
 
-### 2. Atualização da Aba de Busca (Search)
-- O botão "VINCULAR AO MEU CRM" na aba de busca hoje sincroniza apenas com a tabela `contacts` local. Vou atualizar para que ele também chame `syncToExternalCRM` para todos os leads filtrados, garantindo que o CRM externo também receba os dados.
+### 2. Nova Página de Territórios (`src/routes/territorios.tsx`)
+- **Filtros no Topo**:
+  - Dropdown de Região (Todas, Norte, Nordeste, etc.).
+  - Dropdown de Estado (filtrado pela região).
+  - Slider de População com faixas predefinidas (<50k até >1M).
+  - Campo de busca por nome.
+- **Cards de Resumo**:
+  - Total de municípios (5.570).
+  - Contadores dinâmicos para cidades >100k, >500k e >1M (baseados no filtro atual ou total).
+- **Sugestões Rápidas**:
+  - Botões para seleções comuns (Capitais, Nordeste >100k, etc.).
+- **Tabela de Cidades**:
+  - Colunas: Nome, UF, População (Censo 2022), Região, Seleção.
+  - Ordenação padrão por população decrescente.
+  - Checkbox para seleção individual e "Selecionar todos da página".
+  - Limite de 10 cidades selecionadas.
+- **Ação**:
+  - Botão flutuante ou fixo "USAR NA BUSCA" (Verde Neon) que redireciona para a página inicial com as cidades selecionadas como parâmetros.
 
-### 3. Melhorias na Aba de Histórico (History)
-- **Sincronização Individual**: Atualizar o botão "VINCULAR CRM" de cada lead no histórico para também enviar ao CRM externo.
-- **Sincronização em Lote**: Adicionar um novo botão "VINCULAR TODOS AO MEU CRM" nos detalhes de uma busca histórica. Isso permitirá enviar todos os leads daquela pesquisa específica para o CRM local e externo de uma só vez.
+### 3. Integração com a Busca (`src/routes/index.tsx`)
+- Modificar a página inicial para detectar o parâmetro `locations` na URL.
+- Se presente, preencher automaticamente o estado de cidades da busca.
 
 ## Detalhes Técnicos
 
-### Arquivos afetados:
-- `src/routes/index.tsx`
+### Fontes de Dados (API IBGE)
+- Municípios: `https://servicodados.ibge.gov.br/api/v1/localidades/municipios`
+- População: `https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6`
+- Os dados serão carregados via `react-query` para cache e performance.
 
-### Lógica de Sincronização:
-- Ao clicar em "Vincular Todos" no Histórico:
-    1. Iterar sobre `historyLeads`.
-    2. Fazer o upsert na tabela `contacts` (CRM local).
-    3. Chamar `syncToExternalCRM(historyLeads, selectedHistory.segment)`.
+### Lógica de Seleção
+- Armazenar cidades selecionadas em um estado local.
+- Ao clicar em "USAR NA BUSCA", navegar usando `navigate({ to: '/', search: { locations: ['Cidade1, UF', 'Cidade2, UF'] } })`.
 
-### UI:
-- Adicionar o botão de sincronização em lote próximo ao cabeçalho dos detalhes do histórico para facilitar o acesso.
+### Estilização
+- Manter o tema Dark Zinc/Slate com acentos em Verde Neon (`#aaff00`).
+- Usar componentes do Shadcn UI (Table, Slider, Select, Card, Button).
+
+## Considerações de Performance
+- Os dados do IBGE serão processados e cruzados em memória (aprox. 5.600 itens).
+- Implementar paginação na tabela para evitar lentidão no DOM.
