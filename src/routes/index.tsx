@@ -228,6 +228,10 @@ function Index() {
       const locs = Array.isArray(searchParams.locations) ? searchParams.locations : [searchParams.locations];
       setLocations(locs);
       toast.info(`${locs.length} cidades carregadas de Territórios`);
+      // Scroll to search tab if it's the dashboard
+      if (currentTab !== 'search') {
+        navigate({ to: '/', search: { tab: 'search', locations: locs } as any });
+      }
     }
   }, [searchParams.locations]);
 
