@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { useMemo } from "react";
 import { 
   Globe, 
   Search as SearchIcon, 
