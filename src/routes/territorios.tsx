@@ -113,99 +113,60 @@ function Territorios() {
   const [selectedPopRange, setSelectedPopRange] = useState([0]); // Index of range
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
 
-  // Fetch municipios
-  const { data: municipios = [], isLoading: loadingMunicipios } = useQuery({
-    queryKey: ['municipios'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
-        const data = await res.json();
-        return data.map((m: any) => ({
-          id: m.id.toString(),
-          nome: m.nome,
-          uf: m.microrregiao.mesorregiao.UF.sigla,
-          regiao: m.microrregiao.mesorregiao.UF.regiao.nome
-        }));
-      } catch (error) {
-        console.error("Erro ao buscar municípios do IBGE:", error);
-        return [];
-      }
-    },
-    staleTime: Infinity,
-  });
-
-  // Fetch populacao
-  const { data: populacoes = {}, isLoading: loadingPop } = useQuery({
-    queryKey: ['populacao'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]');
-        const data = await res.json();
-        const results: Record<string, number> = {};
-        if (data && data[0] && data[0].resultados && data[0].resultados[0]) {
-          data[0].resultados[0].series.forEach((s: any) => {
-            results[s.localidade.id] = parseInt(s.serie['2022']);
-          });
-        }
-        return results;
-      } catch (error) {
-        console.error("Erro ao buscar população do IBGE:", error);
-        return {};
-      }
-    },
-    staleTime: Infinity,
-  });
+  // Cidades hardcoded para carregamento instantâneo
+  const municipios = [
+    { id: "3550308", nome: "São Paulo", uf: "SP", regiao: "Sudeste", populacao: 11451245 },
+    { id: "3304557", nome: "Rio de Janeiro", uf: "RJ", regiao: "Sudeste", populacao: 6748000 },
+    { id: "5300108", nome: "Brasília", uf: "DF", regiao: "Centro-Oeste", populacao: 3094000 },
+    { id: "2927408", nome: "Salvador", uf: "BA", regiao: "Nordeste", populacao: 2886000 },
+    { id: "2304400", nome: "Fortaleza", uf: "CE", regiao: "Nordeste", populacao: 2703000 },
+    { id: "3106200", nome: "Belo Horizonte", uf: "MG", regiao: "Sudeste", populacao: 2530000 },
+    { id: "1302603", nome: "Manaus", uf: "AM", regiao: "Norte", populacao: 2255000 },
+    { id: "4106902", nome: "Curitiba", uf: "PR", regiao: "Sul", populacao: 1952000 },
+    { id: "2611606", nome: "Recife", uf: "PE", regiao: "Nordeste", populacao: 1661000 },
+    { id: "5208707", nome: "Goiânia", uf: "GO", regiao: "Centro-Oeste", populacao: 1555000 },
+    { id: "4314902", nome: "Porto Alegre", uf: "RS", regiao: "Sul", populacao: 1484000 },
+    { id: "1501402", nome: "Belém", uf: "PA", regiao: "Norte", populacao: 1499000 },
+    { id: "3518800", nome: "Guarulhos", uf: "SP", regiao: "Sudeste", populacao: 1392000 },
+    { id: "3509502", nome: "Campinas", uf: "SP", regiao: "Sudeste", populacao: 1213000 },
+    { id: "2111300", nome: "São Luís", uf: "MA", regiao: "Nordeste", populacao: 1108000 },
+    { id: "3304904", nome: "São Gonçalo", uf: "RJ", regiao: "Sudeste", populacao: 1091000 },
+    { id: "2704302", nome: "Maceió", uf: "AL", regiao: "Nordeste", populacao: 1025000 },
+    { id: "2408102", nome: "Natal", uf: "RN", regiao: "Nordeste", populacao: 890000 },
+    { id: "2211001", nome: "Teresina", uf: "PI", regiao: "Nordeste", populacao: 868000 },
+    { id: "5002704", nome: "Campo Grande", uf: "MS", regiao: "Centro-Oeste", populacao: 916000 },
+    { id: "2507507", nome: "João Pessoa", uf: "PB", regiao: "Nordeste", populacao: 817000 },
+    { id: "3547809", nome: "Santo André", uf: "SP", regiao: "Sudeste", populacao: 748000 },
+    { id: "3534401", nome: "Osasco", uf: "SP", regiao: "Sudeste", populacao: 696000 },
+    { id: "3548708", nome: "São Bernardo do Campo", uf: "SP", regiao: "Sudeste", populacao: 844000 },
+    { id: "2607901", nome: "Jaboatão dos Guararapes", uf: "PE", regiao: "Nordeste", populacao: 706000 },
+    { id: "3543402", nome: "Ribeirão Preto", uf: "SP", regiao: "Sudeste", populacao: 718000 },
+    { id: "3170206", nome: "Uberlândia", uf: "MG", regiao: "Sudeste", populacao: 706000 },
+    { id: "3552205", nome: "Sorocaba", uf: "SP", regiao: "Sudeste", populacao: 700000 },
+    { id: "3118601", nome: "Contagem", uf: "MG", regiao: "Sudeste", populacao: 668000 },
+    { id: "2800308", nome: "Aracaju", uf: "SE", regiao: "Nordeste", populacao: 664000 },
+    { id: "2910800", nome: "Feira de Santana", uf: "BA", regiao: "Nordeste", populacao: 630000 },
+    { id: "5103403", nome: "Cuiabá", uf: "MT", regiao: "Centro-Oeste", populacao: 623000 },
+    { id: "4209102", nome: "Joinville", uf: "SC", regiao: "Sul", populacao: 616000 },
+    { id: "3136702", nome: "Juiz de Fora", uf: "MG", regiao: "Sudeste", populacao: 573000 },
+    { id: "4113700", nome: "Londrina", uf: "PR", regiao: "Sul", populacao: 575000 },
+    { id: "2933307", nome: "Vitória da Conquista", uf: "BA", regiao: "Nordeste", populacao: 341000 },
+    { id: "3506003", nome: "Bauru", uf: "SP", regiao: "Sudeste", populacao: 379000 },
+    { id: "3549904", nome: "São José do Rio Preto", uf: "SP", regiao: "Sudeste", populacao: 469000 },
+    { id: "3538709", nome: "Piracicaba", uf: "SP", regiao: "Sudeste", populacao: 407000 },
+    { id: "3525300", nome: "Jundiaí", uf: "SP", regiao: "Sudeste", populacao: 423000 },
+    { id: "3530607", nome: "Mauá", uf: "SP", regiao: "Sudeste", populacao: 477000 },
+    { id: "3502804", nome: "Anápolis", uf: "GO", regiao: "Centro-Oeste", populacao: 391000 },
+    { id: "3541000", nome: "Praia Grande", uf: "SP", regiao: "Sudeste", populacao: 330000 },
+    { id: "3516200", nome: "Franca", uf: "SP", regiao: "Sudeste", populacao: 355000 },
+    { id: "3523107", nome: "Itaquaquecetuba", uf: "SP", regiao: "Sudeste", populacao: 375000 },
+    { id: "2604106", nome: "Caruaru", uf: "PE", regiao: "Nordeste", populacao: 365000 },
+    { id: "3505708", nome: "Barueri", uf: "SP", regiao: "Sudeste", populacao: 276000 },
+  ];
 
   const mergedData = useMemo(() => {
-    // Top 50 cities backup (hardcoded) to ensure visibility if API is slow or empty
-    const topCitiesBackup = [
-      { id: "3550308", nome: "São Paulo", uf: "SP", regiao: "Sudeste", populacao: 11451245 },
-      { id: "3304557", nome: "Rio de Janeiro", uf: "RJ", regiao: "Sudeste", populacao: 6211423 },
-      { id: "2927408", nome: "Salvador", uf: "BA", regiao: "Nordeste", populacao: 2418005 },
-      { id: "2304400", nome: "Fortaleza", uf: "CE", regiao: "Nordeste", populacao: 2428678 },
-      { id: "3106200", nome: "Belo Horizonte", uf: "MG", regiao: "Sudeste", populacao: 2315560 },
-      { id: "5300108", nome: "Brasília", uf: "DF", regiao: "Centro-Oeste", populacao: 2817068 },
-      { id: "4106902", nome: "Curitiba", uf: "PR", regiao: "Sul", populacao: 1773733 },
-      { id: "4314902", nome: "Porto Alegre", uf: "RS", regiao: "Sul", populacao: 1332570 },
-      { id: "2611606", nome: "Recife", uf: "PE", regiao: "Nordeste", populacao: 1488920 },
-      { id: "5208707", nome: "Goiânia", uf: "GO", regiao: "Centro-Oeste", populacao: 1437237 },
-      { id: "1501402", nome: "Belém", uf: "PA", regiao: "Norte", populacao: 1303389 },
-      { id: "3509502", nome: "Campinas", uf: "SP", regiao: "Sudeste", populacao: 1138309 },
-      { id: "3548500", nome: "São José dos Campos", uf: "SP", regiao: "Sudeste", populacao: 697428 },
-      { id: "3547809", nome: "Santo André", uf: "SP", regiao: "Sudeste", populacao: 748735 },
-      { id: "3534401", nome: "Osasco", uf: "SP", regiao: "Sudeste", populacao: 743432 },
-      { id: "3549904", nome: "São José do Rio Preto", uf: "SP", regiao: "Sudeste", populacao: 480439 },
-      { id: "3543402", nome: "Ribeirão Preto", uf: "SP", regiao: "Sudeste", populacao: 698259 },
-      { id: "3552205", nome: "Sorocaba", uf: "SP", regiao: "Sudeste", populacao: 723574 },
-      { id: "4205407", nome: "Florianópolis", uf: "SC", regiao: "Sul", populacao: 537213 },
-      { id: "2704302", nome: "Maceió", uf: "AL", regiao: "Nordeste", populacao: 957916 },
-      { id: "2111300", nome: "São Luís", uf: "MA", regiao: "Nordeste", populacao: 1037775 },
-      { id: "2408102", nome: "Natal", uf: "RN", regiao: "Nordeste", populacao: 751300 },
-      { id: "2211001", nome: "Teresina", uf: "PI", regiao: "Nordeste", populacao: 866300 },
-      { id: "2507507", nome: "João Pessoa", uf: "PB", regiao: "Nordeste", populacao: 833932 },
-      { id: "2800308", nome: "Aracaju", uf: "SE", regiao: "Nordeste", populacao: 602757 },
-      { id: "5103403", nome: "Cuiabá", uf: "MT", regiao: "Centro-Oeste", populacao: 650912 },
-      { id: "5002704", nome: "Campo Grande", uf: "MS", regiao: "Centro-Oeste", populacao: 897938 },
-      { id: "1302603", nome: "Manaus", uf: "AM", regiao: "Norte", populacao: 2063547 },
-      { id: "1100205", nome: "Porto Velho", uf: "RO", regiao: "Norte", populacao: 460413 },
-      { id: "1200401", nome: "Rio Branco", uf: "AC", regiao: "Norte", populacao: 364756 },
-      { id: "1600303", nome: "Macapá", uf: "AP", regiao: "Norte", populacao: 442933 },
-      { id: "1400100", nome: "Boa Vista", uf: "RR", regiao: "Norte", populacao: 413486 },
-      { id: "1721000", nome: "Palmas", uf: "TO", regiao: "Norte", populacao: 302692 },
-      { id: "3205309", nome: "Vitória", uf: "ES", regiao: "Sudeste", populacao: 322869 }
-    ];
-
-    if (municipios.length === 0 || Object.keys(populacoes).length === 0) {
-      return topCitiesBackup.sort((a, b) => b.populacao - a.populacao);
-    }
-
-    const data = municipios.map((m: Municipio) => ({
-      ...m,
-      populacao: populacoes[m.id] || 0
-    })).sort((a: any, b: any) => b.populacao - a.populacao);
-
-    return data;
-  }, [municipios, populacoes]);
+    return [...municipios].sort((a, b) => b.populacao - a.populacao);
+  }, [municipios]);
 
   const filteredData = useMemo(() => {
     return mergedData.filter((city: any) => {
@@ -430,13 +391,7 @@ function Territorios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(loadingMunicipios || loadingPop) ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i} className="border-zinc-800/50">
-                    <TableCell colSpan={5} className="h-16 animate-pulse bg-zinc-800/20" />
-                  </TableRow>
-                ))
-              ) : filteredData.length === 0 ? (
+              {filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center text-zinc-500">Nenhuma cidade encontrada com esses filtros.</TableCell>
                 </TableRow>
