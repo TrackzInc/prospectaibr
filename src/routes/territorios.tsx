@@ -165,55 +165,8 @@ function Territorios() {
   ];
 
   const mergedData = useMemo(() => {
-    // Top 50 cities backup (hardcoded) to ensure visibility if API is slow or empty
-    const topCitiesBackup = [
-      { id: "3550308", nome: "São Paulo", uf: "SP", regiao: "Sudeste", populacao: 11451245 },
-      { id: "3304557", nome: "Rio de Janeiro", uf: "RJ", regiao: "Sudeste", populacao: 6211423 },
-      { id: "2927408", nome: "Salvador", uf: "BA", regiao: "Nordeste", populacao: 2418005 },
-      { id: "2304400", nome: "Fortaleza", uf: "CE", regiao: "Nordeste", populacao: 2428678 },
-      { id: "3106200", nome: "Belo Horizonte", uf: "MG", regiao: "Sudeste", populacao: 2315560 },
-      { id: "5300108", nome: "Brasília", uf: "DF", regiao: "Centro-Oeste", populacao: 2817068 },
-      { id: "4106902", nome: "Curitiba", uf: "PR", regiao: "Sul", populacao: 1773733 },
-      { id: "4314902", nome: "Porto Alegre", uf: "RS", regiao: "Sul", populacao: 1332570 },
-      { id: "2611606", nome: "Recife", uf: "PE", regiao: "Nordeste", populacao: 1488920 },
-      { id: "5208707", nome: "Goiânia", uf: "GO", regiao: "Centro-Oeste", populacao: 1437237 },
-      { id: "1501402", nome: "Belém", uf: "PA", regiao: "Norte", populacao: 1303389 },
-      { id: "3509502", nome: "Campinas", uf: "SP", regiao: "Sudeste", populacao: 1138309 },
-      { id: "3548500", nome: "São José dos Campos", uf: "SP", regiao: "Sudeste", populacao: 697428 },
-      { id: "3547809", nome: "Santo André", uf: "SP", regiao: "Sudeste", populacao: 748735 },
-      { id: "3534401", nome: "Osasco", uf: "SP", regiao: "Sudeste", populacao: 743432 },
-      { id: "3549904", nome: "São José do Rio Preto", uf: "SP", regiao: "Sudeste", populacao: 480439 },
-      { id: "3543402", nome: "Ribeirão Preto", uf: "SP", regiao: "Sudeste", populacao: 698259 },
-      { id: "3552205", nome: "Sorocaba", uf: "SP", regiao: "Sudeste", populacao: 723574 },
-      { id: "4205407", nome: "Florianópolis", uf: "SC", regiao: "Sul", populacao: 537213 },
-      { id: "2704302", nome: "Maceió", uf: "AL", regiao: "Nordeste", populacao: 957916 },
-      { id: "2111300", nome: "São Luís", uf: "MA", regiao: "Nordeste", populacao: 1037775 },
-      { id: "2408102", nome: "Natal", uf: "RN", regiao: "Nordeste", populacao: 751300 },
-      { id: "2211001", nome: "Teresina", uf: "PI", regiao: "Nordeste", populacao: 866300 },
-      { id: "2507507", nome: "João Pessoa", uf: "PB", regiao: "Nordeste", populacao: 833932 },
-      { id: "2800308", nome: "Aracaju", uf: "SE", regiao: "Nordeste", populacao: 602757 },
-      { id: "5103403", nome: "Cuiabá", uf: "MT", regiao: "Centro-Oeste", populacao: 650912 },
-      { id: "5002704", nome: "Campo Grande", uf: "MS", regiao: "Centro-Oeste", populacao: 897938 },
-      { id: "1302603", nome: "Manaus", uf: "AM", regiao: "Norte", populacao: 2063547 },
-      { id: "1100205", nome: "Porto Velho", uf: "RO", regiao: "Norte", populacao: 460413 },
-      { id: "1200401", nome: "Rio Branco", uf: "AC", regiao: "Norte", populacao: 364756 },
-      { id: "1600303", nome: "Macapá", uf: "AP", regiao: "Norte", populacao: 442933 },
-      { id: "1400100", nome: "Boa Vista", uf: "RR", regiao: "Norte", populacao: 413486 },
-      { id: "1721000", nome: "Palmas", uf: "TO", regiao: "Norte", populacao: 302692 },
-      { id: "3205309", nome: "Vitória", uf: "ES", regiao: "Sudeste", populacao: 322869 }
-    ];
-
-    if (municipios.length === 0 || Object.keys(populacoes).length === 0) {
-      return topCitiesBackup.sort((a, b) => b.populacao - a.populacao);
-    }
-
-    const data = municipios.map((m: Municipio) => ({
-      ...m,
-      populacao: populacoes[m.id] || 0
-    })).sort((a: any, b: any) => b.populacao - a.populacao);
-
-    return data;
-  }, [municipios, populacoes]);
+    return [...municipios].sort((a, b) => b.populacao - a.populacao);
+  }, [municipios]);
 
   const filteredData = useMemo(() => {
     return mergedData.filter((city: any) => {
