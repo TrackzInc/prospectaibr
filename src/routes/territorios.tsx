@@ -396,9 +396,9 @@ function Territorios() {
         </Card>
 
         {/* Table */}
-        <div className="rounded-md border border-zinc-800 bg-zinc-800/20">
+        <div className="rounded-md border border-zinc-700 bg-zinc-800">
           <Table>
-            <TableHeader className="bg-zinc-800/50">
+            <TableHeader className="bg-zinc-700/50">
               <TableRow className="border-zinc-800 hover:bg-transparent">
                 <TableHead className="w-[50px]">
                   <Checkbox 
@@ -434,26 +434,27 @@ function Territorios() {
                   <TableCell colSpan={5} className="h-32 text-center text-zinc-500">Nenhuma cidade encontrada com esses filtros.</TableCell>
                 </TableRow>
               ) : (
-                filteredData.slice(0, 50).map((city: any) => {
+              (filteredData.length > 500 ? filteredData.slice(0, 500) : filteredData).map((city: any) => {
                   const cityStr = `${city.nome}, ${city.uf}`;
                   return (
-                    <TableRow key={city.id} className="border-zinc-800/50 hover:bg-zinc-800/30 transition-colors">
+                    <TableRow key={city.id} className="border-zinc-700 hover:bg-zinc-700 transition-colors">
                       <TableCell>
                         <Checkbox 
                           checked={selectedCities.includes(cityStr)}
                           onCheckedChange={() => handleSelectCity(cityStr)}
+                          className="border-zinc-500 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                         />
                       </TableCell>
-                      <TableCell className="font-medium text-zinc-200">{city.nome}</TableCell>
+                      <TableCell className="font-medium text-zinc-50">{city.nome}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="bg-zinc-800 border-zinc-700 text-zinc-400">
+                        <Badge variant="outline" className="bg-zinc-900 border-zinc-700 text-zinc-400">
                           {city.uf}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-zinc-300 font-mono">
+                      <TableCell className="text-zinc-200 font-mono">
                         {city.populacao.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-zinc-500 text-xs">
+                      <TableCell className="text-zinc-400 text-xs">
                         {city.regiao}
                       </TableCell>
                     </TableRow>
