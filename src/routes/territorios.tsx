@@ -221,11 +221,12 @@ function Territorios() {
   }, [mergedData, searchTerm, selectedRegiao, selectedEstado, selectedPopRange]);
 
   const stats = useMemo(() => {
+    const data = mergedData;
     return {
-      total: 5570,
-      over100k: mergedData.filter((c: any) => c.populacao > 100000).length,
-      over500k: mergedData.filter((c: any) => c.populacao > 500000).length,
-      over1M: mergedData.filter((c: any) => c.populacao > 1000000).length,
+      total: data.length || 5570,
+      over100k: data.filter((c: any) => c.populacao > 100000).length,
+      over500k: data.filter((c: any) => c.populacao > 500000).length,
+      over1M: data.filter((c: any) => c.populacao > 1000000).length,
     };
   }, [mergedData]);
 
