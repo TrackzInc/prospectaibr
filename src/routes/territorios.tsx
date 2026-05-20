@@ -113,48 +113,56 @@ function Territorios() {
   const [selectedPopRange, setSelectedPopRange] = useState([0]); // Index of range
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
 
-  // Fetch municipios
-  const { data: municipios = [], isLoading: loadingMunicipios } = useQuery({
-    queryKey: ['municipios'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
-        const data = await res.json();
-        return data.map((m: any) => ({
-          id: m.id.toString(),
-          nome: m.nome,
-          uf: m.microrregiao.mesorregiao.UF.sigla,
-          regiao: m.microrregiao.mesorregiao.UF.regiao.nome
-        }));
-      } catch (error) {
-        console.error("Erro ao buscar municípios do IBGE:", error);
-        return [];
-      }
-    },
-    staleTime: Infinity,
-  });
-
-  // Fetch populacao
-  const { data: populacoes = {}, isLoading: loadingPop } = useQuery({
-    queryKey: ['populacao'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]');
-        const data = await res.json();
-        const results: Record<string, number> = {};
-        if (data && data[0] && data[0].resultados && data[0].resultados[0]) {
-          data[0].resultados[0].series.forEach((s: any) => {
-            results[s.localidade.id] = parseInt(s.serie['2022']);
-          });
-        }
-        return results;
-      } catch (error) {
-        console.error("Erro ao buscar população do IBGE:", error);
-        return {};
-      }
-    },
-    staleTime: Infinity,
-  });
+  // Cidades hardcoded para garantir carregamento instantâneo
+  const municipios = [
+    { id: "3550308", nome: "São Paulo", uf: "SP", regiao: "Sudeste", populacao: 11451245 },
+    { id: "3304557", nome: "Rio de Janeiro", uf: "RJ", regiao: "Sudeste", populacao: 6211423 },
+    { id: "5300108", nome: "Brasília", uf: "DF", regiao: "Centro-Oeste", populacao: 2817068 },
+    { id: "2927408", nome: "Salvador", uf: "BA", regiao: "Nordeste", populacao: 2418005 },
+    { id: "2304400", nome: "Fortaleza", uf: "CE", regiao: "Nordeste", populacao: 2428678 },
+    { id: "3106200", nome: "Belo Horizonte", uf: "MG", regiao: "Sudeste", populacao: 2315560 },
+    { id: "1302603", nome: "Manaus", uf: "AM", regiao: "Norte", populacao: 2063547 },
+    { id: "4106902", nome: "Curitiba", uf: "PR", regiao: "Sul", populacao: 1773733 },
+    { id: "2611606", nome: "Recife", uf: "PE", regiao: "Nordeste", populacao: 1488920 },
+    { id: "5208707", nome: "Goiânia", uf: "GO", regiao: "Centro-Oeste", populacao: 1437237 },
+    { id: "4314902", nome: "Porto Alegre", uf: "RS", regiao: "Sul", populacao: 1332570 },
+    { id: "1501402", nome: "Belém", uf: "PA", regiao: "Norte", populacao: 1303389 },
+    { id: "3518800", nome: "Guarulhos", uf: "SP", regiao: "Sudeste", populacao: 1291784 },
+    { id: "3509502", nome: "Campinas", uf: "SP", regiao: "Sudeste", populacao: 1138309 },
+    { id: "2111300", nome: "São Luís", uf: "MA", regiao: "Nordeste", populacao: 1037775 },
+    { id: "3304904", nome: "São Gonçalo", uf: "RJ", regiao: "Sudeste", populacao: 896744 },
+    { id: "2704302", nome: "Maceió", uf: "AL", regiao: "Nordeste", populacao: 957916 },
+    { id: "2408102", nome: "Natal", uf: "RN", regiao: "Nordeste", populacao: 751300 },
+    { id: "2211001", nome: "Teresina", uf: "PI", regiao: "Nordeste", populacao: 866300 },
+    { id: "5002704", nome: "Campo Grande", uf: "MS", regiao: "Centro-Oeste", populacao: 897938 },
+    { id: "2507507", nome: "João Pessoa", uf: "PB", regiao: "Nordeste", populacao: 833932 },
+    { id: "3547809", nome: "Santo André", uf: "SP", regiao: "Sudeste", populacao: 748735 },
+    { id: "3534401", nome: "Osasco", uf: "SP", regiao: "Sudeste", populacao: 743432 },
+    { id: "3548708", nome: "São Bernardo do Campo", uf: "SP", regiao: "Sudeste", populacao: 810729 },
+    { id: "2607901", nome: "Jaboatão dos Guararapes", uf: "PE", regiao: "Nordeste", populacao: 643637 },
+    { id: "3543402", nome: "Ribeirão Preto", uf: "SP", regiao: "Sudeste", populacao: 698259 },
+    { id: "3170206", nome: "Uberlândia", uf: "MG", regiao: "Sudeste", populacao: 683247 },
+    { id: "3552205", nome: "Sorocaba", uf: "SP", regiao: "Sudeste", populacao: 723574 },
+    { id: "3118601", nome: "Contagem", uf: "MG", regiao: "Sudeste", populacao: 621863 },
+    { id: "2800308", nome: "Aracaju", uf: "SE", regiao: "Nordeste", populacao: 602757 },
+    { id: "2910800", nome: "Feira de Santana", uf: "BA", regiao: "Nordeste", populacao: 616272 },
+    { id: "5103403", nome: "Cuiabá", uf: "MT", regiao: "Centro-Oeste", populacao: 650912 },
+    { id: "4209102", nome: "Joinville", uf: "SC", regiao: "Sul", populacao: 616323 },
+    { id: "3136702", nome: "Juiz de Fora", uf: "MG", regiao: "Sudeste", populacao: 540756 },
+    { id: "4113700", nome: "Londrina", uf: "PR", regiao: "Sul", populacao: 555965 },
+    { id: "3503208", nome: "Araraquara", uf: "SP", regiao: "Sudeste", populacao: 242111 },
+    { id: "3529005", nome: "Marília", uf: "SP", regiao: "Sudeste", populacao: 237851 },
+    { id: "3540408", nome: "Presidente Prudente", uf: "SP", regiao: "Sudeste", populacao: 225668 },
+    { id: "3506003", nome: "Bauru", uf: "SP", regiao: "Sudeste", populacao: 379531 },
+    { id: "3543907", nome: "Rio Claro", uf: "SP", regiao: "Sudeste", populacao: 201500 },
+    { id: "3554003", nome: "Tatuí", uf: "SP", regiao: "Sudeste", populacao: 123992 },
+    { id: "3552809", nome: "Taboão da Serra", uf: "SP", regiao: "Sudeste", populacao: 273542 },
+    { id: "3516200", nome: "Francas", uf: "SP", regiao: "Sudeste", populacao: 352536 },
+    { id: "3538709", nome: "Piracicaba", uf: "SP", regiao: "Sudeste", populacao: 423323 },
+    { id: "3548906", nome: "São Carlos", uf: "SP", regiao: "Sudeste", populacao: 256915 },
+    { id: "3513801", nome: "Diadema", uf: "SP", regiao: "Sudeste", populacao: 393237 },
+    { id: "3530607", nome: "Mauá", uf: "SP", regiao: "Sudeste", populacao: 420634 },
+  ];
 
   const mergedData = useMemo(() => {
     // Top 50 cities backup (hardcoded) to ensure visibility if API is slow or empty
