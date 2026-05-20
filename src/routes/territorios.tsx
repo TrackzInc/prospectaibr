@@ -352,15 +352,15 @@ function Territorios() {
               <TableRow className="border-zinc-800 hover:bg-transparent">
                 <TableHead className="w-[50px]">
                   <Checkbox 
-                    checked={filteredData.length > 0 && filteredData.slice(0, 50).every(c => selectedCities.includes(`${c.nome}, ${c.uf}`))}
+                    checked={filteredData.length > 0 && filteredData.slice(0, 50).every((c: any) => selectedCities.includes(`${c.nome}, ${c.uf}`))}
                     onCheckedChange={(checked) => {
                       if (checked) {
-                        const pageCities = filteredData.slice(0, 50).map(c => `${c.nome}, ${c.uf}`);
+                        const pageCities = filteredData.slice(0, 50).map((c: any) => `${c.nome}, ${c.uf}`);
                         const newSelection = [...new Set([...selectedCities, ...pageCities])].slice(0, 10);
                         setSelectedCities(newSelection);
                         if (pageCities.length > 10) toast.info("Apenas as primeiras 10 cidades foram selecionadas");
                       } else {
-                        const pageCities = filteredData.slice(0, 50).map(c => `${c.nome}, ${c.uf}`);
+                        const pageCities = filteredData.slice(0, 50).map((c: any) => `${c.nome}, ${c.uf}`);
                         setSelectedCities(selectedCities.filter(c => !pageCities.includes(c)));
                       }
                     }}
