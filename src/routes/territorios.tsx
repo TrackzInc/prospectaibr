@@ -205,66 +205,13 @@ function Territorios() {
   const [selectedPopRange, setSelectedPopRange] = useState([0]); 
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
 
-  // Fetch municipios
-  const { data: municipios = [], isLoading: loadingMunicipios } = useQuery({
-    queryKey: ['municipios'],
-    queryFn: async () => {
-      console.log("Iniciando busca de municípios no IBGE...");
-      const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
-      if (!res.ok) throw new Error("Falha ao carregar municípios");
-      const data = await res.json();
-      
-      return data.map((m: any) => ({
-        id: m.id.toString(),
-        nome: m.nome,
-        uf: m.microrregiao.mesorregiao.UF.sigla,
-        regiao: m.microrregiao.mesorregiao.UF.regiao.nome
-      }));
-    },
-    staleTime: Infinity,
-  });
-
-  // Fetch populacao
-  const { data: populacoes = {}, isLoading: loadingPop } = useQuery({
-    queryKey: ['populacao'],
-    queryFn: async () => {
-      console.log("Iniciando busca de população no IBGE...");
-      const res = await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]');
-      if (!res.ok) throw new Error("Falha ao carregar dados de população");
-      const data = await res.json();
-      const results: Record<string, number> = {};
-      
-      if (data && data[0]?.resultados?.[0]?.series) {
-        data[0].resultados[0].series.forEach((s: any) => {
-          results[s.localidade.id] = parseInt(s.serie['2022']);
-        });
-      }
-      return results;
-    },
-    staleTime: Infinity,
-  });
-
   const mergedData = useMemo(() => {
-    if (municipios.length === 0 && Object.keys(populacoes).length === 0 && !loadingMunicipios && !loadingPop) {
-      return TOP_CITIES_FALLBACK;
-    }
+    return TOP_CITIES_DATA.sort((a: any, b: any) => b.populacao - a.populacao);
+  }, []);
 
-    const data = municipios.map((m: Municipio) => ({
-      ...m,
-      populacao: populacoes[m.id] || 0
-    })).sort((a: any, b: any) => b.populacao - a.populacao);
-    
-    // If we have municipios but zero population data (API still loading or failed), use fallback for matching IDs
-    if (data.length > 0 && data.every((d: any) => d.populacao === 0) && !loadingPop) {
-      console.warn("Dados de população não carregados corretamente, aplicando fallback para principais cidades.");
-      return data.map((d: any) => {
-        const fallback = TOP_CITIES_FALLBACK.find(f => f.id === d.id);
-        return fallback ? { ...d, populacao: fallback.populacao } : d;
-      }).sort((a: any, b: any) => b.populacao - a.populacao);
-    }
-
-    return data;
-  }, [municipios, populacoes, loadingMunicipios, loadingPop]);
+  const loadingMunicipios = false;
+  const loadingPop = false;
+  const municipios = TOP_CITIES_DATA;
 
   const filteredData = useMemo(() => {
     const range = POP_RANGES[selectedPopRange[0]];
