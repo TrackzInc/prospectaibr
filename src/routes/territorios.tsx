@@ -286,7 +286,37 @@ const TOP_CITIES_DATA = [
   { nome: "Valinhos", uf: "SP", populacao: 126000, regiao: "Sudeste" },
   { nome: "Votorantim", uf: "SP", populacao: 127000, regiao: "Sudeste" },
   { nome: "Araras", uf: "SP", populacao: 130000, regiao: "Sudeste" },
-  { nome: "Hortolândia", uf: "SP", populacao: 236000, regiao: "Sudeste" }
+  { nome: "Hortolândia", uf: "SP", populacao: 236000, regiao: "Sudeste" },
+  { nome: "Taguatinga", uf: "DF", populacao: 220000, regiao: "Centro-Oeste" },
+  { nome: "Ceilândia", uf: "DF", populacao: 400000, regiao: "Centro-Oeste" },
+  { nome: "Parintins", uf: "AM", populacao: 115000, regiao: "Norte" },
+  { nome: "Itacoatiara", uf: "AM", populacao: 103000, regiao: "Norte" },
+  { nome: "Rio Largo", uf: "AL", populacao: 75000, regiao: "Nordeste" },
+  { nome: "Palmeira dos Índios", uf: "AL", populacao: 70000, regiao: "Nordeste" },
+  { nome: "Parnamirim", uf: "RN", populacao: 252000, regiao: "Nordeste" },
+  { nome: "Caicó", uf: "RN", populacao: 68000, regiao: "Nordeste" },
+  { nome: "Picos", uf: "PI", populacao: 78000, regiao: "Nordeste" },
+  { nome: "Piripiri", uf: "PI", populacao: 65000, regiao: "Nordeste" },
+  { nome: "Três Lagoas", uf: "MS", populacao: 123000, regiao: "Centro-Oeste" },
+  { nome: "Corumbá", uf: "MS", populacao: 96000, regiao: "Centro-Oeste" },
+  { nome: "Santa Rita", uf: "PB", populacao: 149000, regiao: "Nordeste" },
+  { nome: "Patos", uf: "PB", populacao: 103000, regiao: "Nordeste" },
+  { nome: "Santana", uf: "AP", populacao: 112000, regiao: "Norte" },
+  { nome: "Laranjal do Jari", uf: "AP", populacao: 52000, regiao: "Norte" },
+  { nome: "Cruzeiro do Sul", uf: "AC", populacao: 89000, regiao: "Norte" },
+  { nome: "Sena Madureira", uf: "AC", populacao: 46000, regiao: "Norte" },
+  { nome: "Rorainópolis", uf: "RR", populacao: 30000, regiao: "Norte" },
+  { nome: "Caracaraí", uf: "RR", populacao: 20000, regiao: "Norte" },
+  { nome: "Araguaína", uf: "TO", populacao: 171000, regiao: "Norte" },
+  { nome: "Gurupi", uf: "TO", populacao: 85000, regiao: "Norte" },
+  { nome: "Itabira", uf: "MG", populacao: 113000, regiao: "Sudeste" },
+  { nome: "Barbacena", uf: "MG", populacao: 123000, regiao: "Sudeste" },
+  { nome: "Vespasiano", uf: "MG", populacao: 129000, regiao: "Sudeste" },
+  { nome: "Conselheiro Lafaiete", uf: "MG", populacao: 131000, regiao: "Sudeste" },
+  { nome: "Erechim", uf: "RS", populacao: 106000, regiao: "Sul" },
+  { nome: "Lajeado", uf: "RS", populacao: 93000, regiao: "Sul" },
+  { nome: "Bento Gonçalves", uf: "RS", populacao: 123000, regiao: "Sul" },
+  { nome: "Bagé", uf: "RS", populacao: 117000, regiao: "Sul" }
 ].map((c, i) => ({ ...c, id: i.toString() }));
 
 function Territorios() {
@@ -367,7 +397,7 @@ function Territorios() {
       toast.error("Selecione pelo menos uma cidade");
       return;
     }
-    navigate({ to: "/", search: { locations: selectedCities } as any });
+    navigate({ to: "/", search: { locations: selectedCities, tab: 'search' } as any });
   };
 
   const currentEstados = selectedRegiao === "all" ? [] : ESTADOS[selectedRegiao] || [];
