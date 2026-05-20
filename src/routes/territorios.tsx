@@ -168,16 +168,26 @@ function Territorios() {
   }, [municipios, populacoes]);
 
   const filteredData = useMemo(() => {
-    return mergedData.filter((city: any) => {
+    const range = POP_RANGES[selectedPopRange[0]];
+    const filtered = mergedData.filter((city: any) => {
       const matchSearch = city.nome.toLowerCase().includes(searchTerm.toLowerCase());
       const matchRegiao = selectedRegiao === "all" || city.regiao === selectedRegiao;
       const matchEstado = selectedEstado === "all" || city.uf === selectedEstado;
       
-      const range = POP_RANGES[selectedPopRange[0]];
       const matchPop = city.populacao >= range.min && city.populacao < range.max;
 
       return matchSearch && matchRegiao && matchEstado && matchPop;
     });
+
+    console.log("Filtros ativos:", { 
+      searchTerm, 
+      selectedRegiao, 
+      selectedEstado, 
+      popRange: range.label,
+      resultsCount: filtered.length 
+    });
+
+    return filtered;
   }, [mergedData, searchTerm, selectedRegiao, selectedEstado, selectedPopRange]);
 
   const stats = useMemo(() => {
