@@ -106,12 +106,36 @@ function MetricCard({
   );
 }
 
+const TOP_CITIES_FALLBACK = [
+  { id: "3550308", nome: "São Paulo", uf: "SP", regiao: "Sudeste", populacao: 11451245 },
+  { id: "3304557", nome: "Rio de Janeiro", uf: "RJ", regiao: "Sudeste", populacao: 6211423 },
+  { id: "2927408", nome: "Salvador", uf: "BA", regiao: "Nordeste", populacao: 2418005 },
+  { id: "2304400", nome: "Fortaleza", uf: "CE", regiao: "Nordeste", populacao: 2428678 },
+  { id: "3106200", nome: "Belo Horizonte", uf: "MG", regiao: "Sudeste", populacao: 2315560 },
+  { id: "5300108", nome: "Brasília", uf: "DF", regiao: "Centro-Oeste", populacao: 2817068 },
+  { id: "4106902", nome: "Curitiba", uf: "PR", regiao: "Sul", populacao: 1773733 },
+  { id: "4314902", nome: "Porto Alegre", uf: "RS", regiao: "Sul", populacao: 1332570 },
+  { id: "2611606", nome: "Recife", uf: "PE", regiao: "Nordeste", populacao: 1488920 },
+  { id: "1302603", nome: "Manaus", uf: "AM", regiao: "Norte", populacao: 2063547 },
+  { id: "5208707", nome: "Goiânia", uf: "GO", regiao: "Centro-Oeste", populacao: 1437237 },
+  { id: "1501402", nome: "Belém", uf: "PA", regiao: "Norte", populacao: 1303389 },
+  { id: "3509502", nome: "Campinas", uf: "SP", regiao: "Sudeste", populacao: 1138309 },
+  { id: "3304904", nome: "São Gonçalo", uf: "RJ", regiao: "Sudeste", populacao: 896744 },
+  { id: "2111300", nome: "São Luís", uf: "MA", regiao: "Nordeste", populacao: 1037775 },
+  { id: "2704302", nome: "Maceió", uf: "AL", regiao: "Nordeste", populacao: 957916 },
+  { id: "3301702", nome: "Duque de Caxias", uf: "RJ", regiao: "Sudeste", populacao: 808152 },
+  { id: "2408102", nome: "Natal", uf: "RN", regiao: "Nordeste", populacao: 751332 },
+  { id: "2507507", nome: "João Pessoa", uf: "PB", regiao: "Nordeste", populacao: 833932 },
+  { id: "4205407", nome: "Florianópolis", uf: "SC", regiao: "Sul", populacao: 537213 },
+  { id: "2604106", nome: "Caruaru", uf: "PE", regiao: "Nordeste", populacao: 378052 },
+];
+
 function Territorios() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRegiao, setSelectedRegiao] = useState("all");
   const [selectedEstado, setSelectedEstado] = useState("all");
-  const [selectedPopRange, setSelectedPopRange] = useState([0]); // Index of range
+  const [selectedPopRange, setSelectedPopRange] = useState([0]); 
   const [selectedCities, setSelectedCities] = useState<string[]>([]);
 
   // Fetch municipios
@@ -122,16 +146,13 @@ function Territorios() {
       const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
       if (!res.ok) throw new Error("Falha ao carregar municípios");
       const data = await res.json();
-      console.log(`IBGE retornou ${data.length} municípios raw`);
       
-      const mapped = data.map((m: any) => ({
+      return data.map((m: any) => ({
         id: m.id.toString(),
         nome: m.nome,
         uf: m.microrregiao.mesorregiao.UF.sigla,
         regiao: m.microrregiao.mesorregiao.UF.regiao.nome
       }));
-      console.log(`Mapeamento concluído: ${mapped.length} municípios`);
-      return mapped;
     },
     staleTime: Infinity,
   });
@@ -141,7 +162,7 @@ function Territorios() {
     queryKey: ['populacao'],
     queryFn: async () => {
       console.log("Iniciando busca de população no IBGE...");
-      const res = await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6');
+      const res = await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]');
       if (!res.ok) throw new Error("Falha ao carregar dados de população");
       const data = await res.json();
       const results: Record<string, number> = {};
@@ -151,21 +172,32 @@ function Territorios() {
           results[s.localidade.id] = parseInt(s.serie['2022']);
         });
       }
-      console.log(`Dados de população processados para ${Object.keys(results).length} localidades`);
       return results;
     },
     staleTime: Infinity,
   });
 
   const mergedData = useMemo(() => {
+    if (municipios.length === 0 && Object.keys(populacoes).length === 0 && !loadingMunicipios && !loadingPop) {
+      return TOP_CITIES_FALLBACK;
+    }
+
     const data = municipios.map((m: Municipio) => ({
       ...m,
       populacao: populacoes[m.id] || 0
     })).sort((a: any, b: any) => b.populacao - a.populacao);
     
-    console.log("Total de cidades carregadas:", data.length);
+    // If we have municipios but zero population data (API still loading or failed), use fallback if it matches better
+    if (data.length > 0 && data.every(d => d.populacao === 0) && !loadingPop) {
+      console.warn("Dados de população não carregados corretamente, aplicando fallback para principais cidades.");
+      return data.map(d => {
+        const fallback = TOP_CITIES_FALLBACK.find(f => f.id === d.id);
+        return fallback ? { ...d, populacao: fallback.populacao } : d;
+      }).sort((a, b) => b.populacao - a.populacao);
+    }
+
     return data;
-  }, [municipios, populacoes]);
+  }, [municipios, populacoes, loadingMunicipios, loadingPop]);
 
   const filteredData = useMemo(() => {
     const range = POP_RANGES[selectedPopRange[0]];
