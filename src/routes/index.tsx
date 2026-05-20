@@ -215,7 +215,14 @@ function Index() {
     fetchFunnelPhones();
     checkCrmStatus();
     loadSerpApiKey();
-  }, []);
+    
+    // Check for locations in URL from Territorios page
+    if (searchParams.locations) {
+      const locs = Array.isArray(searchParams.locations) ? searchParams.locations : [searchParams.locations];
+      setLocations(locs);
+      toast.info(`${locs.length} cidades carregadas de Territórios`);
+    }
+  }, [searchParams.locations]);
 
   const loadSerpApiKey = async () => {
     try {
