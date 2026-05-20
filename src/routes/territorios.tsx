@@ -118,14 +118,20 @@ function Territorios() {
   const { data: municipios = [], isLoading: loadingMunicipios } = useQuery({
     queryKey: ['municipios'],
     queryFn: async () => {
+      console.log("Iniciando busca de municípios no IBGE...");
       const res = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios');
+      if (!res.ok) throw new Error("Falha ao carregar municípios");
       const data = await res.json();
-      return data.map((m: any) => ({
+      console.log(`IBGE retornou ${data.length} municípios raw`);
+      
+      const mapped = data.map((m: any) => ({
         id: m.id.toString(),
         nome: m.nome,
         uf: m.microrregiao.mesorregiao.UF.sigla,
         regiao: m.microrregiao.mesorregiao.UF.regiao.nome
       }));
+      console.log(`Mapeamento concluído: ${mapped.length} municípios`);
+      return mapped;
     },
     staleTime: Infinity,
   });
@@ -134,12 +140,18 @@ function Territorios() {
   const { data: populacoes = {}, isLoading: loadingPop } = useQuery({
     queryKey: ['populacao'],
     queryFn: async () => {
+      console.log("Iniciando busca de população no IBGE...");
       const res = await fetch('https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6');
+      if (!res.ok) throw new Error("Falha ao carregar dados de população");
       const data = await res.json();
       const results: Record<string, number> = {};
-      data[0].resultados[0].series.forEach((s: any) => {
-        results[s.localidade.id] = parseInt(s.serie['2022']);
-      });
+      
+      if (data && data[0]?.resultados?.[0]?.series) {
+        data[0].resultados[0].series.forEach((s: any) => {
+          results[s.localidade.id] = parseInt(s.serie['2022']);
+        });
+      }
+      console.log(`Dados de população processados para ${Object.keys(results).length} localidades`);
       return results;
     },
     staleTime: Infinity,
