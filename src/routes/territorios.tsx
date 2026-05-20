@@ -157,10 +157,16 @@ function Territorios() {
   });
 
   const mergedData = useMemo(() => {
-    return municipios.map((m: Municipio) => ({
+    // Se não houver dados da API, podemos retornar uma lista vazia ou mockada
+    // Mas o objetivo é cruzar ID do município com o ID da população
+    const data = municipios.map((m: Municipio) => ({
       ...m,
       populacao: populacoes[m.id] || 0
     })).sort((a: any, b: any) => b.populacao - a.populacao);
+
+    // Se a API falhou ou está vazia, mas temos municípios, podemos usar o mock se necessário
+    // Por enquanto, confiamos na correção da URL N6[all]
+    return data;
   }, [municipios, populacoes]);
 
   const filteredData = useMemo(() => {
