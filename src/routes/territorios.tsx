@@ -68,6 +68,7 @@ const ESTADOS: Record<string, string[]> = {
 };
 
 const POP_RANGES = [
+  { label: "Todas", min: 0, max: Infinity },
   { label: "< 50k", min: 0, max: 50000 },
   { label: "50k-100k", min: 50000, max: 100000 },
   { label: "100k-500k", min: 100000, max: 500000 },
@@ -145,10 +146,13 @@ function Territorios() {
   });
 
   const mergedData = useMemo(() => {
-    return municipios.map((m: Municipio) => ({
+    const data = municipios.map((m: Municipio) => ({
       ...m,
       populacao: populacoes[m.id] || 0
     })).sort((a: any, b: any) => b.populacao - a.populacao);
+    
+    console.log("Total de cidades carregadas:", data.length);
+    return data;
   }, [municipios, populacoes]);
 
   const filteredData = useMemo(() => {
@@ -322,7 +326,7 @@ function Territorios() {
                   <Slider 
                     value={selectedPopRange} 
                     onValueChange={setSelectedPopRange} 
-                    max={4} 
+                    max={POP_RANGES.length - 1} 
                     step={1}
                     className="cursor-pointer"
                   />
