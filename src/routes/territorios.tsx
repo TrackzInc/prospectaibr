@@ -68,7 +68,7 @@ const ESTADOS: Record<string, string[]> = {
 };
 
 const POP_RANGES = [
-  { label: "< 50k", min: 0, max: 50000 },
+  { label: "Todas", min: 0, max: Infinity },
   { label: "50k-100k", min: 50000, max: 100000 },
   { label: "100k-500k", min: 100000, max: 500000 },
   { label: "500k-1M", min: 500000, max: 1000000 },
