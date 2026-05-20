@@ -187,13 +187,13 @@ function Territorios() {
       populacao: populacoes[m.id] || 0
     })).sort((a: any, b: any) => b.populacao - a.populacao);
     
-    // If we have municipios but zero population data (API still loading or failed), use fallback if it matches better
-    if (data.length > 0 && data.every(d => d.populacao === 0) && !loadingPop) {
+    // If we have municipios but zero population data (API still loading or failed), use fallback for matching IDs
+    if (data.length > 0 && data.every((d: any) => d.populacao === 0) && !loadingPop) {
       console.warn("Dados de população não carregados corretamente, aplicando fallback para principais cidades.");
-      return data.map(d => {
+      return data.map((d: any) => {
         const fallback = TOP_CITIES_FALLBACK.find(f => f.id === d.id);
         return fallback ? { ...d, populacao: fallback.populacao } : d;
-      }).sort((a, b) => b.populacao - a.populacao);
+      }).sort((a: any, b: any) => b.populacao - a.populacao);
     }
 
     return data;
