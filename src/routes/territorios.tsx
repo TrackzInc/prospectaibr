@@ -164,6 +164,10 @@ function Territorios() {
     { id: "3505708", nome: "Barueri", uf: "SP", regiao: "Sudeste", populacao: 276000 },
   ];
 
+  useEffect(() => {
+    console.log(`[Territorios] Array de municípios carregado com ${municipios.length} cidades.`);
+  }, []);
+
   const mergedData = useMemo(() => {
     return [...municipios].sort((a, b) => b.populacao - a.populacao);
   }, [municipios]);
