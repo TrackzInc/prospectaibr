@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TerritoriosRouteImport } from './routes/territorios'
 import { Route as SdrRouteImport } from './routes/sdr'
 import { Route as ScriptsRouteImport } from './routes/scripts'
 import { Route as RelatoriosRouteImport } from './routes/relatorios'
@@ -22,6 +23,11 @@ import { Route as AtendimentoRouteImport } from './routes/atendimento'
 import { Route as AgendamentosRouteImport } from './routes/agendamentos'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TerritoriosRoute = TerritoriosRouteImport.update({
+  id: '/territorios',
+  path: '/territorios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SdrRoute = SdrRouteImport.update({
   id: '/sdr',
   path: '/sdr',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/relatorios': typeof RelatoriosRoute
   '/scripts': typeof ScriptsRoute
   '/sdr': typeof SdrRoute
+  '/territorios': typeof TerritoriosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/relatorios': typeof RelatoriosRoute
   '/scripts': typeof ScriptsRoute
   '/sdr': typeof SdrRoute
+  '/territorios': typeof TerritoriosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/relatorios': typeof RelatoriosRoute
   '/scripts': typeof ScriptsRoute
   '/sdr': typeof SdrRoute
+  '/territorios': typeof TerritoriosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/scripts'
     | '/sdr'
+    | '/territorios'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/scripts'
     | '/sdr'
+    | '/territorios'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/relatorios'
     | '/scripts'
     | '/sdr'
+    | '/territorios'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,10 +196,18 @@ export interface RootRouteChildren {
   RelatoriosRoute: typeof RelatoriosRoute
   ScriptsRoute: typeof ScriptsRoute
   SdrRoute: typeof SdrRoute
+  TerritoriosRoute: typeof TerritoriosRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/territorios': {
+      id: '/territorios'
+      path: '/territorios'
+      fullPath: '/territorios'
+      preLoaderRoute: typeof TerritoriosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sdr': {
       id: '/sdr'
       path: '/sdr'
@@ -288,7 +308,18 @@ const rootRouteChildren: RootRouteChildren = {
   RelatoriosRoute: RelatoriosRoute,
   ScriptsRoute: ScriptsRoute,
   SdrRoute: SdrRoute,
+  TerritoriosRoute: TerritoriosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

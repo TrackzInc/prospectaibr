@@ -23,7 +23,8 @@ import {
   Calendar,
   Tag,
   PieChart,
-  Bot
+  Bot,
+  Globe
 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -43,6 +44,7 @@ interface SidebarProps {
 const navigationItems: NavigationItem[] = [
   { id: "dashboard", name: "Dashboard", icon: BarChart3, href: "/?tab=dashboard" },
   { id: "search", name: "Busca", icon: Search, href: "/" },
+  { id: "territorios", name: "Territórios", icon: Globe, href: "/territorios" },
   { id: "funil", name: "Funil", icon: Columns, href: "/funil" },
   { id: "agendamentos", name: "Agendamentos", icon: Calendar, href: "/agendamentos" },
   { id: "etiquetas", name: "Etiquetas", icon: Tag, href: "/etiquetas" },
