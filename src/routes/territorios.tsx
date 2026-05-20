@@ -230,12 +230,12 @@ function Territorios() {
 
   const stats = useMemo(() => {
     return {
-      total: municipios.length || 5570,
-      over100k: mergedData.filter((c: any) => c.populacao > 100000).length,
-      over500k: mergedData.filter((c: any) => c.populacao > 500000).length,
-      over1M: mergedData.filter((c: any) => c.populacao > 1000000).length,
+      total: TOP_CITIES_DATA.length,
+      over100k: TOP_CITIES_DATA.filter((c: any) => c.populacao > 100000).length,
+      over500k: TOP_CITIES_DATA.filter((c: any) => c.populacao > 500000).length,
+      over1M: TOP_CITIES_DATA.filter((c: any) => c.populacao > 1000000).length,
     };
-  }, [mergedData, municipios]);
+  }, []);
 
   const handleSelectCity = (cityStr: string) => {
     if (selectedCities.includes(cityStr)) {
