@@ -211,25 +211,17 @@ function Territorios() {
       return matchSearch && matchRegiao && matchEstado && matchPop;
     });
 
-    console.log("Filtros ativos:", { 
-      searchTerm, 
-      selectedRegiao, 
-      selectedEstado, 
-      popRange: range.label,
-      resultsCount: filtered.length 
-    });
-
     return filtered;
   }, [mergedData, searchTerm, selectedRegiao, selectedEstado, selectedPopRange]);
 
   const stats = useMemo(() => {
     return {
-      total: 5570,
+      total: municipios.length || 5570,
       over100k: mergedData.filter((c: any) => c.populacao > 100000).length,
       over500k: mergedData.filter((c: any) => c.populacao > 500000).length,
       over1M: mergedData.filter((c: any) => c.populacao > 1000000).length,
     };
-  }, [mergedData]);
+  }, [mergedData, municipios]);
 
   const handleSelectCity = (cityStr: string) => {
     if (selectedCities.includes(cityStr)) {
