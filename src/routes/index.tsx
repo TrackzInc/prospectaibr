@@ -182,7 +182,12 @@ function Index() {
   const [apiKey, setApiKey] = useState("");
   const [apiKeyConfigured, setApiKeyConfigured] = useState(false);
   const [segment, setSegment] = useState("");
-  const [locations, setLocations] = useState<string[]>([]);
+  const [locations, setLocations] = useState<string[]>(() => {
+    if (searchParams.locations) {
+      return Array.isArray(searchParams.locations) ? searchParams.locations : [searchParams.locations];
+    }
+    return [];
+  });
   const [locationInput, setLocationInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchProgress, setSearchProgress] = useState({ current: 0, total: 0 });
