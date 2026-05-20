@@ -228,10 +228,6 @@ function Index() {
       const locs = Array.isArray(searchParams.locations) ? searchParams.locations : [searchParams.locations];
       setLocations(locs);
       toast.info(`${locs.length} cidades carregadas de Territórios`);
-      // Scroll to search tab if it's the dashboard
-      if (currentTab !== 'search') {
-        navigate({ to: '/', search: { tab: 'search', locations: locs } as any });
-      }
     }
   }, [searchParams.locations]);
 
@@ -1254,7 +1250,7 @@ function Index() {
                   <div className="flex flex-wrap gap-2 p-2 min-h-[40px] bg-zinc-900 border border-zinc-700 rounded-md">
                     {locations.map(loc => (
                       <Badge key={loc} variant="secondary" className="gap-1 bg-zinc-800 text-zinc-300 border-zinc-700">
-                        <span className="max-w-[120px] truncate">{loc}</span>
+                        {loc}
                         <button type="button" onClick={() => setLocations(locations.filter(l => l !== loc))}>
                           <X className="h-3 w-3 hover:text-red-400" />
                         </button>
