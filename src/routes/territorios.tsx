@@ -391,13 +391,7 @@ function Territorios() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(loadingMunicipios || loadingPop) ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i} className="border-zinc-800/50">
-                    <TableCell colSpan={5} className="h-16 animate-pulse bg-zinc-800/20" />
-                  </TableRow>
-                ))
-              ) : filteredData.length === 0 ? (
+              {filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center text-zinc-500">Nenhuma cidade encontrada com esses filtros.</TableCell>
                 </TableRow>
