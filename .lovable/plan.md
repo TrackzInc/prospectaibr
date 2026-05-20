@@ -1,35 +1,30 @@
-# Plan: Fix Territories Page Filters
+# Plan: Fix Territories Data Loading
 
-The "Territórios" page shows "No cities found" because the population filter is too restrictive by default. This plan addresses the filter initialization and ensures data visibility.
+The user reports that the Territories page is empty. This plan addresses the data fetching logic from IBGE and adds a fallback to ensure the page is always functional.
 
 ## Proposed Changes
 
-### Frontend Improvements
-- Update `POP_RANGES` to include an "All" option or adjust logic to show all cities when no filter is applied.
-- Initialize `selectedPopRange` state to 0 and ensure the first range includes all cities or represents a "No filter" state.
-- Add `console.log` to monitor `mergedData` and `filteredData` lengths during development.
-- Ensure the population filter logic correctly handles the "All" case.
+### 1. Update Data Fetching Logic
+- Update the population API URL to `https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]` as requested.
+- Ensure the data merging logic correctly handles the response format from IBGE (cross-referencing by ID).
 
-### Implementation Details
-1.  **Modify `POP_RANGES`**:
-    - Current: `< 50k`, `50k-100k`, etc.
-    - New: Add `{ label: "Todas", min: 0, max: Infinity }` as the first item.
-2.  **State Initialization**:
-    - Keep `selectedPopRange` as `[0]`, which will now correspond to "Todas".
-3.  **Logging**:
-    - Add `useEffect` to log the length of `mergedData` whenever it changes.
-4.  **Filter Logic**:
-    - Verify `filteredData` useMemo correctly applies the range from index 0.
+### 2. Implement Local Fallback (Top Cities)
+- Create a fallback dataset with the top 100-200 Brazilian cities (hardcoded) to display immediately if the API fails or takes too long.
+- This ensures a "zero-data" state is avoided.
+
+### 3. Improve Loading State
+- Ensure the `loadingMunicipios` and `loadingPop` states are correctly tied to the UI.
+- Use the existing skeleton/loading logic or enhance it if needed.
+
+### 4. Fix Metric Cards
+- Ensure `stats` useMemo correctly calculates counts based on the merged data.
 
 ## Technical Details
 - **File**: `src/routes/territorios.tsx`
-- **State**: `selectedPopRange` (index-based slider)
-- **Data Source**: IBGE API (Municípios and População)
-- **Logic**: Range check `city.populacao >= range.min && city.populacao < range.max`
+- **Population API**: `https://servicodados.ibge.gov.br/api/v3/agregados/4709/periodos/2022/variaveis/93?localidades=N6[all]`
+- **Merging**: `populacao[m.id]` mapping.
 
 ## Verification Plan
-- Open the Territories page.
-- Verify that the table is populated with cities by default.
-- Check the browser console for the logged counts.
-- Test the population slider to ensure it filters correctly between ranges.
-- Confirm "Todas" shows the complete list (paginated to 50 items for performance).
+- Check if the table populates with all ~5,570 cities.
+- Verify that metrics cards show correct counts (e.g., ~320 cities > 100k).
+- Test filtering with the updated data.
