@@ -220,7 +220,9 @@ function Index() {
     fetchFunnelPhones();
     checkCrmStatus();
     loadSerpApiKey();
-    
+  }, []);
+
+  useEffect(() => {
     // Check for locations in URL from Territorios page
     if (searchParams.locations) {
       const locs = Array.isArray(searchParams.locations) ? searchParams.locations : [searchParams.locations];
