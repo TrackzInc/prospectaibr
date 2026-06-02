@@ -358,6 +358,7 @@ function Index() {
         rating: Number(res.rating) || 0,
         reviews: res.reviews || 0,
         open: res.is_open ?? false,
+        city: res.city_state || "",
       }));
       
       setHistoryLeads(mappedLeads);
@@ -558,7 +559,7 @@ function Index() {
         name: c.name,
         phone: c.phone,
         email: c.email || null,
-        notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}`,
+        notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}\nCidade Raspagem: ${c.city || 'Não informada'}`,
         interest: customSegment || c.segment || segment,
         is_lead: true,
         stage: "novo_lead",
@@ -578,7 +579,7 @@ function Index() {
           company_name: c.name,
           phone: c.phone,
           email: c.email,
-          segment: c.interest
+          segment: `${c.interest} (${c.city || 'Cidade não informada'})`
         })));
         error = fallbackError;
       }
@@ -1693,7 +1694,7 @@ function Index() {
                                    stage: 'novo_lead',
                                    is_lead: true,
                                    tag: segment || 'Lead Individual',
-                                   notes: `Vínculo individual via ProspectAI em ${new Date().toLocaleDateString()}`
+                                   notes: `Vínculo individual via ProspectAI em ${new Date().toLocaleDateString()} - Cidade: ${r.city || 'Não informada'}`
                                  }, { onConflict: 'user_id,phone' });
 
                                  if (localError) throw localError;
