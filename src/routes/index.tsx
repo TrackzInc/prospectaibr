@@ -566,7 +566,8 @@ function Index() {
         origin: "ProspectAI",
         status: "novo",
         external_source: 'ProspectAI',
-        external_id: c.id || (c.name + (c.phone || '')).replace(/[^a-z0-9]/gi, '_')
+        external_id: c.id || (c.name + (c.phone || '')).replace(/[^a-z0-9]/gi, '_'),
+        city: c.city
       }));
 
       // Inicia com tentativa na tabela contacts
