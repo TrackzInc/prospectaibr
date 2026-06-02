@@ -580,7 +580,7 @@ function Index() {
           company_name: c.name,
           phone: c.phone,
           email: c.email,
-          segment: `${c.interest} (${c.city || 'Cidade não informada'})`
+          segment: c.interest
         })));
         error = fallbackError;
       }
