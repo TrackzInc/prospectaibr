@@ -560,7 +560,7 @@ function Index() {
         phone: c.phone,
         email: c.email || null,
         notes: `Empresa: ${c.name}\nEndereço: ${c.address || 'Não informado'}\nWebsite: ${c.website || 'Não informado'}\nCidade Raspagem: ${c.city || 'Não informada'}`,
-        interest: customSegment || c.segment || segment,
+        interest: `${customSegment || c.segment || segment} (${c.city || 'Cidade não informada'})`,
         is_lead: true,
         stage: "novo_lead",
         origin: "ProspectAI",
@@ -580,7 +580,7 @@ function Index() {
           company_name: c.name,
           phone: c.phone,
           email: c.email,
-          segment: `${c.interest} (${c.city || 'Cidade não informada'})`
+          segment: c.interest
         })));
         error = fallbackError;
       }
@@ -711,9 +711,9 @@ function Index() {
         status: 'novo',
         stage: 'novo_lead',
         is_lead: true,
-        tag: segment,
-        interest: segment,
-        notes: `Lead gerado via ProspectAI - ${company.city || locations[0]}`,
+        tag: `${segment} - ${company.city || locations[0]}`,
+        interest: `${segment} (${company.city || locations[0]})`,
+        notes: `Lead gerado via ProspectAI - Cidade: ${company.city || locations[0]}`,
         potential_value: 0,
         optin_email: false,
         optin_whatsapp: false,
@@ -1849,8 +1849,8 @@ function Index() {
                                   status: 'novo',
                                   stage: 'novo_lead',
                                   is_lead: true,
-                                  tag: selectedHistory.segment,
-                                  notes: `Exportado do histórico em lote em ${new Date().toLocaleDateString()}`
+                                  tag: `${selectedHistory.segment} - ${selectedHistory.location}`,
+                                  notes: `Exportado do histórico em lote em ${new Date().toLocaleDateString()} - Cidade: ${selectedHistory.location}`
                                 }, { onConflict: 'user_id,phone' });
                                 
                                 if (!error) count++;
@@ -1935,8 +1935,8 @@ function Index() {
                                             website: lead.website,
                                             origin: 'ProspectAI_History',
                                             status: 'novo',
-                                            tag: selectedHistory.segment,
-                                            notes: `Exportado do histórico em ${new Date().toLocaleDateString()}`
+                                            tag: `${selectedHistory.segment} - ${selectedHistory.location}`,
+                                            notes: `Exportado do histórico em ${new Date().toLocaleDateString()} - Cidade: ${selectedHistory.location}`
                                           }, { onConflict: 'user_id,phone' });
 
                                           if (error) throw error;
